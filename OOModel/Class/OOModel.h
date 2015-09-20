@@ -1,9 +1,8 @@
 //
 //  OOModel.h
-//  iPhoneAPP
 //
-//  Created by oo on 15/9/1.
-//  Copyright (c) 2015 oo. All rights reserved.
+//  Created by oo on 15/9/20.
+//  Copyright © 2015 oo. All rights reserved.
 //
 /**
  
@@ -143,7 +142,7 @@ typedef NS_ENUM(NSInteger, OO_DatabaseColumnType) {
  */
 + (void)oo_delete:(void (^__nullable)())complete synchronously:(BOOL)synchronously;
 /**
- *
+ * use database
  */
 + (void)oo_inDB:(void(^__nonnull)(FMDatabase * _Nonnull db))block synchronously:(BOOL)synchronously;
 @end

@@ -1,15 +1,14 @@
 //
 //  OOModel.m
-//  iPhoneAPP
 //
-//  Created by oo on 15/9/1.
-//  Copyright (c) 2015 oo. All rights reserved.
+//  Created by oo on 15/9/20.
+//  Copyright © 2015 oo. All rights reserved.
 //
 
 #import "OOModel.h"
 #import "MTLReflection.h"
 #import "objc/runtime.h"
-static FMDatabase * oo_database=nil;
+static FMDatabase * oo_model_database=nil;
 static void * k_oo_queue_key=&k_oo_queue_key;
 static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 @implementation OOModel
@@ -38,11 +37,11 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
     va_end(ap);
     __block OOModel *retModel=nil;
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             return;
         }
-        NSArray * models= [self oo_selectAndSyncWithSql:sql args:args inDB:oo_database];
+        NSArray * models= [self oo_selectAndSyncWithSql:sql args:args inDB:oo_model_database];
         retModel=models.count>0?[models lastObject]:nil;
     } synchronously:YES];
     return retModel;
@@ -62,11 +61,11 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
     va_end(ap);
     __block NSArray *retModels=[NSArray array];
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             return;
         }
-        retModels=[self oo_selectAndSyncWithSql:sql args:args inDB:oo_database];
+        retModels=[self oo_selectAndSyncWithSql:sql args:args inDB:oo_model_database];
     } synchronously:YES];
     return retModels;
 }
@@ -81,7 +80,7 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 
 + (void)oo_model:(void(^)(id model))complete synchronously:(BOOL)synchronously dictionary:(NSDictionary*)dictionaryValue{
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             if(complete) {
                 complete(nil);
@@ -98,7 +97,7 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 + (void)oo_models:(void (^)(NSArray *models))complete synchronously:(BOOL)synchronously dictionaries:(NSArray *)dictionaryValues{
     [self oo_excute:^{
         NSMutableArray *models=[NSMutableArray array];
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             if(complete) {
                 complete(models);
@@ -132,14 +131,14 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
     }
     va_end(ap);
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             if(complete) {
                 complete([NSArray array]);
             }
             return;
         }
-        NSArray *retModel=[self oo_selectAndSyncWithSql:sql args:args inDB:oo_database];
+        NSArray *retModel=[self oo_selectAndSyncWithSql:sql args:args inDB:oo_model_database];
         if(complete) {
             complete(retModel);
         }
@@ -149,7 +148,7 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 
 + (void)oo_delete:(void(^)())complete synchronously:(BOOL)synchronously models:(NSArray*)models{
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             if(complete) {
                 complete(nil);
@@ -157,12 +156,12 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
             return;
         }
         NSString *tableName=[self oo_databaseTableName];
-        if(![self oo_checkTable:tableName inDB:oo_database]){
+        if(![self oo_checkTable:tableName inDB:oo_model_database]){
             return;
         }
         for(OOModel * model in models){
             @autoreleasepool {
-                [[model class] oo_deleteModel:model inDB:oo_database];
+                [[model class] oo_deleteModel:model inDB:oo_model_database];
             }
         }
         if(complete) {
@@ -173,7 +172,7 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 
 + (void)oo_delete:(void (^)())complete synchronously:(BOOL)synchronously{
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
             if(complete) {
                 complete(nil);
@@ -181,9 +180,9 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
             return;
         }
         NSString *tableName=[self oo_databaseTableName];
-        if ([self oo_checkTable:tableName inDB:oo_database]) {
+        if ([self oo_checkTable:tableName inDB:oo_model_database]) {
             NSString *sql=[NSString stringWithFormat:@"drop table %@",tableName];
-            [oo_database executeUpdate:sql];
+            [oo_model_database executeUpdate:sql];
         }
         [self oo_setTableCreated:NO];
         if (complete) {
@@ -194,11 +193,11 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 
 + (void)oo_inDB:(void(^__nonnull)(FMDatabase * _Nonnull db))block synchronously:(BOOL)synchronously{
     [self oo_excute:^{
-        if (!oo_database) {
+        if (!oo_model_database) {
             [NSException raise:OO_DATABASE_DONT_EXIST format:OO_DATABASE_DONT_EXIST];
         }
         if (block) {
-            block(oo_database);
+            block(oo_model_database);
         }
     } synchronously:YES];
 }
@@ -206,15 +205,15 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 #pragma mark -- database
 + (void)oo_openDatabase:(void(^)())complete file:(NSString*)file synchronously:(BOOL)synchronously{
     [self oo_excute:^{
-        if (oo_database) {
-            if (file&&[[oo_database databasePath] isEqualToString:file]) {
+        if (oo_model_database) {
+            if (file&&[[oo_model_database databasePath] isEqualToString:file]) {
                 return;
             }
-            [oo_database close];
+            [oo_model_database close];
         }
         if (file) {
-            oo_database=[FMDatabase databaseWithPath:file];
-            [oo_database open];
+            oo_model_database=[FMDatabase databaseWithPath:file];
+            [oo_model_database open];
         }
     } synchronously:synchronously];
 }
@@ -268,11 +267,11 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
     NSString *sql=[NSString stringWithFormat:@"create index %@ on %@(%@)",index,table,column];
     [db executeUpdate:sql];
 }
-//先查询再同步maptable
+
 + (NSArray*)oo_selectAndSyncWithSql:(NSString*)sql args:(NSArray*)args inDB:(FMDatabase*)db{
     NSArray *models=[NSArray array];
     @try {
-        models=[self oo_selectWithSql:sql args:args inDB:oo_database];
+        models=[self oo_selectWithSql:sql args:args inDB:oo_model_database];
         NSMutableArray *retModels=[NSMutableArray array];
         for(OOModel * model in models){
             @autoreleasepool {
@@ -299,7 +298,7 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 }
 + (NSArray *)oo_selectWithSql:(NSString*)sql args:(NSArray*)args inDB:(FMDatabase*)db {
     NSMutableArray *models=[NSMutableArray array];
-    [self oo_createTable:self InDB:oo_database];
+    [self oo_createTable:self InDB:oo_model_database];
     FMResultSet *set=[db executeQuery:sql withArgumentsInArray:args];
     while ([set next]) {
         @autoreleasepool {
@@ -345,10 +344,8 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
                         [self oo_checkIDIfNilOrNullAndRaiseException:primaryValue];
                     }
                     if([self oo_checkTable:tableName primaryKey:primaryKey primaryValue:primaryValue inDB:db]) {
-                        //update
                         [self oo_updateModel:model inDB:db];
                     }else{
-                        //insert
                         [self oo_insertModel:model inDB:db];
                     }
                 }else{
@@ -405,7 +402,6 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
             [sql appendFormat:@" where %@=?",primaryKey];
         }
         [args addObject:primaryValue];
-        //只有sql正确才执行sql
         [db executeUpdate:sql withArgumentsInArray:args];
     }
     @catch (NSException *exception) {
@@ -459,7 +455,6 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
         [sql2 appendString:@")"];
         
         NSString *sql=[NSString stringWithFormat:@"%@%@",sql1,sql2];
-        //只有有内容才执行sql
         if([sql rangeOfString:@"()"].location==NSNotFound) {
             [db executeUpdate:sql withArgumentsInArray:args];
         }
@@ -587,8 +582,8 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 #pragma mark --
 #pragma mark -- sql args count
 + (NSInteger)oo_argsCountWithSql:(NSString*)sql{
-    Ivar ivar=class_getInstanceVariable([oo_database class], [@"_db" UTF8String]);
-    sqlite3 * sq=(__bridge sqlite3 *)object_getIvar(oo_database, ivar);
+    Ivar ivar=class_getInstanceVariable([oo_model_database class], [@"_db" UTF8String]);
+    sqlite3 * sq=(__bridge sqlite3 *)object_getIvar(oo_model_database, ivar);
     int rc                  = 0x00;
     sqlite3_stmt *pStmt     = 0x00;
     if (!pStmt) {
@@ -628,10 +623,9 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
 }
 
 #pragma mark --
-#pragma mark --
+#pragma mark -- analytics
 
 + (instancetype)oo_modelWithDictionary_inner:(NSDictionary *)dictionaryValue{
-    //解析字典model
     @try {
         NSError *error=nil;
         OOModel *analyticalModel=[MTLJSONAdapter modelOfClass:self fromJSONDictionary:dictionaryValue error:&error];
@@ -641,14 +635,12 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
         }
         NSString *primaryKey=[[analyticalModel class]oo_databasePrimaryKey];
         if(!primaryKey) {
-            //如果没有主键 就是普通模型 直接更新数据库 不需要同步属性
-            [[analyticalModel class] oo_updateModels:@[analyticalModel] inDB:oo_database];
+            [[analyticalModel class] oo_updateModels:@[analyticalModel] inDB:oo_model_database];
             return analyticalModel;
         }
         id primaryValue=[analyticalModel oo_primaryValue];
         OOModel *mapTableModel=[[[analyticalModel class] oo_mapTable] objectForKey:primaryValue];
         if(!mapTableModel) {
-            //缓存里面没有这个model 就检查数据库里面有没有这个model
             NSString *sql=nil;
             NSString *databasePrimaryValue=primaryValue;
             NSValueTransformer *valueTransformer=[[analyticalModel class]oo_databaseTransformerForKey:primaryKey];
@@ -662,7 +654,7 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
                 sql=[NSString stringWithFormat:@"select * from %@ where %@=?",[self oo_databaseTableName],primaryKey];
             }
             OOModel *databaseModel=analyticalModel;
-            NSArray *models=[[analyticalModel class] oo_selectWithSql:sql args:@[databasePrimaryValue] inDB:oo_database];
+            NSArray *models=[[analyticalModel class] oo_selectWithSql:sql args:@[databasePrimaryValue] inDB:oo_model_database];
             if(models.count>0) {
                 databaseModel=[models lastObject];
             }
@@ -675,11 +667,11 @@ static NSString * const OO_DATABASE_DONT_EXIST=@"database don't exist";
                 model=analyticalModel;
             }
             [[[model class] oo_mapTable] setObject:model forKey:primaryValue];
-            [[model class] oo_updateModels:@[model] inDB:oo_database];
+            [[model class] oo_updateModels:@[model] inDB:oo_model_database];
             return model;
         }else{
             [mapTableModel mergeValuesForKeysFromModel:analyticalModel];
-            [[analyticalModel class] oo_updateModels:@[mapTableModel] inDB:oo_database];
+            [[analyticalModel class] oo_updateModels:@[mapTableModel] inDB:oo_model_database];
             return mapTableModel;
         }
     }
