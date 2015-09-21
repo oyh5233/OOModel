@@ -2,8 +2,8 @@
 //  MUser.m
 //  OOModel
 //
-//  Created by oo on 15/9/21.
-//  Copyright © 2015年 comein. All rights reserved.
+//  Created by oo on 15/9/20.
+//  Copyright © 2015 oo. All rights reserved.
 //
 
 #import "MUser.h"
