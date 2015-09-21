@@ -35,7 +35,7 @@
 + (nonnull NSString*)oo_databaseTableName{
     static NSString *tableName=nil;
     if (!tableName) {
-        tableName=NSStringFromClass([self class]);
+        tableName=@"MUser";
     }
     return tableName;
 }
