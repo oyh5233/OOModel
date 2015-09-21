@@ -1,5 +1,5 @@
 //
-//  User.m
+//  MUser.m
 //  OOModel
 //
 //  Created by oo on 15/9/21.

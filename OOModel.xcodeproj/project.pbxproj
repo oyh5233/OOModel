@@ -15,6 +15,9 @@
 		519813D61BAEFEEA00CBF87A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 519813D41BAEFEEA00CBF87A /* LaunchScreen.storyboard */; };
 		519813E31BAF039600CBF87A /* OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 519813DF1BAF039600CBF87A /* OOModel.m */; settings = {ASSET_TAGS = (); }; };
 		519813E41BAF039600CBF87A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 519813E21BAF039600CBF87A /* ViewController.m */; settings = {ASSET_TAGS = (); }; };
+		CF08BE671BAFF4BE007D5060 /* MGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = CF08BE661BAFF4BE007D5060 /* MGroup.m */; settings = {ASSET_TAGS = (); }; };
+		CF08BE6A1BAFF4C9007D5060 /* MUser.m in Sources */ = {isa = PBXBuildFile; fileRef = CF08BE691BAFF4C9007D5060 /* MUser.m */; settings = {ASSET_TAGS = (); }; };
+		CF08BE711BB005C4007D5060 /* CustomTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = CF08BE701BB005C4007D5060 /* CustomTableViewCell.m */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +33,12 @@
 		519813DF1BAF039600CBF87A /* OOModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOModel.m; sourceTree = "<group>"; };
 		519813E11BAF039600CBF87A /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		519813E21BAF039600CBF87A /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		CF08BE651BAFF4BE007D5060 /* MGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MGroup.h; sourceTree = "<group>"; };
+		CF08BE661BAFF4BE007D5060 /* MGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MGroup.m; sourceTree = "<group>"; };
+		CF08BE681BAFF4C9007D5060 /* MUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MUser.h; sourceTree = "<group>"; };
+		CF08BE691BAFF4C9007D5060 /* MUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MUser.m; sourceTree = "<group>"; };
+		CF08BE6F1BB005C4007D5060 /* CustomTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomTableViewCell.h; sourceTree = "<group>"; };
+		CF08BE701BB005C4007D5060 /* CustomTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CustomTableViewCell.m; sourceTree = "<group>"; };
 		E2AE905D448D843447F1F3C6 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		E786B327BA76A1EB25EB949F /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		F871B657A5BFD22682D56AB9 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
@@ -68,6 +77,8 @@
 		519813C51BAEFEEA00CBF87A /* OOModel */ = {
 			isa = PBXGroup;
 			children = (
+				CF08BE6B1BB0035D007D5060 /* Views */,
+				CF08BE5E1BAFF0DE007D5060 /* Models */,
 				519813DD1BAF039600CBF87A /* Class */,
 				519813E01BAF039600CBF87A /* ViewControllers */,
 				519813C91BAEFEEA00CBF87A /* AppDelegate.h */,
@@ -113,6 +124,26 @@
 				E786B327BA76A1EB25EB949F /* libPods.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CF08BE5E1BAFF0DE007D5060 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CF08BE651BAFF4BE007D5060 /* MGroup.h */,
+				CF08BE661BAFF4BE007D5060 /* MGroup.m */,
+				CF08BE681BAFF4C9007D5060 /* MUser.h */,
+				CF08BE691BAFF4C9007D5060 /* MUser.m */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CF08BE6B1BB0035D007D5060 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CF08BE6F1BB005C4007D5060 /* CustomTableViewCell.h */,
+				CF08BE701BB005C4007D5060 /* CustomTableViewCell.m */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		D46365CBAF346A6FA44D3A70 /* Pods */ = {
@@ -230,9 +261,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				519813E31BAF039600CBF87A /* OOModel.m in Sources */,
+				CF08BE711BB005C4007D5060 /* CustomTableViewCell.m in Sources */,
 				519813CB1BAEFEEA00CBF87A /* AppDelegate.m in Sources */,
 				519813E41BAF039600CBF87A /* ViewController.m in Sources */,
 				519813C81BAEFEEA00CBF87A /* main.m in Sources */,
+				CF08BE6A1BAFF4C9007D5060 /* MUser.m in Sources */,
+				CF08BE671BAFF4BE007D5060 /* MGroup.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -344,6 +378,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = OOModel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = cn.comein.OOModel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -356,6 +391,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = OOModel/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = cn.comein.OOModel;
 				PRODUCT_NAME = "$(TARGET_NAME)";

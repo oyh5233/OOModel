@@ -5,10 +5,14 @@
 //  Copyright © 2015 oo. All rights reserved.
 //
 /**
- 
+ *
  */
 #import "Mantle.h"
+#import "MTLValueTransformer.h"
 #import "FMDB.h"
+#if ! __has_feature(objc_arc)
+#error this class must work in arc
+#endif
 typedef NS_ENUM(NSInteger, OO_DatabaseColumnType) {
     OO_DatabaseColumnTypeText,
     OO_DatabaseColumnTypeInteger,

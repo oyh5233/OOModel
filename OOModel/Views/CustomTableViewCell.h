@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-
+#import "MUser.h"
 @interface CustomTableViewCell : UITableViewCell
-
+@property (nonatomic, strong)MUser *user;
 @end
