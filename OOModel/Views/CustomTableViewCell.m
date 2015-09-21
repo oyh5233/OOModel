@@ -10,7 +10,7 @@
 
 @implementation CustomTableViewCell
 - (void)dealloc{
-    [self unstallKVO];
+    [self uninstallKVO];
 }
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
     self=[super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -24,7 +24,7 @@
 - (void)installKVO{
     [self addObserver:self forKeyPath:@"user.nickName" options:NSKeyValueObservingOptionNew context:NULL];
 }
-- (void)unstallKVO{
+- (void)uninstallKVO{
     [self removeObserver:self forKeyPath:@"user.nickName"];
 }
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context{

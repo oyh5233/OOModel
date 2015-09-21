@@ -21,13 +21,12 @@ static NSString * kString=@"据港媒报道，万人迷“华神”刘德华20�
 
 @implementation ViewController
 - (void)dealloc{
-    [self unstallKVO];
+    [self uninstallKVO];
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [OOModel oo_openDatabase:^{
-        
-    } file:[[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"db.sqlite"] synchronously:YES];
+
+    
     CGFloat width=CGRectGetWidth(self.view.frame);
     CGFloat height=24;
     self.titleLabel=[[UILabel alloc]initWithFrame:CGRectMake(0, 20, width, height)];
@@ -40,20 +39,16 @@ static NSString * kString=@"据港媒报道，万人迷“华神”刘德华20�
     [self.view addSubview:self.noticeLabel];
     [self.view addSubview:self.creatorNameLabel];
     [self.view addSubview:self.memebersTableView];
-    self.group=[[self class]group];
     [self installKVO];
+
+    [OOModel oo_openDatabase:NULL file:[[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"db.sqlite"] synchronously:YES];
+    
+    self.group=[[self class]group];
     NSTimer *timer=[[NSTimer alloc]initWithFireDate:[NSDate distantPast] interval:1.0 target:self selector:@selector(change) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop]addTimer:timer forMode:NSRunLoopCommonModes];
+    
     [self.memebersTableView reloadData];
-    
-    
     // Do any additional setup after loading the view, typically from a nib.
-}
-- (void)run{
-    NSRunLoop *runLoop= [NSRunLoop currentRunLoop];
-    [runLoop addPort:[NSMachPort port] forMode:NSDefaultRunLoopMode];
-    [runLoop run];
-    [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(change) userInfo:nil repeats:YES];
 }
 - (void)change{
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -66,7 +61,7 @@ static NSString * kString=@"据港媒报道，万人迷“华神”刘德华20�
     [self addObserver:self forKeyPath:@"group.notice" options:NSKeyValueObservingOptionNew context:NULL];
     [self addObserver:self forKeyPath:@"group.creator.nickName" options:NSKeyValueObservingOptionNew context:NULL];
 }
-- (void)unstallKVO{
+- (void)uninstallKVO{
     [self removeObserver:self forKeyPath:@"group.title"];
     [self removeObserver:self forKeyPath:@"group.notice"];
     [self removeObserver:self forKeyPath:@"group.creator.nickName"];
