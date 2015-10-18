@@ -160,7 +160,6 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 @end
 
-
 @implementation OOModel (OOJsonSerializing)
 
 #pragma mark --
@@ -698,6 +697,31 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 + (NSTimeInterval)_tableLastCreateTime{
     return [objc_getAssociatedObject(self, @selector(_tableLastCreateTime)) doubleValue];
+}
+
+@end
+
+@implementation OOModel (OOPrimaryKeyModelManager)
+
++ (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary{
+    return nil;
+}
+
+- (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary{
+    return YES;
+}
+
++ (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary{
+    NSDictionary *dictionary=[self.class _dictionaryWithJsonDictionary:jsonDictionary];
+    return nil;
+}
+
++ (NSArray*)oo_modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments{
+    return nil;
+}
+
++ (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments{
+    return nil;
 }
 
 @end

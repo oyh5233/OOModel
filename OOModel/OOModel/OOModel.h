@@ -59,6 +59,20 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @end
 
+@interface OOModel (OOPrimaryKeyModelManager)
+
++ (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary;
+
+- (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary;
+
++ (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
+
++ (NSArray*)oo_modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments;
+
++ (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments;
+
+
+@end
 @interface OOModel (OOJsonSerializing)
 
 + (instancetype)modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
