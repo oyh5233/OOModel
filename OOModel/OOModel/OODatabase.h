@@ -4,7 +4,9 @@
 //
 
 #import <Foundation/Foundation.h>
+
 @class OODatabase;
+
 @interface OODatabase : NSObject
 
 @property (nonatomic, strong         ) NSDateFormatter *dateFormatter;

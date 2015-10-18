@@ -6,6 +6,7 @@
 #import "OOUser.h"
 
 @implementation OOUser
+
 + (NSDictionary*)jsonKeyPathsByPropertyKey{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"uid":@"id"}];
 }
@@ -37,6 +38,10 @@
              @"name":@(OODatabaseColumnTypeText),
              @"sex":@(OODatabaseColumnTypeInteger)
              };
+}
+
++ (NSValueTransformer*)databaseValueTransformerForKey:(NSString *)key{
+    return nil;
 }
 
 + (NSString*)databaseTableName{

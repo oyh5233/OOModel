@@ -5,12 +5,14 @@
 
 #import "OOValueTransformer.h"
 #import "objc/runtime.h"
+
 @interface OOValueTransformer ()
 
 @property (nonatomic, copy) OOValueTransformerBlock forwardBlock;
 @property (nonatomic, copy) OOValueTransformerBlock reverseBlock;
 
 @end
+
 @implementation OOValueTransformer
 
 #pragma mark --

@@ -4,7 +4,6 @@
 //
 
 #import "OOModel+OODatabaseSerializing.h"
-#import "NSDictionary+OOModelAddition.h"
 #import "OODatabase.h"
 #import "objc/runtime.h"
 
