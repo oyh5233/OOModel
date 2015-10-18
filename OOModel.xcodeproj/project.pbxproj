@@ -14,10 +14,8 @@
 		51426D7F1BD37FD800456F3F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 51426D7E1BD37FD800456F3F /* Assets.xcassets */; };
 		51426D821BD37FD800456F3F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 51426D801BD37FD800456F3F /* LaunchScreen.storyboard */; };
 		51426D921BD3801200456F3F /* NSDictionary+OOModelAddition.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D8B1BD3801200456F3F /* NSDictionary+OOModelAddition.m */; settings = {ASSET_TAGS = (); }; };
-		51426D931BD3801200456F3F /* OOModel+OOJsonSerializing.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D8D1BD3801200456F3F /* OOModel+OOJsonSerializing.m */; settings = {ASSET_TAGS = (); }; };
 		51426D941BD3801200456F3F /* OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D8F1BD3801200456F3F /* OOModel.m */; settings = {ASSET_TAGS = (); }; };
 		51426D951BD3801200456F3F /* OOValueTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D911BD3801200456F3F /* OOValueTransformer.m */; settings = {ASSET_TAGS = (); }; };
-		51426D981BD3809500456F3F /* OOModel+OODatabaseSerializing.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D971BD3809500456F3F /* OOModel+OODatabaseSerializing.m */; settings = {ASSET_TAGS = (); }; };
 		51426D9B1BD382AD00456F3F /* OODatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D9A1BD382AD00456F3F /* OODatabase.m */; settings = {ASSET_TAGS = (); }; };
 		515D3F6D1BD387A200AD56E2 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */; };
 		51B842181BD3D15400766DE4 /* OOUser.m in Sources */ = {isa = PBXBuildFile; fileRef = 51B842171BD3D15400766DE4 /* OOUser.m */; settings = {ASSET_TAGS = (); }; };
@@ -36,14 +34,10 @@
 		51426D831BD37FD800456F3F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		51426D8A1BD3801200456F3F /* NSDictionary+OOModelAddition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+OOModelAddition.h"; sourceTree = "<group>"; };
 		51426D8B1BD3801200456F3F /* NSDictionary+OOModelAddition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+OOModelAddition.m"; sourceTree = "<group>"; };
-		51426D8C1BD3801200456F3F /* OOModel+OOJsonSerializing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "OOModel+OOJsonSerializing.h"; sourceTree = "<group>"; };
-		51426D8D1BD3801200456F3F /* OOModel+OOJsonSerializing.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "OOModel+OOJsonSerializing.m"; sourceTree = "<group>"; };
 		51426D8E1BD3801200456F3F /* OOModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOModel.h; sourceTree = "<group>"; };
 		51426D8F1BD3801200456F3F /* OOModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOModel.m; sourceTree = "<group>"; };
 		51426D901BD3801200456F3F /* OOValueTransformer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOValueTransformer.h; sourceTree = "<group>"; };
 		51426D911BD3801200456F3F /* OOValueTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOValueTransformer.m; sourceTree = "<group>"; };
-		51426D961BD3809500456F3F /* OOModel+OODatabaseSerializing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "OOModel+OODatabaseSerializing.h"; sourceTree = "<group>"; };
-		51426D971BD3809500456F3F /* OOModel+OODatabaseSerializing.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "OOModel+OODatabaseSerializing.m"; sourceTree = "<group>"; };
 		51426D991BD382AD00456F3F /* OODatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OODatabase.h; sourceTree = "<group>"; };
 		51426D9A1BD382AD00456F3F /* OODatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OODatabase.m; sourceTree = "<group>"; };
 		515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
@@ -109,12 +103,8 @@
 		51426D891BD3801200456F3F /* OOModel */ = {
 			isa = PBXGroup;
 			children = (
-				51426D961BD3809500456F3F /* OOModel+OODatabaseSerializing.h */,
-				51426D971BD3809500456F3F /* OOModel+OODatabaseSerializing.m */,
 				51426D8A1BD3801200456F3F /* NSDictionary+OOModelAddition.h */,
 				51426D8B1BD3801200456F3F /* NSDictionary+OOModelAddition.m */,
-				51426D8C1BD3801200456F3F /* OOModel+OOJsonSerializing.h */,
-				51426D8D1BD3801200456F3F /* OOModel+OOJsonSerializing.m */,
 				51426D8E1BD3801200456F3F /* OOModel.h */,
 				51426D8F1BD3801200456F3F /* OOModel.m */,
 				51426D991BD382AD00456F3F /* OODatabase.h */,
@@ -204,7 +194,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				51426D981BD3809500456F3F /* OOModel+OODatabaseSerializing.m in Sources */,
 				51426D7A1BD37FD800456F3F /* ViewController.m in Sources */,
 				51426D771BD37FD800456F3F /* AppDelegate.m in Sources */,
 				51426D951BD3801200456F3F /* OOValueTransformer.m in Sources */,
@@ -212,7 +201,6 @@
 				51426D9B1BD382AD00456F3F /* OODatabase.m in Sources */,
 				51426D921BD3801200456F3F /* NSDictionary+OOModelAddition.m in Sources */,
 				51426D941BD3801200456F3F /* OOModel.m in Sources */,
-				51426D931BD3801200456F3F /* OOModel+OOJsonSerializing.m in Sources */,
 				51426D741BD37FD800456F3F /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
