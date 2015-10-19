@@ -7,8 +7,6 @@
 #import "OODatabase.h"
 #import "objc/runtime.h"
 
-//static const void *  OOModelMainQueueKey = &OOModelMainQueueKey;
-
 static OODatabase *OOModelDatabase=nil;
 static NSTimeInterval OOModelDatabaseOpenTime=-1;
 
@@ -95,27 +93,6 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- override
 + (void)load{
     [super load];
-//    static dispatch_once_t onceToken;
-//    dispatch_once(&onceToken, ^{
-//        dispatch_queue_set_specific(dispatch_get_main_queue(), OOModelMainQueueKey, (__bridge void *)self, NULL);
-//    });
-}
-- (void)setValue:(id)value forKey:(NSString *)key{
-    if ([NSThread isMainThread]) {
-        [super setValue:value forKey:key];
-    }else{
-        if (value==nil) {
-            value=NSNull.null;
-        }
-        [self performSelectorOnMainThread:@selector(setValueForKeyWithDictionary:) withObject:@{@"key":key,@"value":value} waitUntilDone:YES modes:@[NSRunLoopCommonModes]];
-    }
-}
-- (void)setValueForKeyWithDictionary:(NSDictionary*)dictionary{
-    id value=dictionary[@"value"];
-    if ([value isKindOfClass:NSNull.class]) {
-        value=nil;
-    }
-    [super setValue:value forKey:dictionary[@"key"]];
 }
 #pragma mark --
 #pragma mark -- enumerate keys
@@ -776,7 +753,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     if (oldModel) {
         [oldModel mergeWithDictionary:dictionary];
         [oldModel update];
-        OOModelLog(@"from mapTable:%@",managerPrimaryValue);
+        OOModelLog(@"from mapTable:%@,%@:%@",NSStringFromClass(self.class),managerPrimaryKey,managerPrimaryValue);
         return oldModel;
     }else{
         if (newModel) {
@@ -792,7 +769,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             newModel=[self modelWithSql:[NSString stringWithFormat:@"%@=?",databasePrimaryKey] arguments:@[databasePrimaryValue]];
             if (newModel) {
                 [[self _mapTable] setObject:newModel forKey:primaryValue];
-                OOModelLog(@"from database:%@",managerPrimaryValue);
+                OOModelLog(@"from database:%@,%@:%@",NSStringFromClass(self.class),primaryKey,managerPrimaryValue);
                 return newModel;
             }
         }
