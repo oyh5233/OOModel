@@ -46,9 +46,10 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @protocol OOManagerSerializing <NSObject>
 
++ (NSString*)managerPrimaryKey;
+
 + (NSString*)managerMapTableName;
 
-+ (NSString*)managerPrimaryKey;
 
 @end
 
@@ -81,6 +82,10 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 - (BOOL)mergeWithJsonDictionary:(NSDictionary*)jsonDictionary;
 
 - (NSDictionary*)jsonDictionary;
+
++ (NSString*)jsonKeyForPropertyKey:(NSString*)propertyKey;
+
+- (id)jsonValueForPropertyKey:(NSString*)propertyKey;
 
 @end
 
@@ -118,6 +123,10 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 - (void)update;
 
 + (BOOL)openDatabaseWithFile:(NSString*)file;
+
++ (NSString*)databaseColumnForPropertyKey:(NSString*)propertyKey;
+
+- (id)databaseValueForPropertyKey:(NSString*)propertyKey;
 
 @end
 

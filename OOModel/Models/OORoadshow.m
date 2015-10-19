@@ -1,0 +1,103 @@
+//
+//  OORoadshow.m
+//  OOModel
+//
+//  Created by oo on 15/10/19.
+//  Copyright © 2015年 comein. All rights reserved.
+//
+
+#import "OORoadshow.h"
+
+@implementation OORoadshow
++ (NSDictionary*)jsonKeyPathsByPropertyKey{
+    return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"rid":@"id"}];
+}
+
++ (NSValueTransformer*)jsonValueTransformerForKey:(NSString*)key{
+    if ([key isEqualToString:@"rid"]||[key isEqualToString:@"membercount"]) {
+        return [OOValueTransformer transformerWithForwardBlock:^id(NSString * value) {
+            if ([value isKindOfClass:NSString.class]) {
+                return @(value.integerValue);
+            }
+            return nil;
+        } reverseBlock:^id(NSNumber * value) {
+            if ([value isKindOfClass:NSNumber.class]) {
+                return [NSString stringWithFormat:@"%@",value];
+            }
+            return nil;
+        }];
+    }else if ([key isEqualToString:@"creator"]){
+        return [OOValueTransformer transformerWithForwardBlock:^id(NSDictionary * value) {
+            if ([value isKindOfClass:NSDictionary.class]) {
+                return [OOUser oo_modelWithJsonDictionary:value];
+            }
+            return nil;
+        } reverseBlock:^id(OOUser * value) {
+            if ([value isKindOfClass:OOUser.class]) {
+                return [value jsonDictionary];
+            }
+            return nil;
+        }];
+    }
+    return nil;
+}
+
++ (NSDictionary*)databaseColumnsByPropertyKey{
+    return [NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self];
+}
+
++ (NSDictionary*)databaseColumnTypesByPropertyKey{
+    return @{
+             @"rid":@(OODatabaseColumnTypeInteger),
+             @"title":@(OODatabaseColumnTypeText),
+             @"membercount":@(OODatabaseColumnTypeInteger),
+             @"creator":@(OODatabaseColumnTypeInteger)
+             };
+}
+
++ (NSValueTransformer*)databaseValueTransformerForKey:(NSString *)key{
+    if ([key isEqualToString:@"creator"]) {
+        return [OOValueTransformer transformerWithForwardBlock:^id(NSNumber * value) {
+            if ([value isKindOfClass:NSNumber.class]) {
+                NSString *primaryKey=[OOUser databasePrimaryKey];
+                NSString *databasePrimaryKey=[[OOUser databaseColumnsByPropertyKey] objectForKey:primaryKey];
+                id primaryValue=[value valueForKey:primaryKey];
+                id databasePrimaryValue=primaryValue;
+                NSValueTransformer *valueTransform=nil;
+                if ([OOUser respondsToSelector:@selector(databaseValueTransformerForKey:)]) {
+                    valueTransform=[OOUser databaseValueTransformerForKey:primaryValue];
+                }
+                if (valueTransform) {
+                    databasePrimaryValue=[valueTransform transformedValue:databasePrimaryValue];
+                }
+                if (databasePrimaryValue) {
+                    return [OOUser oo_modelWithSql:[NSString stringWithFormat:@"%@=?",databasePrimaryKey] arguments:@[databasePrimaryValue]];
+                }
+            }
+            return nil;
+        } reverseBlock:^id(OOUser * value) {
+            if ([value isKindOfClass:OOUser.class]) {
+                return @(value.uid);
+            }
+            return nil;
+        }];
+    }
+    return nil;
+}
+
++ (NSString*)databaseTableName{
+    return @"OORoadshow";
+}
+
++ (NSString*)databasePrimaryKey{
+    return @"rid";
+}
+
++ (NSString*)managerMapTableName{
+    return [self databaseTableName];
+}
+
++ (NSString*)managerPrimaryKey{
+    return [self databasePrimaryKey];
+}
+@end

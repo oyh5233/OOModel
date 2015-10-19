@@ -5,6 +5,8 @@
 
 #import "ViewController.h"
 #import "OOUser.h"
+static void * key1=&key1;
+static void * key2=&key2;
 @interface ViewController ()
 @property (nonatomic, strong)NSMutableDictionary * dictionary;
 @end
@@ -14,9 +16,13 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [OOModel openDatabaseWithFile:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
-    [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(timer) userInfo:nil repeats:YES];
+    dispatch_queue_set_specific(dispatch_get_main_queue(), key1, (__bridge void *)self, NULL);
+    dispatch_queue_set_specific(dispatch_get_main_queue(), key2, (__bridge void *)self, NULL);
+
+    [NSTimer scheduledTimerWithTimeInterval:0.001 target:self selector:@selector(timer) userInfo:nil repeats:YES];
     // Do any additional setup after loading the view, typically from a nib.
 }
+
 - (void)timer{
     void (^block)()=^{
         NSString *age=[NSString stringWithFormat:@"%d",arc4random()%3+1];
@@ -26,7 +32,9 @@
     };
     if (arc4random()%2==0) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            block();
+            dispatch_async(dispatch_get_main_queue(), ^{
+                block();
+            });
         });
     }else{
         block();

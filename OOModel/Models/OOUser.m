@@ -53,10 +53,10 @@
 }
 
 + (NSString*)managerMapTableName{
-    return @"OOUser";
+    return [self databaseTableName];
 }
 
 + (NSString*)managerPrimaryKey{
-    return @"uid";
+    return [self databasePrimaryKey];
 }
 @end

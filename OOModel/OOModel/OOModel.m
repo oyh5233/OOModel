@@ -7,10 +7,10 @@
 #import "OODatabase.h"
 #import "objc/runtime.h"
 
-static const void *  OOModelMainQueueKey = &OOModelMainQueueKey;
+//static const void *  OOModelMainQueueKey = &OOModelMainQueueKey;
 
-static OODatabase *modelDatabase=nil;
-static NSTimeInterval modelDatabaseOpenTime=-1;
+static OODatabase *OOModelDatabase=nil;
+static NSTimeInterval OOModelDatabaseOpenTime=-1;
 
 #define OOSelectSql(table,sql) [NSString stringWithFormat:@"select * from %@ where %@",table,sql]
 #define OODeleteSql(table,sql) [NSString stringWithFormat:@"delete from %@ where %@",table,sql]
@@ -95,21 +95,28 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- override
 + (void)load{
     [super load];
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        dispatch_queue_set_specific(dispatch_get_main_queue(), OOModelMainQueueKey, (__bridge void *)self, NULL);
-    });
+//    static dispatch_once_t onceToken;
+//    dispatch_once(&onceToken, ^{
+//        dispatch_queue_set_specific(dispatch_get_main_queue(), OOModelMainQueueKey, (__bridge void *)self, NULL);
+//    });
 }
 - (void)setValue:(id)value forKey:(NSString *)key{
-    if (dispatch_get_specific(OOModelMainQueueKey)) {
+    if ([NSThread isMainThread]) {
         [super setValue:value forKey:key];
     }else{
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            [super setValue:value forKey:key];
-        });
+        if (value==nil) {
+            value=NSNull.null;
+        }
+        [self performSelectorOnMainThread:@selector(setValueForKeyWithDictionary:) withObject:@{@"key":key,@"value":value} waitUntilDone:YES modes:@[NSRunLoopCommonModes]];
     }
 }
-
+- (void)setValueForKeyWithDictionary:(NSDictionary*)dictionary{
+    id value=dictionary[@"value"];
+    if ([value isKindOfClass:NSNull.class]) {
+        value=nil;
+    }
+    [super setValue:value forKey:dictionary[@"key"]];
+}
 #pragma mark --
 #pragma mark -- enumerate keys
 
@@ -210,6 +217,20 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- getter
++ (NSString*)jsonKeyForPropertyKey:(NSString*)propertyKey{
+    return [self.class jsonKeyPathsByPropertyKey][propertyKey];
+}
+
+- (id)jsonValueForPropertyKey:(NSString*)propertyKey{
+    id value=[self valueForKey:propertyKey];
+    if ([self.class respondsToSelector:@selector(jsonValueTransformerForKey:)]) {
+        NSValueTransformer *valueTransformer=[self.class jsonValueTransformerForKey:propertyKey];
+        if (valueTransformer) {
+            value=[valueTransformer reverseTransformedValue:value];
+        }
+    }
+    return value;
+}
 
 - (NSDictionary*)jsonDictionary{
     NSMutableDictionary *jsonDictionary=[NSMutableDictionary dictionary];
@@ -294,10 +315,10 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- interface
 
 + (NSArray*)modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments{
-    NSParameterAssert(modelDatabase);
+    NSParameterAssert(OOModelDatabase);
     [self _createTableIfNeed];
     NSString *table=[self.class _table];
-    NSArray * databaseDictionaries = [modelDatabase executeQuery:OOSelectSql(table, sql) arguments:arguments];
+    NSArray * databaseDictionaries = [OOModelDatabase executeQuery:OOSelectSql(table, sql) arguments:arguments];
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * databaseDictionary in databaseDictionaries) {
         @autoreleasepool {
@@ -315,13 +336,13 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (void)deleteModelsWithSql:(NSString*)sql arguments:(NSArray*)arguments{
-    NSParameterAssert(modelDatabase);
+    NSParameterAssert(OOModelDatabase);
     NSString *table=[self.class _table];
-    [modelDatabase executeUpdate:OODeleteSql(table, sql) arguments:arguments];
+    [OOModelDatabase executeUpdate:OODeleteSql(table, sql) arguments:arguments];
 }
 
 + (void)updateModels:(NSArray*)models{
-    NSParameterAssert(modelDatabase);
+    NSParameterAssert(OOModelDatabase);
     if ((!models)||(![models isKindOfClass:NSArray.class])) {
         OOModelLog(@"%@ is not a array!",models);
         return;
@@ -340,12 +361,12 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (BOOL)openDatabaseWithFile:(NSString *)file{
-    modelDatabase=[OODatabase databaseWithFile:file];
-    BOOL result = [modelDatabase open];
+    OOModelDatabase=[OODatabase databaseWithFile:file];
+    BOOL result = [OOModelDatabase open];
     if (result) {
-        modelDatabaseOpenTime=-1;
+        OOModelDatabaseOpenTime=-1;
     }else{
-        modelDatabaseOpenTime=[[NSDate date]timeIntervalSince1970];
+        OOModelDatabaseOpenTime=[[NSDate date]timeIntervalSince1970];
     }
     return result;
 }
@@ -377,7 +398,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             if (value&&![value isKindOfClass:NSNull.class]) {
                 NSValueTransformer *valueTransformer=[model.class _databaseValueTransformerForKey:propertyKey];
                 if (valueTransformer) {
-                    value=[valueTransformer transformedValue:value];
+                    value=[valueTransformer reverseTransformedValue:value];
                 }
                 if (value&&![value isKindOfClass:NSNull.class]) {
                     [sql1 appendFormat:@"%@%@",databaseColumn,comma];
@@ -393,7 +414,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     [sql2 appendString:@")"];
     NSString *sql=[NSString stringWithFormat:@"%@%@",sql1,sql2];
     if ([sql rangeOfString:@"()"].location==NSNotFound) {
-        [modelDatabase executeUpdate:sql arguments:args];
+        [OOModelDatabase executeUpdate:sql arguments:args];
     }
 }
 
@@ -440,7 +461,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             if (value&&![value isKindOfClass:NSNull.class]) {
                 NSValueTransformer *valueTransformer=[model.class _databaseValueTransformerForKey:propertyKey];
                 if (valueTransformer) {
-                    value=[valueTransformer transformedValue:value];
+                    value=[valueTransformer reverseTransformedValue:value];
                 }
                 if (value&&![value isKindOfClass:NSNull.class]) {
                     [args addObject:value];
@@ -456,7 +477,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     id primaryValue=[modelDictionary objectForKey:primaryKey];
     NSValueTransformer *valueTransformer=[model.class _databaseValueTransformerForKey:primaryKey];
     if (valueTransformer) {
-        primaryValue=[valueTransformer transformedValue:primaryValue];
+        primaryValue=[valueTransformer reverseTransformedValue:primaryValue];
     }
     NSString *databasePrimaryKey=[self _columnsByPropertyKey][primaryKey];
     if (primaryValue&&![primaryValue isKindOfClass:NSNull.class]) {
@@ -464,7 +485,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         [sql appendString:whereSql];
         [args addObject:primaryValue];
         if (sql.length>preSql.length+whereSql.length) {
-            [modelDatabase executeUpdate:sql arguments:args];
+            [OOModelDatabase executeUpdate:sql arguments:args];
         }
     }
 }
@@ -496,7 +517,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- create
 
 + (void)_createTableIfNeed{
-    if ([self _tableLastCreateTime]==modelDatabaseOpenTime) {
+    if ([self _tableLastCreateTime]==OOModelDatabaseOpenTime) {
         return;
     }
     [self _createTable];
@@ -518,7 +539,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         }else{
             sql=[NSString stringWithFormat:@"create table if not exists '%@' ('id' integer not null primary key autoincrement)",table];
         }
-        [modelDatabase executeUpdate:sql arguments:nil];
+        [OOModelDatabase executeUpdate:sql arguments:nil];
     }
     [self _addColumns];
     [self _addIndexes];
@@ -532,7 +553,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             OODatabaseColumnType type=[[self _columnTypesByPropertyKey][key] integerValue];
             NSString *columnType=_columnTypeWithType(type);
             NSString *sql=[NSString stringWithFormat:@"alter table '%@' add column '%@' %@",table,column,columnType];
-            [modelDatabase executeUpdate:sql arguments:nil];
+            [OOModelDatabase executeUpdate:sql arguments:nil];
         }
     }];
 }
@@ -553,10 +574,10 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         if (![self _chekTable:table index:obj]) {
             NSString *index=[NSString stringWithFormat:@"%@_%@_index",table,obj];
             NSString *sql=[NSString stringWithFormat:@"create index %@ on %@(%@)",index,table,obj];
-            [modelDatabase executeUpdate:sql arguments:nil];
+            [OOModelDatabase executeUpdate:sql arguments:nil];
         }
     }];
-    [self _setTableLastCreateTime:modelDatabaseOpenTime];
+    [self _setTableLastCreateTime:OOModelDatabaseOpenTime];
 }
 
 #pragma mark --
@@ -564,7 +585,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 + (BOOL)_checkTable:(NSString*)table{
     NSString * sql=@"select * from sqlite_master where tbl_name=? and type='table'";
-    NSArray * sets=[modelDatabase executeQuery:sql arguments:@[table]];
+    NSArray * sets=[OOModelDatabase executeQuery:sql arguments:@[table]];
     if (sets.count>0) {
         return YES;
     }else{
@@ -575,7 +596,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (BOOL)_checkTable:(NSString*)table column:(NSString*)column{
     BOOL ret=NO;
     NSString * sql=@"select sql from sqlite_master where tbl_name=? and type='table'";
-    NSArray * sets=[modelDatabase executeQuery:sql arguments:@[table]];
+    NSArray * sets=[OOModelDatabase executeQuery:sql arguments:@[table]];
     if (sets.count>0) {
         for(NSDictionary * set in sets) {
             NSString *createSql=set[@"sql"];
@@ -592,7 +613,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     __block BOOL ret;
     NSString * sql=@"select * from sqlite_master where tbl_name=? and type='index'";
     ret=NO;
-    NSArray * sets=[modelDatabase executeQuery:sql arguments:@[table]];
+    NSArray * sets=[OOModelDatabase executeQuery:sql arguments:@[table]];
     if (sets.count>0) {
         for(NSDictionary * set in sets) {
             NSString *createSql=set[@"sql"];
@@ -608,7 +629,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (BOOL)_checkTable:(NSString*)table primaryKey:(NSString*)key primaryValue:(id)value {
     NSParameterAssert(value);
     NSString *sql=[NSString stringWithFormat:@"select * from %@ where %@=?",table,key];
-    NSArray * sets=[modelDatabase executeQuery:sql arguments:@[value]];
+    NSArray * sets=[OOModelDatabase executeQuery:sql arguments:@[value]];
     if (sets.count>0) {
         return YES;
     }else{
@@ -625,6 +646,20 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- getter
++ (NSString*)databaseColumnForPropertyKey:(NSString*)propertyKey{
+    return [self _columnsByPropertyKey][propertyKey];
+}
+
+- (id)databaseValueForPropertyKey:(NSString*)propertyKey{
+    id value = [self valueForKey:propertyKey];
+    if ([self.class respondsToSelector:@selector(databaseValueTransformerForKey:)]) {
+        NSValueTransformer *valueTransformer=[self.class databaseValueTransformerForKey:propertyKey];
+        if (valueTransformer) {
+            value=[valueTransformer reverseTransformedValue:value];
+        }
+    }
+    return value;
+}
 
 + (NSDictionary*)_dictionaryWithDatabaseDictionary:(NSDictionary*)databaseDictionary{
     if (![databaseDictionary isKindOfClass:NSDictionary.class]) {
@@ -638,7 +673,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             if (key&&![obj isKindOfClass:NSNull.class]) {
                 NSValueTransformer *valueTransformer=[self.class _databaseValueTransformerForKey:key];
                 if (valueTransformer) {
-                    obj=[valueTransformer reverseTransformedValue:obj];
+                    obj=[valueTransformer transformedValue:obj];
                 }
                 if (obj) {
                     [dictionary setObject:obj forKey:key];
