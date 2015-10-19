@@ -44,6 +44,13 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @end
 
+@protocol OOManagerSerializing <NSObject>
+
++ (NSString*)managerMapTableName;
+
++ (NSString*)managerPrimaryKey;
+
+@end
 
 @interface OOModel : NSObject
 
@@ -54,6 +61,8 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 - (instancetype)initWithDictionary:(NSDictionary*)dictionary;
 
 - (BOOL)mergeWithDictionary:(NSDictionary*)dictionary;
+
+- (BOOL)mergeWithModel:(OOModel*)model;
 
 - (NSDictionary*)dictionary;
 
@@ -112,16 +121,39 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @end
 
-@interface OOModel (OOPrimaryKeyModelManager)
+@interface OOModel (OOManagerSerializing)
+
++ (NSArray*)oo_modelsWithDictionaries:(NSArray*)dictionaryies;
 
 + (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary;
 
 - (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary;
 
+
++ (NSArray*)oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaryies;
+
 + (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
 
+- (BOOL)oo_mergeWithJsonDictionary:(NSDictionary*)jsonDictionary;
+/**
+ *
+ *  <#Description#>
+ *
+ *  @param sql       sql after 'where '
+ *  @param arguments <#arguments description#>
+ *
+ *  @return <#return value description#>
+ */
 + (NSArray*)oo_modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments;
-
+/**
+ *
+ *  <#Description#>
+ *
+ *  @param sql       sql after 'where '
+ *  @param arguments <#arguments description#>
+ *
+ *  @return <#return value description#>
+ */
 + (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments;
 
 

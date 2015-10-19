@@ -86,6 +86,10 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     }];
     return YES;
 }
+- (BOOL)mergeWithModel:(OOModel*)model{
+    [self mergeWithDictionary:[model dictionary]];
+    return YES;
+}
 
 #pragma mark --
 #pragma mark -- override
@@ -469,23 +473,23 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- validate once
 
 + (void)_validateOnce{
-    BOOL validated=[objc_getAssociatedObject(self, @selector(_validateOnce)) boolValue];
-    if (validated == NO) {
-        NSParameterAssert([[self _columnsByPropertyKey] isKindOfClass:NSDictionary.class]);
-        NSParameterAssert([[self _columnTypesByPropertyKey] isKindOfClass:NSDictionary.class]);
-        NSParameterAssert([[self _table] isKindOfClass:NSString.class]);
-        [[self _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            NSParameterAssert([key isKindOfClass:NSString.class]);
-            NSParameterAssert([obj isKindOfClass:NSString.class]);
-        }];
-        [[self _columnTypesByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            NSParameterAssert([key isKindOfClass:NSString.class]);
-            NSParameterAssert([obj isKindOfClass:NSNumber.class]);
-            NSParameterAssert([obj integerValue]>=0&&[obj integerValue]<OODatabaseColumnTypeBlob);
-        }];
-        validated=YES;
-        objc_setAssociatedObject(self, @selector(_validateOnce), @(validated), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
+//    BOOL validated=[objc_getAssociatedObject(self, @selector(_validateOnce)) boolValue];
+//    if (validated == NO) {
+    NSParameterAssert([[self _columnsByPropertyKey] isKindOfClass:NSDictionary.class]);
+    NSParameterAssert([[self _columnTypesByPropertyKey] isKindOfClass:NSDictionary.class]);
+    NSParameterAssert([[self _table] isKindOfClass:NSString.class]);
+    [[self _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        NSParameterAssert([key isKindOfClass:NSString.class]);
+        NSParameterAssert([obj isKindOfClass:NSString.class]);
+    }];
+    [[self _columnTypesByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        NSParameterAssert([key isKindOfClass:NSString.class]);
+        NSParameterAssert([obj isKindOfClass:NSNumber.class]);
+        NSParameterAssert([obj integerValue]>=0&&[obj integerValue]<OODatabaseColumnTypeBlob);
+    }];
+//        validated=YES;
+//        objc_setAssociatedObject(self, @selector(_validateOnce), @(validated), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+//    }
 }
 
 #pragma mark --
@@ -720,27 +724,156 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 @end
 
-@implementation OOModel (OOPrimaryKeyModelManager)
+@implementation OOModel (OOManagerSerializing)
+
+#pragma mark --
+#pragma mark -- init
+
++ (NSArray*)oo_modelsWithDictionaries:(NSArray*)dictionaries{
+    NSMutableArray *models=[NSMutableArray array];
+    for (NSDictionary * dictionary in dictionaries){
+        id model=[self.class oo_modelWithDictionary:dictionary];
+        if (model) {
+            [models addObject:model];
+        }
+    }
+    return models;
+}
 
 + (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary{
+    if (![dictionary isKindOfClass:[NSDictionary class]]) {
+        OOModelLog(@"%@ is not a dictionary!",dictionary);
+        return nil;
+    }
+    NSString *managerPrimaryKey=[self _managerPrimaryKey];
+    OOModel * newModel=[self modelWithDictionary:dictionary];
+    NSObject * managerPrimaryValue=(NSObject*)[newModel valueForKey:managerPrimaryKey];
+    if ((!managerPrimaryValue)||[managerPrimaryValue isKindOfClass:NSNull.class]) {
+        OOModelLog(@"primaryValue is nil!");
+        return nil;
+    }
+    OOModel * oldModel=[self _modelInMapTableWithManagerPrimaryValue:(id)managerPrimaryValue];
+    if (oldModel) {
+        [oldModel mergeWithDictionary:dictionary];
+        [oldModel update];
+        OOModelLog(@"from mapTable:%@",managerPrimaryValue);
+        return oldModel;
+    }else{
+        if (newModel) {
+            [newModel update];
+            NSString *primaryKey=[self _primaryKey];
+            id primaryValue=[newModel valueForKey:primaryKey];
+            id databasePrimaryValue=primaryValue;
+            NSValueTransformer *valueTransfomer=[self _databaseValueTransformerForKey:primaryKey];
+            if (valueTransfomer) {
+                 databasePrimaryValue=[valueTransfomer transformedValue:primaryValue];
+            }
+            if ((!databasePrimaryValue)||[databasePrimaryValue isKindOfClass:NSNull.class]) {
+                OOModelLog(@"primaryValue is nil!");
+                return nil;
+            }
+            NSString *databasePrimaryKey=[self _columnsByPropertyKey][primaryKey];
+            newModel=[self modelWithSql:[NSString stringWithFormat:@"%@=?",databasePrimaryKey] arguments:@[databasePrimaryValue]];
+            if (newModel) {
+                [[self _mapTable] setObject:newModel forKey:primaryValue];
+                OOModelLog(@"from database:%@",managerPrimaryValue);
+                return newModel;
+            }
+        }
+    }
+    OOModelLog(@"model is not exist in database!");
     return nil;
 }
 
 - (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary{
-    return YES;
+    BOOL result = [self mergeWithDictionary:dictionary];
+    if (result) {
+        [self update];
+    }
+    return result;
+}
+
++ (NSArray*)oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaries{
+    NSMutableArray *models=[NSMutableArray array];
+    for (NSDictionary * jsonDictionary in jsonDictionaries){
+        id model=[self.class oo_modelWithJsonDictionary:jsonDictionary];
+        if (model) {
+            [models addObject:model];
+        }
+    }
+    return models;
 }
 
 + (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary{
-    NSDictionary *dictionary=[self.class _dictionaryWithJsonDictionary:jsonDictionary];
-    return nil;
+    return [self oo_modelWithDictionary:[self _dictionaryWithJsonDictionary:jsonDictionary]];
+}
+
+- (BOOL)oo_mergeWithJsonDictionary:(NSDictionary*)jsonDictionary{
+    return [self oo_mergeWithDictionary:[self.class _dictionaryWithJsonDictionary:jsonDictionary]];
 }
 
 + (NSArray*)oo_modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments{
-    return nil;
+    NSArray * selectedModels=[self modelsWithSql:sql arguments:arguments];
+    NSMutableArray *dbModels=[NSMutableArray array];
+    for (OOModel * dbModel in selectedModels){
+        NSString * managerPrimaryKey=[dbModel.class _managerPrimaryKey];
+        NSObject  *managerPrimaryValue=[dbModel valueForKey:managerPrimaryKey];
+        OOModel * managedModel=[[self _mapTable] objectForKey:managerPrimaryValue];
+        if (managedModel) {
+            [dbModels addObject:managedModel];
+        }else{
+            [dbModels addObject:dbModel];
+        }
+    }
+    return dbModels;
 }
 
 + (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments{
-    return nil;
+    return [[self oo_modelsWithSql:sql arguments:arguments] lastObject];
 }
+
+#pragma mark --
+#pragma mark -- getter
+
+- (id<NSCopying>)_primaryValue{
+    return [self valueForKey:[self.class _primaryKey]];
+}
+
++ (OOModel*)_modelInMapTableWithManagerPrimaryValue:(id<NSCopying>)primaryValue{
+    return [[self _mapTable] objectForKey:primaryValue];
+}
+
++ (NSMapTable*)_mapTable{
+    void * key=(__bridge void *)[self _mapTableName];
+    NSMapTable * mapTable=objc_getAssociatedObject(self,key);
+    if (!mapTable) {
+        mapTable=[NSMapTable strongToWeakObjectsMapTable];
+        objc_setAssociatedObject(self,key, mapTable, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    return mapTable;
+}
+
++ (NSString*)_mapTableName{
+    NSString *mapTable=objc_getAssociatedObject(self, @selector(_mapTableName));
+    if (!mapTable) {
+        mapTable=[self.class managerMapTableName];
+        NSParameterAssert([mapTable isKindOfClass:NSString.class]);
+        objc_setAssociatedObject(self, @selector(_mapTableName), mapTable, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    }
+    return mapTable;
+}
+
++ (NSString*)_managerPrimaryKey{
+    NSString *primaryKey=objc_getAssociatedObject(self, @selector(_managerPrimaryKey));
+    if (!primaryKey) {
+        primaryKey=[self.class managerPrimaryKey];
+        NSParameterAssert([primaryKey isKindOfClass:NSString.class]);
+        objc_setAssociatedObject(self, @selector(_managerPrimaryKey), primaryKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    }
+    return primaryKey;
+}
+
+
+
 
 @end

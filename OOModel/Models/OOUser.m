@@ -51,4 +51,12 @@
 + (NSString*)databasePrimaryKey{
     return @"uid";
 }
+
++ (NSString*)managerMapTableName{
+    return @"OOUser";
+}
+
++ (NSString*)managerPrimaryKey{
+    return @"uid";
+}
 @end
