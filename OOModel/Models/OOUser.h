@@ -3,8 +3,7 @@
 //  OOModel
 //
 
-#import "OOModel+OODatabaseSerializing.h"
-#import "OOModel+OOJsonSerializing.h"
+#import "OOModel.h"
 typedef NS_ENUM(NSInteger,UserSex) {
     UserSexMan,
     UserSexWoman

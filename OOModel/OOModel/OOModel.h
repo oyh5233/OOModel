@@ -47,6 +47,8 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @interface OOModel : NSObject
 
++ (NSArray *)modelsWithDictionaries:(NSArray*)dictionaries;
+
 + (instancetype)modelWithDictionary:(NSDictionary*)dictionary;
 
 - (instancetype)initWithDictionary:(NSDictionary*)dictionary;
@@ -59,21 +61,9 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @end
 
-@interface OOModel (OOPrimaryKeyModelManager)
-
-+ (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary;
-
-- (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary;
-
-+ (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
-
-+ (NSArray*)oo_modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments;
-
-+ (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments;
-
-
-@end
 @interface OOModel (OOJsonSerializing)
+
++ (NSArray*)modelsWithJsonDictionaries:(NSArray*)jsonDictionaries;
 
 + (instancetype)modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
 
@@ -119,5 +109,20 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 - (void)update;
 
 + (BOOL)openDatabaseWithFile:(NSString*)file;
+
+@end
+
+@interface OOModel (OOPrimaryKeyModelManager)
+
++ (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary;
+
+- (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary;
+
++ (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
+
++ (NSArray*)oo_modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments;
+
++ (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments;
+
 
 @end

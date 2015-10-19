@@ -41,6 +41,16 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- init
++ (NSArray *)modelsWithDictionaries:(NSArray*)dictionaries{
+    NSMutableArray *models=[NSMutableArray array];
+    for (NSDictionary * dictionary in dictionaries){
+        id model = [self.class modelWithDictionary:dictionary];
+        if (model) {
+            [models addObject:model];
+        }
+    }
+    return models;
+}
 
 + (instancetype)modelWithDictionary:(NSDictionary*)dictionary{
     return [[self alloc]initWithDictionary:dictionary];
@@ -113,7 +123,6 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             objc_property_t property=properties[i];
             block(property, &stop);
             if (stop) {
-                free(properties);
                 break;
             }
         }
@@ -164,6 +173,17 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- init
+
++ (NSArray *)modelsWithJsonDictionaries:(NSArray*)jsonDictionaries{
+    NSMutableArray *models=[NSMutableArray array];
+    for (NSDictionary * jsonDictionary in jsonDictionaries){
+        id model = [self.class modelWithJsonDictionary:jsonDictionary];
+        if (model) {
+            [models addObject:model];
+        }
+    }
+    return models;
+}
 
 + (instancetype)modelWithJsonDictionary:(NSDictionary*)jsonDictionary{
     return [[self alloc]initWithJsonDictionary:jsonDictionary];
@@ -449,23 +469,22 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- validate once
 
 + (void)_validateOnce{
-    dispatch_once_t onceToken=[objc_getAssociatedObject(self, @selector(_validateOnce)) integerValue];
-    if (!onceToken) {
-        dispatch_once(&onceToken, ^{
-            NSParameterAssert([[self _columnsByPropertyKey] isKindOfClass:NSDictionary.class]);
-            NSParameterAssert([[self _columnTypesByPropertyKey] isKindOfClass:NSDictionary.class]);
-            NSParameterAssert([[self _table] isKindOfClass:NSString.class]);
-            [[self _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                NSParameterAssert([key isKindOfClass:NSString.class]);
-                NSParameterAssert([obj isKindOfClass:NSString.class]);
-            }];
-            [[self _columnTypesByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                NSParameterAssert([key isKindOfClass:NSString.class]);
-                NSParameterAssert([obj isKindOfClass:NSNumber.class]);
-                NSParameterAssert([obj integerValue]>=0&&[obj integerValue]<OODatabaseColumnTypeBlob);
-            }];
-        });
-        objc_setAssociatedObject(self, @selector(_validateOnce), @(onceToken), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    BOOL validated=[objc_getAssociatedObject(self, @selector(_validateOnce)) boolValue];
+    if (validated == NO) {
+        NSParameterAssert([[self _columnsByPropertyKey] isKindOfClass:NSDictionary.class]);
+        NSParameterAssert([[self _columnTypesByPropertyKey] isKindOfClass:NSDictionary.class]);
+        NSParameterAssert([[self _table] isKindOfClass:NSString.class]);
+        [[self _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            NSParameterAssert([key isKindOfClass:NSString.class]);
+            NSParameterAssert([obj isKindOfClass:NSString.class]);
+        }];
+        [[self _columnTypesByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            NSParameterAssert([key isKindOfClass:NSString.class]);
+            NSParameterAssert([obj isKindOfClass:NSNumber.class]);
+            NSParameterAssert([obj integerValue]>=0&&[obj integerValue]<OODatabaseColumnTypeBlob);
+        }];
+        validated=YES;
+        objc_setAssociatedObject(self, @selector(_validateOnce), @(validated), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
 }
 
