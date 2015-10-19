@@ -19,6 +19,8 @@
 		51426D9B1BD382AD00456F3F /* OODatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = 51426D9A1BD382AD00456F3F /* OODatabase.m */; settings = {ASSET_TAGS = (); }; };
 		515D3F6D1BD387A200AD56E2 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */; };
 		51B842181BD3D15400766DE4 /* OOUser.m in Sources */ = {isa = PBXBuildFile; fileRef = 51B842171BD3D15400766DE4 /* OOUser.m */; settings = {ASSET_TAGS = (); }; };
+		51D1997C1BD552C1009225A0 /* DemoTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 51D1997A1BD552C1009225A0 /* DemoTableViewCell.m */; settings = {ASSET_TAGS = (); }; };
+		51D1997D1BD552C1009225A0 /* DemoTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51D1997B1BD552C1009225A0 /* DemoTableViewCell.xib */; settings = {ASSET_TAGS = (); }; };
 		CF8C2F5F1BD49A1C00004DEF /* OORoadshow.m in Sources */ = {isa = PBXBuildFile; fileRef = CF8C2F5E1BD49A1C00004DEF /* OORoadshow.m */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
@@ -44,6 +46,9 @@
 		515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		51B842161BD3D15400766DE4 /* OOUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOUser.h; sourceTree = "<group>"; };
 		51B842171BD3D15400766DE4 /* OOUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOUser.m; sourceTree = "<group>"; };
+		51D199791BD552C1009225A0 /* DemoTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemoTableViewCell.h; sourceTree = "<group>"; };
+		51D1997A1BD552C1009225A0 /* DemoTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoTableViewCell.m; sourceTree = "<group>"; };
+		51D1997B1BD552C1009225A0 /* DemoTableViewCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DemoTableViewCell.xib; sourceTree = "<group>"; };
 		CF8C2F5D1BD49A1C00004DEF /* OORoadshow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OORoadshow.h; sourceTree = "<group>"; };
 		CF8C2F5E1BD49A1C00004DEF /* OORoadshow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OORoadshow.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -79,6 +84,7 @@
 		51426D711BD37FD800456F3F /* OOModel */ = {
 			isa = PBXGroup;
 			children = (
+				51D199751BD55274009225A0 /* Views */,
 				51B842151BD3D14200766DE4 /* Models */,
 				51426D891BD3801200456F3F /* OOModel */,
 				51426D751BD37FD800456F3F /* AppDelegate.h */,
@@ -127,6 +133,16 @@
 				CF8C2F5E1BD49A1C00004DEF /* OORoadshow.m */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		51D199751BD55274009225A0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				51D199791BD552C1009225A0 /* DemoTableViewCell.h */,
+				51D1997A1BD552C1009225A0 /* DemoTableViewCell.m */,
+				51D1997B1BD552C1009225A0 /* DemoTableViewCell.xib */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -188,6 +204,7 @@
 			files = (
 				51426D821BD37FD800456F3F /* LaunchScreen.storyboard in Resources */,
 				51426D7F1BD37FD800456F3F /* Assets.xcassets in Resources */,
+				51D1997D1BD552C1009225A0 /* DemoTableViewCell.xib in Resources */,
 				51426D7D1BD37FD800456F3F /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -203,6 +220,7 @@
 				51426D771BD37FD800456F3F /* AppDelegate.m in Sources */,
 				51426D951BD3801200456F3F /* OOValueTransformer.m in Sources */,
 				51B842181BD3D15400766DE4 /* OOUser.m in Sources */,
+				51D1997C1BD552C1009225A0 /* DemoTableViewCell.m in Sources */,
 				CF8C2F5F1BD49A1C00004DEF /* OORoadshow.m in Sources */,
 				51426D9B1BD382AD00456F3F /* OODatabase.m in Sources */,
 				51426D921BD3801200456F3F /* NSDictionary+OOModelAddition.m in Sources */,

@@ -42,7 +42,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSArray *)modelsWithDictionaries:(NSArray*)dictionaries{
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * dictionary in dictionaries){
-        id model = [self.class modelWithDictionary:dictionary];
+        id model = [self modelWithDictionary:dictionary];
         if (model) {
             [models addObject:model];
         }
@@ -165,7 +165,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSArray *)modelsWithJsonDictionaries:(NSArray*)jsonDictionaries{
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * jsonDictionary in jsonDictionaries){
-        id model = [self.class modelWithJsonDictionary:jsonDictionary];
+        id model = [self modelWithJsonDictionary:jsonDictionary];
         if (model) {
             [models addObject:model];
         }
@@ -245,7 +245,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             @autoreleasepool {
                 id  propertyKey=[self _propertyKeysByKeyPath][keyPath];
                 if (propertyKey&&![jsonValue isKindOfClass:NSNull.class]) {
-                    id value=[self.class valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
+                    id value=[self valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
                     if (value) {
                         [dictionary setObject:value forKey:propertyKey];
                     }
@@ -284,7 +284,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (NSValueTransformer*)_jsonValueTransformerForKey:(NSString*)key{
-    if ([self.class respondsToSelector:@selector(jsonValueTransformerForKey:)]) {
+    if ([self respondsToSelector:@selector(jsonValueTransformerForKey:)]) {
         return [self.class jsonValueTransformerForKey:key];
     }
     return nil;
@@ -344,12 +344,29 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (BOOL)openDatabaseWithFile:(NSString *)file{
+    if ([self closeDatabase]) {
+        return NO;
+    }
     OOModelDatabase=[OODatabase databaseWithFile:file];
     BOOL result = [OOModelDatabase open];
     if (result) {
-        OOModelDatabaseOpenTime=-1;
-    }else{
         OOModelDatabaseOpenTime=[[NSDate date]timeIntervalSince1970];
+    }else{
+        OOModelDatabaseOpenTime=-1;
+        OOModelLog(@"open database fail:%@",file);
+    }
+    return result;
+}
+
++ (BOOL)closeDatabase{
+    BOOL result = YES;
+    if (OOModelDatabase) {
+        result = [OOModelDatabase close];
+        if (result) {
+            OOModelDatabase=nil;
+        }else{
+            OOModelLog(@"database close fail!");
+        }
     }
     return result;
 }
@@ -711,7 +728,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSString*)_databasePrimaryKey{
     NSString * databasePrimaryKey=objc_getAssociatedObject(self, @selector(_databasePrimaryKey));
     if (!databasePrimaryKey) {
-        if (![self.class respondsToSelector:@selector(databasePrimaryKey)]) {
+        if (![self respondsToSelector:@selector(databasePrimaryKey)]) {
             return nil;
         }
         databasePrimaryKey=[self.class databasePrimaryKey];
@@ -728,14 +745,14 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (NSArray*)_databaseIndexesKeys{
-    if ([self.class respondsToSelector:@selector(databaseIndexesKeys)]) {
+    if ([self respondsToSelector:@selector(databaseIndexesKeys)]) {
         return [self.class databaseIndexesKeys];
     }
     return nil;
 }
 
 + (NSValueTransformer*)_databaseValueTransformerForKey:(NSString*)key{
-    if ([self.class respondsToSelector:@selector(databaseValueTransformerForKey:)]) {
+    if ([self respondsToSelector:@selector(databaseValueTransformerForKey:)]) {
         return [self.class databaseValueTransformerForKey:key];
     }
     return nil;
@@ -755,7 +772,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSArray*)oo_modelsWithDictionaries:(NSArray*)dictionaries{
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * dictionary in dictionaries){
-        id model=[self.class oo_modelWithDictionary:dictionary];
+        id model=[self oo_modelWithDictionary:dictionary];
         if (model) {
             [models addObject:model];
         }
@@ -779,23 +796,23 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     if (oldModel) {
         [oldModel mergeWithDictionary:dictionary];
         [oldModel update];
-        OOModelLog(@"from mapTable:%@,%@:%@",NSStringFromClass(self.class),managerPrimaryKey,managerPrimaryValue);
+//        OOModelLog(@"from mapTable:%@,%@:%@",NSStringFromClass(self.class),managerPrimaryKey,managerPrimaryValue);
         return oldModel;
     }else{
         if (newModel) {
             [newModel update];
             NSString *primaryKey=[self _databasePrimaryKey];
             id primaryValue=[newModel valueForKey:primaryKey];
-            id databasePrimaryValue=[self.class databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
+            id databasePrimaryValue=[self databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
             if ((!databasePrimaryValue)||[databasePrimaryValue isKindOfClass:NSNull.class]) {
-                OOModelLog(@"primaryValue is nil!");
+//                OOModelLog(@"primaryValue is nil!");
                 return nil;
             }
             NSString *databasePrimaryKey=[self _columnsByPropertyKey][primaryKey];
             newModel=[self modelWithSql:[NSString stringWithFormat:@"%@=?",databasePrimaryKey] arguments:@[databasePrimaryValue]];
             if (newModel) {
                 [[self _mapTable] setObject:newModel forKey:primaryValue];
-                OOModelLog(@"from database:%@,%@:%@",NSStringFromClass(self.class),primaryKey,managerPrimaryValue);
+//                OOModelLog(@"from database:%@,%@:%@",NSStringFromClass(self.class),primaryKey,managerPrimaryValue);
                 return newModel;
             }
         }
@@ -815,7 +832,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSArray*)oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaries{
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * jsonDictionary in jsonDictionaries){
-        id model=[self.class oo_modelWithJsonDictionary:jsonDictionary];
+        id model=[self oo_modelWithJsonDictionary:jsonDictionary];
         if (model) {
             [models addObject:model];
         }
@@ -849,6 +866,28 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 + (instancetype)oo_modelWithSql:(NSString*)sql arguments:(NSArray*)arguments{
     return [[self oo_modelsWithSql:sql arguments:arguments] lastObject];
+}
+
++ (void)oo_updateModels:(NSArray*)models{
+    for (OOModel * model in models){
+        NSString * managerPrimaryKey=[model.class _managerPrimaryKey];
+        NSObject  *managerPrimaryValue=[model valueForKey:managerPrimaryKey];
+        if (managerPrimaryValue) {
+            OOModel * managedModel=[[self _mapTable] objectForKey:managerPrimaryValue];
+            if (managedModel) {
+                [managedModel mergeWithModel:model];
+                [managedModel update];
+            }else{
+                [model update];
+            }
+        }else{
+            OOModelLog(@"%@ dont have a managerPrimaryValue!",model);
+        }
+    }
+}
+
+- (void)oo_update{
+    [self.class oo_updateModels:@[self]];
 }
 
 #pragma mark --

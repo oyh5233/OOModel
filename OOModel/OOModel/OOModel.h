@@ -128,6 +128,8 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 + (BOOL)openDatabaseWithFile:(NSString*)file;
 
++ (BOOL)closeDatabase;
+
 - (NSDictionary*)databaseDictionary;
 
 + (NSString*)propertyKeyForDatabaseColumn:(NSString*)column;
@@ -154,11 +156,15 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 + (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
 
 - (BOOL)oo_mergeWithJsonDictionary:(NSDictionary*)jsonDictionary;
+
++ (void)oo_updateModels:(NSArray*)models;
+
+- (void)oo_update;
 /**
  *
  *  <#Description#>
  *
- *  @param sql       sql after 'where '
+ *  @param sql       sql after 'where ' 
  *  @param arguments <#arguments description#>
  *
  *  @return <#return value description#>
