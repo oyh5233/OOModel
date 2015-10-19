@@ -217,17 +217,23 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- getter
+
 + (NSString*)jsonKeyForPropertyKey:(NSString*)propertyKey{
     return [self.class jsonKeyPathsByPropertyKey][propertyKey];
 }
 
-- (id)jsonValueForPropertyKey:(NSString*)propertyKey{
-    id value=[self valueForKey:propertyKey];
-    if ([self.class respondsToSelector:@selector(jsonValueTransformerForKey:)]) {
-        NSValueTransformer *valueTransformer=[self.class jsonValueTransformerForKey:propertyKey];
-        if (valueTransformer) {
-            value=[valueTransformer reverseTransformedValue:value];
-        }
++ (id)valueWithJsonValue:(id)value forPropertyKey:(NSString *)propertyKey{
+    NSValueTransformer *valueTransformer=[self _jsonValueTransformerForKey:propertyKey];
+    if (valueTransformer) {
+        return [valueTransformer transformedValue:value];
+    }
+    return value;
+}
+
++ (id)jsonValueWithValue:(id)value forPropertyKey:(NSString*)propertyKey{
+    NSValueTransformer *valueTransformer=[self _jsonValueTransformerForKey:propertyKey];
+    if (valueTransformer) {
+        return [valueTransformer reverseTransformedValue:value];
     }
     return value;
 }
@@ -236,12 +242,9 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     NSMutableDictionary *jsonDictionary=[NSMutableDictionary dictionary];
     [[self dictionary] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         @autoreleasepool {
-            key=[self.class _keyPathsByPropertyKey][key];
             if (key&&![obj isKindOfClass:NSNull.class]) {
-                NSValueTransformer *valueTransformer=[self.class _jsonValueTransformerForKey:key];
-                if (valueTransformer) {
-                    obj=[valueTransformer reverseTransformedValue:obj];
-                }
+                obj=[self.class jsonValueWithValue:obj forPropertyKey:key];
+                key=[self.class jsonKeyForPropertyKey:key];
                 if (obj) {
                     [jsonDictionary setObject:obj forKey:key];
                 }
@@ -260,10 +263,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         @autoreleasepool {
             key=[self.class _propertyKeysByKeyPath][key];
             if (key&&![obj isKindOfClass:NSNull.class]) {
-                NSValueTransformer *valueTransformer=[self.class _jsonValueTransformerForKey:key];
-                if (valueTransformer) {
-                    obj=[valueTransformer transformedValue:obj];
-                }
+                obj=[self.class valueWithJsonValue:obj forPropertyKey:key];
                 if (obj) {
                     [dictionary setObject:obj forKey:key];
                 }
@@ -395,16 +395,11 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     [[model.class _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(NSString * propertyKey, NSString *databaseColumn, BOOL *stop) {
         @autoreleasepool {
             id value = [[model dictionary] objectForKey:propertyKey];
+            value=[self.class databaseValueWithValue:value forPropertyKey:propertyKey];
             if (value&&![value isKindOfClass:NSNull.class]) {
-                NSValueTransformer *valueTransformer=[model.class _databaseValueTransformerForKey:propertyKey];
-                if (valueTransformer) {
-                    value=[valueTransformer reverseTransformedValue:value];
-                }
-                if (value&&![value isKindOfClass:NSNull.class]) {
-                    [sql1 appendFormat:@"%@%@",databaseColumn,comma];
-                    [sql2 appendFormat:@"?%@",comma];
-                    [args addObject:value];
-                }
+                [sql1 appendFormat:@"%@%@",databaseColumn,comma];
+                [sql2 appendFormat:@"?%@",comma];
+                [args addObject:value];
             }
         }
     }];
@@ -458,15 +453,10 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     [[[model.class _columnsByPropertyKey]oo_dictionaryByRemoveKeys:@[primaryKey]] enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, NSString *  _Nonnull column, BOOL * _Nonnull stop) {
         @autoreleasepool {
             id value=[modelDictionary objectForKey:propertyKey];
+            value=[self.class databaseValueWithValue:value forPropertyKey:propertyKey];
             if (value&&![value isKindOfClass:NSNull.class]) {
-                NSValueTransformer *valueTransformer=[model.class _databaseValueTransformerForKey:propertyKey];
-                if (valueTransformer) {
-                    value=[valueTransformer reverseTransformedValue:value];
-                }
-                if (value&&![value isKindOfClass:NSNull.class]) {
-                    [args addObject:value];
-                    [sql appendFormat:@"%@=?%@",column,and];
-                }
+                [args addObject:value];
+                [sql appendFormat:@"%@=?%@",column,and];
             }
         }
     }];
@@ -474,12 +464,9 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     if ([sql length]<=preSql.length) {
         return;
     }
+    NSString *databasePrimaryKey=[self databaseColumnForPropertyKey:primaryKey];
     id primaryValue=[modelDictionary objectForKey:primaryKey];
-    NSValueTransformer *valueTransformer=[model.class _databaseValueTransformerForKey:primaryKey];
-    if (valueTransformer) {
-        primaryValue=[valueTransformer reverseTransformedValue:primaryValue];
-    }
-    NSString *databasePrimaryKey=[self _columnsByPropertyKey][primaryKey];
+    primaryValue=[self.class databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
     if (primaryValue&&![primaryValue isKindOfClass:NSNull.class]) {
         NSString *whereSql=[NSString stringWithFormat:@" where %@=?",databasePrimaryKey];
         [sql appendString:whereSql];
@@ -494,8 +481,6 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark -- validate once
 
 + (void)_validateOnce{
-//    BOOL validated=[objc_getAssociatedObject(self, @selector(_validateOnce)) boolValue];
-//    if (validated == NO) {
     NSParameterAssert([[self _columnsByPropertyKey] isKindOfClass:NSDictionary.class]);
     NSParameterAssert([[self _columnTypesByPropertyKey] isKindOfClass:NSDictionary.class]);
     NSParameterAssert([[self _table] isKindOfClass:NSString.class]);
@@ -508,9 +493,6 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         NSParameterAssert([obj isKindOfClass:NSNumber.class]);
         NSParameterAssert([obj integerValue]>=0&&[obj integerValue]<OODatabaseColumnTypeBlob);
     }];
-//        validated=YES;
-//        objc_setAssociatedObject(self, @selector(_validateOnce), @(validated), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-//    }
 }
 
 #pragma mark --
@@ -646,17 +628,23 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- getter
+
 + (NSString*)databaseColumnForPropertyKey:(NSString*)propertyKey{
     return [self _columnsByPropertyKey][propertyKey];
 }
 
-- (id)databaseValueForPropertyKey:(NSString*)propertyKey{
-    id value = [self valueForKey:propertyKey];
-    if ([self.class respondsToSelector:@selector(databaseValueTransformerForKey:)]) {
-        NSValueTransformer *valueTransformer=[self.class databaseValueTransformerForKey:propertyKey];
-        if (valueTransformer) {
-            value=[valueTransformer reverseTransformedValue:value];
-        }
++ (id)valueWithDatabaseValue:(id)value forPropertyKey:(NSString *)propertyKey{
+    NSValueTransformer *valueTransformer=[self _databaseValueTransformerForKey:propertyKey];
+    if (valueTransformer) {
+        return [valueTransformer transformedValue:value];
+    }
+    return value;
+}
+
++ (id)databaseValueWithValue:(id)value forPropertyKey:(NSString*)propertyKey{
+    NSValueTransformer *valueTransformer=[self _databaseValueTransformerForKey:propertyKey];
+    if (valueTransformer) {
+        return [valueTransformer reverseTransformedValue:value];
     }
     return value;
 }
@@ -671,10 +659,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         @autoreleasepool {
             key=databasePropertyKeysByColumn[key];
             if (key&&![obj isKindOfClass:NSNull.class]) {
-                NSValueTransformer *valueTransformer=[self.class _databaseValueTransformerForKey:key];
-                if (valueTransformer) {
-                    obj=[valueTransformer transformedValue:obj];
-                }
+                obj =[self.class valueWithDatabaseValue:obj forPropertyKey:key];
                 if (obj) {
                     [dictionary setObject:obj forKey:key];
                 }
@@ -798,11 +783,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
             [newModel update];
             NSString *primaryKey=[self _primaryKey];
             id primaryValue=[newModel valueForKey:primaryKey];
-            id databasePrimaryValue=primaryValue;
-            NSValueTransformer *valueTransfomer=[self _databaseValueTransformerForKey:primaryKey];
-            if (valueTransfomer) {
-                 databasePrimaryValue=[valueTransfomer transformedValue:primaryValue];
-            }
+            id databasePrimaryValue=[self.class databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
             if ((!databasePrimaryValue)||[databasePrimaryValue isKindOfClass:NSNull.class]) {
                 OOModelLog(@"primaryValue is nil!");
                 return nil;

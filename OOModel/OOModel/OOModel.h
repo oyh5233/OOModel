@@ -85,7 +85,9 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 + (NSString*)jsonKeyForPropertyKey:(NSString*)propertyKey;
 
-- (id)jsonValueForPropertyKey:(NSString*)propertyKey;
++ (id)valueWithJsonValue:(id)value forPropertyKey:(NSString*)propertyKey;
+
++ (id)jsonValueWithValue:(id)value forPropertyKey:(NSString*)propertyKey;
 
 @end
 
@@ -126,7 +128,9 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 + (NSString*)databaseColumnForPropertyKey:(NSString*)propertyKey;
 
-- (id)databaseValueForPropertyKey:(NSString*)propertyKey;
++ (id)valueWithDatabaseValue:(id)value forPropertyKey:(NSString*)propertyKey;
+
++ (id)databaseValueWithValue:(id)value forPropertyKey:(NSString*)propertyKey;
 
 @end
 

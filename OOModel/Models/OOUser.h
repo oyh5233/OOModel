@@ -4,10 +4,12 @@
 //
 
 #import "OOModel.h"
+
 typedef NS_ENUM(NSInteger,UserSex) {
     UserSexMan,
     UserSexWoman
 };
+
 @interface OOUser : OOModel <OODatabaseSerializing,OOJsonSerializing,OOManagerSerializing>
 
 @property (nonatomic, assign)NSInteger uid;

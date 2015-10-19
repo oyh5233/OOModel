@@ -7,6 +7,9 @@
 
 @implementation OOUser
 
+#pragma mark --
+#pragma mark -- OOJsonSerializing
+
 + (NSDictionary*)jsonKeyPathsByPropertyKey{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"uid":@"id"}];
 }
@@ -27,6 +30,9 @@
     }
     return nil;
 }
+
+#pragma mark --
+#pragma mark -- OODatabaseSerializing
 
 + (NSDictionary*)databaseColumnsByPropertyKey{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"uid":@"o_uid",@"name":@"o_name",@"sex":@"o_sex",@"age":@"o_age"}];
@@ -51,6 +57,9 @@
 + (NSString*)databasePrimaryKey{
     return @"uid";
 }
+
+#pragma mark --
+#pragma mark -- OODatabaseSerializing
 
 + (NSString*)managerMapTableName{
     return [self databaseTableName];

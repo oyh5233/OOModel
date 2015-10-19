@@ -9,6 +9,10 @@
 #import "OORoadshow.h"
 
 @implementation OORoadshow
+
+#pragma mark --
+#pragma mark -- OODatabaseSerializing
+
 + (NSDictionary*)jsonKeyPathsByPropertyKey{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"rid":@"id"}];
 }
@@ -42,6 +46,9 @@
     return nil;
 }
 
+#pragma mark --
+#pragma mark -- OODatabaseSerializing
+
 + (NSDictionary*)databaseColumnsByPropertyKey{
     return [NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self];
 }
@@ -59,17 +66,9 @@
     if ([key isEqualToString:@"creator"]) {
         return [OOValueTransformer transformerWithForwardBlock:^id(NSNumber * value) {
             if ([value isKindOfClass:NSNumber.class]) {
+                id databasePrimaryValue=value;
                 NSString *primaryKey=[OOUser databasePrimaryKey];
-                NSString *databasePrimaryKey=[[OOUser databaseColumnsByPropertyKey] objectForKey:primaryKey];
-                id primaryValue=[value valueForKey:primaryKey];
-                id databasePrimaryValue=primaryValue;
-                NSValueTransformer *valueTransform=nil;
-                if ([OOUser respondsToSelector:@selector(databaseValueTransformerForKey:)]) {
-                    valueTransform=[OOUser databaseValueTransformerForKey:primaryValue];
-                }
-                if (valueTransform) {
-                    databasePrimaryValue=[valueTransform transformedValue:databasePrimaryValue];
-                }
+                NSString *databasePrimaryKey=[OOUser databaseColumnForPropertyKey:primaryKey];
                 if (databasePrimaryValue) {
                     return [OOUser oo_modelWithSql:[NSString stringWithFormat:@"%@=?",databasePrimaryKey] arguments:@[databasePrimaryValue]];
                 }
@@ -93,11 +92,16 @@
     return @"rid";
 }
 
-+ (NSString*)managerMapTableName{
-    return [self databaseTableName];
-}
+#pragma mark --
+#pragma mark -- OOManagerSerializing
 
 + (NSString*)managerPrimaryKey{
     return [self databasePrimaryKey];
 }
+
++ (NSString*)managerMapTableName{
+    return [self databaseTableName];
+}
+
+
 @end
