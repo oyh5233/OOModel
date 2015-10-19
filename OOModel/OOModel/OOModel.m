@@ -195,8 +195,12 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark --
 #pragma mark -- getter
 
-+ (NSString*)jsonKeyForPropertyKey:(NSString*)propertyKey{
-    return [self.class jsonKeyPathsByPropertyKey][propertyKey];
++ (NSString*)propertyKeyForKeyPath:(NSString*)keyPath{
+    return [self _propertyKeysByKeyPath][keyPath];
+}
+
++ (NSString*)keyPathForPropertyKey:(NSString*)propertyKey{
+    return [self _keyPathsByPropertyKey][propertyKey];
 }
 
 + (id)valueWithJsonValue:(id)value forPropertyKey:(NSString *)propertyKey{
@@ -216,37 +220,39 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 - (NSDictionary*)jsonDictionary{
-    NSMutableDictionary *jsonDictionary=[NSMutableDictionary dictionary];
-    [[self dictionary] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        @autoreleasepool {
-            if (key&&![obj isKindOfClass:NSNull.class]) {
-                obj=[self.class jsonValueWithValue:obj forPropertyKey:key];
-                key=[self.class jsonKeyForPropertyKey:key];
-                if (obj) {
-                    [jsonDictionary setObject:obj forKey:key];
-                }
-            }
-        }
-    }];
-    return jsonDictionary;
+    return [self.class _jsonDictionaryWithDictionary:[self dictionary]];
 }
 
-+ (NSDictionary*)_dictionaryWithJsonDictionary:(NSDictionary*)jsonDictionary{
-    if (![jsonDictionary isKindOfClass:NSDictionary.class]) {
-        return nil;
-    }
-    NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
-    [jsonDictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        @autoreleasepool {
-            key=[self.class _propertyKeysByKeyPath][key];
-            if (key&&![obj isKindOfClass:NSNull.class]) {
-                obj=[self.class valueWithJsonValue:obj forPropertyKey:key];
-                if (obj) {
-                    [dictionary setObject:obj forKey:key];
++ (NSDictionary*)_jsonDictionaryWithDictionary:(NSDictionary*)dictionary{
+    NSMutableDictionary *jsonDictionary=[NSMutableDictionary dictionary];
+    if ([dictionary isKindOfClass:NSDictionary.class]) {
+        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            @autoreleasepool {
+                NSString *keyPath=[self _keyPathsByPropertyKey][propertyKey];
+                id jsonValue=[self jsonValueWithValue:obj forPropertyKey:propertyKey];
+                if (jsonValue) {
+                    [jsonDictionary setObject:jsonValue forKey:keyPath];
                 }
             }
-        }
-    }];
+        }];
+    }
+    return jsonDictionary;
+}
++ (NSDictionary*)_dictionaryWithJsonDictionary:(NSDictionary*)jsonDictionary{
+    NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
+    if ([jsonDictionary isKindOfClass:NSDictionary.class]) {
+        [jsonDictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull keyPath, id  _Nonnull jsonValue, BOOL * _Nonnull stop) {
+            @autoreleasepool {
+                id  propertyKey=[self _propertyKeysByKeyPath][keyPath];
+                if (propertyKey&&![jsonValue isKindOfClass:NSNull.class]) {
+                    id value=[self.class valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
+                    if (value) {
+                        [dictionary setObject:value forKey:propertyKey];
+                    }
+                }
+            }
+        }];
+    }
     return dictionary;
 }
 
@@ -268,7 +274,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     NSMutableDictionary * propertyKeysByKeyPath=objc_getAssociatedObject(self, @selector(_propertyKeysByKeyPath));
     if (!propertyKeysByKeyPath) {
         propertyKeysByKeyPath=[NSMutableDictionary dictionary];
-        NSDictionary *  keyPathsByPropertyKey=[self.class jsonKeyPathsByPropertyKey];
+        NSDictionary *  keyPathsByPropertyKey=[self _keyPathsByPropertyKey];
         [keyPathsByPropertyKey enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
             [propertyKeysByKeyPath setObject:key forKey:obj];
         }];
@@ -294,12 +300,12 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSArray*)modelsWithSql:(NSString*)sql arguments:(NSArray*)arguments{
     NSParameterAssert(OOModelDatabase);
     [self _createTableIfNeed];
-    NSString *table=[self.class _table];
+    NSString *table=[self _databaseTableName];
     NSArray * databaseDictionaries = [OOModelDatabase executeQuery:OOSelectSql(table, sql) arguments:arguments];
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * databaseDictionary in databaseDictionaries) {
         @autoreleasepool {
-            id model=[self modelWithDictionary:[self.class _dictionaryWithDatabaseDictionary:databaseDictionary]];
+            id model=[self modelWithDictionary:[self _dictionaryWithDatabaseDictionary:databaseDictionary]];
             if (model) {
                 [models addObject:model];
             }
@@ -314,7 +320,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 + (void)deleteModelsWithSql:(NSString*)sql arguments:(NSArray*)arguments{
     NSParameterAssert(OOModelDatabase);
-    NSString *table=[self.class _table];
+    NSString *table=[self _databaseTableName];
     [OOModelDatabase executeUpdate:OODeleteSql(table, sql) arguments:arguments];
 }
 
@@ -325,7 +331,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         return;
     }
     [self _createTableIfNeed];
-    NSString *primaryKey=[self _primaryKey];
+    NSString *primaryKey=[self _databasePrimaryKey];
     if (primaryKey) {
         [self _updateModels:models];
     }else{
@@ -363,20 +369,18 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         return;
     }
     NSString *comma=@",";
-    NSString *table=[self _table];
+    NSString *table=[self _databaseTableName];
     NSMutableString *sql1=[NSMutableString string];
     NSMutableString *sql2=[NSMutableString string];
     NSMutableArray *args=[NSMutableArray array];
     [sql1 appendFormat:@"insert into %@ (",table];
     [sql2 appendString:@" values ("];
-    [[model.class _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(NSString * propertyKey, NSString *databaseColumn, BOOL *stop) {
+    [[model databaseDictionary] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         @autoreleasepool {
-            id value = [[model dictionary] objectForKey:propertyKey];
-            value=[self.class databaseValueWithValue:value forPropertyKey:propertyKey];
-            if (value&&![value isKindOfClass:NSNull.class]) {
-                [sql1 appendFormat:@"%@%@",databaseColumn,comma];
+            if (![obj isKindOfClass:NSNull.class]) {
+                [sql1 appendFormat:@"%@%@",key,comma];
                 [sql2 appendFormat:@"?%@",comma];
-                [args addObject:value];
+                [args addObject:obj];
             }
         }
     }];
@@ -401,13 +405,13 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         OOModelLog(@"%@ is not subclass of OOModel!",model.class);
         return;
     }
-    NSString *primaryKey=[self _primaryKey];
-    id primaryValue =[model valueForKey:primaryKey];
+    NSString *primaryKey=[self _databasePrimaryKey];
+    id primaryValue=[model _databasePrimaryValue];
     if ((!primaryValue)||[primaryValue isKindOfClass:NSNull.class]) {
         OOModelLog(@"%@'s primary value is not exist!",model);
         return;
     }
-    NSString *databasePrimaryKey=[self _columnsByPropertyKey][primaryKey];
+    NSString *databasePrimaryKey=[self databaseColumnForPropertyKey:primaryKey];
     NSString *sql=nil;
     sql=[NSString stringWithFormat:@"%@ = ?",databasePrimaryKey];
     id existModel=[self modelWithSql:sql arguments:@[primaryValue]];
@@ -419,21 +423,19 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (void)_updateExistModel:(OOModel*)model{
-    NSString *table=[self _table];
+    NSString *table=[self _databaseTableName];
     NSMutableString *sql=nil;
     NSMutableArray *args=[NSMutableArray array];
     NSString *and=@",";
     NSString *preSql=[NSString stringWithFormat:@"update %@ set ",table];
     sql=[preSql mutableCopy];
-    NSString *primaryKey=[self _primaryKey];
-    NSDictionary *modelDictionary=[model dictionary];
-    [[[model.class _columnsByPropertyKey]oo_dictionaryByRemoveKeys:@[primaryKey]] enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, NSString *  _Nonnull column, BOOL * _Nonnull stop) {
+    NSString *primaryKey=[self _databasePrimaryKey];
+    NSDictionary *databaseDictionary=[model databaseDictionary];
+    [[databaseDictionary oo_dictionaryByRemoveKeys:@[primaryKey]] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         @autoreleasepool {
-            id value=[modelDictionary objectForKey:propertyKey];
-            value=[self.class databaseValueWithValue:value forPropertyKey:propertyKey];
-            if (value&&![value isKindOfClass:NSNull.class]) {
-                [args addObject:value];
-                [sql appendFormat:@"%@=?%@",column,and];
+            if (![obj isKindOfClass:NSNull.class]) {
+                [args addObject:obj];
+                [sql appendFormat:@"%@=?%@",key,and];
             }
         }
     }];
@@ -442,12 +444,11 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
         return;
     }
     NSString *databasePrimaryKey=[self databaseColumnForPropertyKey:primaryKey];
-    id primaryValue=[modelDictionary objectForKey:primaryKey];
-    primaryValue=[self.class databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
-    if (primaryValue&&![primaryValue isKindOfClass:NSNull.class]) {
+    id databasePrimaryValue=[databaseDictionary objectForKey:databasePrimaryKey];
+    if (databasePrimaryValue&&![databasePrimaryValue isKindOfClass:NSNull.class]) {
         NSString *whereSql=[NSString stringWithFormat:@" where %@=?",databasePrimaryKey];
         [sql appendString:whereSql];
-        [args addObject:primaryValue];
+        [args addObject:databasePrimaryValue];
         if (sql.length>preSql.length+whereSql.length) {
             [OOModelDatabase executeUpdate:sql arguments:args];
         }
@@ -460,7 +461,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (void)_validateOnce{
     NSParameterAssert([[self _columnsByPropertyKey] isKindOfClass:NSDictionary.class]);
     NSParameterAssert([[self _columnTypesByPropertyKey] isKindOfClass:NSDictionary.class]);
-    NSParameterAssert([[self _table] isKindOfClass:NSString.class]);
+    NSParameterAssert([[self _databaseTableName] isKindOfClass:NSString.class]);
     [[self _columnsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         NSParameterAssert([key isKindOfClass:NSString.class]);
         NSParameterAssert([obj isKindOfClass:NSString.class]);
@@ -484,12 +485,12 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 + (void)_createTable{
     [self _validateOnce];
-    NSString *table=[self _table];
+    NSString *table=[self _databaseTableName];
     if (![self _checkTable:table]) {
-        NSString *primaryKey=[self _primaryKey];
+        NSString *primaryKey=[self _databasePrimaryKey];
         NSString *sql=nil;
         if (primaryKey) {
-            NSString *databasePrimaryKey=[self _columnsByPropertyKey][primaryKey];
+            NSString *databasePrimaryKey=[self databaseColumnForPropertyKey:primaryKey];
             NSNumber *typeNumber=[self _columnTypesByPropertyKey][primaryKey];
             NSParameterAssert(typeNumber);
             OODatabaseColumnType type=typeNumber.integerValue;
@@ -505,7 +506,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (void)_addColumns{
-    NSString *table = [self _table];
+    NSString *table = [self _databaseTableName];
     NSDictionary *columnsByPropertyKey=[self _columnsByPropertyKey];
     [columnsByPropertyKey enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, NSString *  _Nonnull column, BOOL * _Nonnull stop) {
         if (![self _checkTable:table column:column]) {
@@ -518,16 +519,15 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (void)_addIndexes{
-    NSArray *indexes=[self _indexesKeys];
+    NSArray *indexes=[self _databaseIndexesKeys];
     NSParameterAssert([indexes isKindOfClass:NSArray.class]||!indexes);
-    NSDictionary *columnsByPropertyKey=[self _columnsByPropertyKey];
-    NSString *table=[self _table];
+    NSString *table=[self _databaseTableName];
     NSMutableArray *databaseIndexes=[NSMutableArray array];
-    [indexes enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSParameterAssert([obj isKindOfClass:NSString.class]);
-        NSString *index=columnsByPropertyKey[obj];
-        NSParameterAssert([index isKindOfClass:NSString.class]);
-        [databaseIndexes addObject:index];
+    [indexes enumerateObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSParameterAssert([propertyKey isKindOfClass:NSString.class]);
+        NSString *databaseColumn=[self databaseColumnForPropertyKey:propertyKey];
+        NSParameterAssert([databaseColumn isKindOfClass:NSString.class]);
+        [databaseIndexes addObject:databaseColumn];
     }];
     [databaseIndexes enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (![self _chekTable:table index:obj]) {
@@ -606,6 +606,10 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark --
 #pragma mark -- getter
 
++ (NSString*)propertyKeyForDatabaseColumn:(NSString*)column{
+    return [self _propertyKeysByColumn][column];
+}
+
 + (NSString*)databaseColumnForPropertyKey:(NSString*)propertyKey{
     return [self _columnsByPropertyKey][propertyKey];
 }
@@ -626,19 +630,37 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     return value;
 }
 
+- (NSDictionary*)databaseDictionary{
+    NSDictionary *dictionary=[self dictionary];
+    return [self.class _databaseDictionaryWithDictionary:dictionary];
+}
+
++ (NSDictionary*)_databaseDictionaryWithDictionary:(NSDictionary*)dictionary{
+    NSMutableDictionary *databaseDictionary=[NSMutableDictionary dictionary];
+    if ([dictionary isKindOfClass:NSDictionary.class]) {
+        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, id  _Nonnull value, BOOL * _Nonnull stop) {
+            NSString *databaseColumn=[self databaseColumnForPropertyKey:propertyKey];
+            id databaseValue=[self databaseValueWithValue:value forPropertyKey:propertyKey];
+            if (databaseValue) {
+                [databaseDictionary setObject:databaseValue forKey:databaseColumn];
+            }
+        }];
+    }
+    return databaseDictionary;
+}
+
 + (NSDictionary*)_dictionaryWithDatabaseDictionary:(NSDictionary*)databaseDictionary{
     if (![databaseDictionary isKindOfClass:NSDictionary.class]) {
         return nil;
     }
-    NSDictionary *databasePropertyKeysByColumn=[self _propertyKeysByColumn];
     NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
-    [databaseDictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+    [databaseDictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull column, id  _Nonnull databaseValue, BOOL * _Nonnull stop) {
         @autoreleasepool {
-            key=databasePropertyKeysByColumn[key];
-            if (key&&![obj isKindOfClass:NSNull.class]) {
-                obj =[self.class valueWithDatabaseValue:obj forPropertyKey:key];
-                if (obj) {
-                    [dictionary setObject:obj forKey:key];
+            NSString * propertyKey=[self propertyKeyForDatabaseColumn:column];
+            if (propertyKey&&![databaseValue isKindOfClass:NSNull.class]) {
+               id value =[self valueWithDatabaseValue:databaseValue forPropertyKey:propertyKey];
+                if (value) {
+                    [dictionary setObject:value forKey:propertyKey];
                 }
             }
         }
@@ -659,7 +681,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     NSMutableDictionary * propertyKeysByColumn=objc_getAssociatedObject(self, @selector(_propertyKeysByColumn));
     if (!propertyKeysByColumn) {
         propertyKeysByColumn=[NSMutableDictionary dictionary];
-        NSDictionary * columnsByPropertyKey=[self.class databaseColumnsByPropertyKey];
+        NSDictionary * columnsByPropertyKey=[self _columnsByPropertyKey];
         [columnsByPropertyKey enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
             [propertyKeysByColumn setObject:key forKey:obj];
         }];
@@ -677,31 +699,35 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     return columnTypesByPropertyKey;
 }
 
-+ (NSString*)_table{
-    NSString * table=objc_getAssociatedObject(self, @selector(_table));
-    if (!table) {
-        table=[self.class databaseTableName];
-        objc_setAssociatedObject(self, @selector(_table),table, OBJC_ASSOCIATION_COPY_NONATOMIC);
++ (NSString*)_databaseTableName{
+    NSString * databaseTableName=objc_getAssociatedObject(self, @selector(_databaseTableName));
+    if (!databaseTableName) {
+        databaseTableName=[self.class databaseTableName];
+        objc_setAssociatedObject(self, @selector(_databaseTableName),databaseTableName, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
-    return table;
+    return databaseTableName;
 }
 
-+ (NSString*)_primaryKey{
-    NSString * primaryKey=objc_getAssociatedObject(self, @selector(_primaryKey));
-    if (!primaryKey) {
++ (NSString*)_databasePrimaryKey{
+    NSString * databasePrimaryKey=objc_getAssociatedObject(self, @selector(_databasePrimaryKey));
+    if (!databasePrimaryKey) {
         if (![self.class respondsToSelector:@selector(databasePrimaryKey)]) {
             return nil;
         }
-        primaryKey=[self.class databasePrimaryKey];
-        if (primaryKey) {
-            NSParameterAssert([primaryKey isKindOfClass:NSString.class]);
+        databasePrimaryKey=[self.class databasePrimaryKey];
+        if (databasePrimaryKey) {
+            NSParameterAssert([databasePrimaryKey isKindOfClass:NSString.class]);
         }
-        objc_setAssociatedObject(self, @selector(_primaryKey),primaryKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        objc_setAssociatedObject(self, @selector(_databasePrimaryKey),databasePrimaryKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
-    return primaryKey;
+    return databasePrimaryKey;
 }
 
-+ (NSArray*)_indexesKeys{
+- (id<NSCopying>)_databasePrimaryValue{
+    return [self valueForKey:[self.class _databasePrimaryKey]];
+}
+
++ (NSArray*)_databaseIndexesKeys{
     if ([self.class respondsToSelector:@selector(databaseIndexesKeys)]) {
         return [self.class databaseIndexesKeys];
     }
@@ -738,7 +764,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary{
-    if (![dictionary isKindOfClass:[NSDictionary class]]) {
+    if (![dictionary isKindOfClass:NSDictionary.class]) {
         OOModelLog(@"%@ is not a dictionary!",dictionary);
         return nil;
     }
@@ -758,7 +784,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     }else{
         if (newModel) {
             [newModel update];
-            NSString *primaryKey=[self _primaryKey];
+            NSString *primaryKey=[self _databasePrimaryKey];
             id primaryValue=[newModel valueForKey:primaryKey];
             id databasePrimaryValue=[self.class databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
             if ((!databasePrimaryValue)||[databasePrimaryValue isKindOfClass:NSNull.class]) {
@@ -828,22 +854,13 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 #pragma mark --
 #pragma mark -- getter
 
-- (id<NSCopying>)_primaryValue{
-    return [self valueForKey:[self.class _primaryKey]];
-}
-
-+ (OOModel*)_modelInMapTableWithManagerPrimaryValue:(id<NSCopying>)primaryValue{
-    return [[self _mapTable] objectForKey:primaryValue];
-}
-
-+ (NSMapTable*)_mapTable{
-    void * key=(__bridge void *)[self _mapTableName];
-    NSMapTable * mapTable=objc_getAssociatedObject(self,key);
-    if (!mapTable) {
-        mapTable=[NSMapTable strongToWeakObjectsMapTable];
-        objc_setAssociatedObject(self,key, mapTable, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++ (NSString *)_managerPrimaryKey{
+    NSString *managerPrimaryKey=objc_getAssociatedObject(self, @selector(_managerPrimaryKey));
+    if (!managerPrimaryKey) {
+        managerPrimaryKey=[self.class managerPrimaryKey];
+        objc_setAssociatedObject(self, @selector(_managerPrimaryKey), managerPrimaryKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
-    return mapTable;
+    return managerPrimaryKey;
 }
 
 + (NSString*)_mapTableName{
@@ -856,14 +873,18 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     return mapTable;
 }
 
-+ (NSString*)_managerPrimaryKey{
-    NSString *primaryKey=objc_getAssociatedObject(self, @selector(_managerPrimaryKey));
-    if (!primaryKey) {
-        primaryKey=[self.class managerPrimaryKey];
-        NSParameterAssert([primaryKey isKindOfClass:NSString.class]);
-        objc_setAssociatedObject(self, @selector(_managerPrimaryKey), primaryKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
++ (NSMapTable*)_mapTable{
+    void * key=(__bridge void *)[self _mapTableName];
+    NSMapTable * mapTable=objc_getAssociatedObject(self,key);
+    if (!mapTable) {
+        mapTable=[NSMapTable strongToWeakObjectsMapTable];
+        objc_setAssociatedObject(self,key, mapTable, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    return primaryKey;
+    return mapTable;
+}
+
++ (OOModel*)_modelInMapTableWithManagerPrimaryValue:(id<NSCopying>)primaryValue{
+    return [[self _mapTable] objectForKey:primaryValue];
 }
 
 
