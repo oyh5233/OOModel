@@ -46,10 +46,6 @@
              };
 }
 
-+ (NSValueTransformer*)databaseValueTransformerForKey:(NSString *)key{
-    return nil;
-}
-
 + (NSString*)databaseTableName{
     return @"OOUser";
 }
