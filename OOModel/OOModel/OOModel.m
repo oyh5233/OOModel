@@ -225,34 +225,48 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 + (NSDictionary*)_jsonDictionaryWithDictionary:(NSDictionary*)dictionary{
     NSMutableDictionary *jsonDictionary=[NSMutableDictionary dictionary];
+    [[self _keyPathsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull propertyKey, id  _Nonnull keyPath, BOOL * _Nonnull stop) {
+        [self _autoComplementJsonDictionary:jsonDictionary ForKeyPath:keyPath];
+    }];
     if ([dictionary isKindOfClass:NSDictionary.class]) {
         [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, id  _Nonnull obj, BOOL * _Nonnull stop) {
             @autoreleasepool {
                 NSString *keyPath=[self _keyPathsByPropertyKey][propertyKey];
-                id jsonValue=[self jsonValueWithValue:obj forPropertyKey:propertyKey];
-                if (jsonValue) {
-                    [jsonDictionary setObject:jsonValue forKey:keyPath];
+                if (keyPath) {
+                    id jsonValue=[self jsonValueWithValue:obj forPropertyKey:propertyKey];
+                    if (jsonValue) {
+                        [jsonDictionary setValue:jsonValue forKeyPath:keyPath];
+                    }
                 }
             }
         }];
     }
     return jsonDictionary;
 }
+
++ (void)_autoComplementJsonDictionary:(NSMutableDictionary*)jsonDictionary ForKeyPath:(NSString*)keyPath{
+    NSArray * comps=[keyPath componentsSeparatedByString:@"."];
+    NSMutableDictionary *childDictionary=nil;
+    NSMutableDictionary *parentDictionary=jsonDictionary;
+    for (int i = 0 ; i < comps.count ; i++){
+        if (i>0) {
+            NSString *parentPath=comps[i-1];
+            childDictionary=[NSMutableDictionary dictionary];
+            [parentDictionary setObject:childDictionary forKey:parentPath];
+            parentDictionary=childDictionary;
+        }
+    }
+
+}
+
 + (NSDictionary*)_dictionaryWithJsonDictionary:(NSDictionary*)jsonDictionary{
     NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
-    if ([jsonDictionary isKindOfClass:NSDictionary.class]) {
-        [jsonDictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull keyPath, id  _Nonnull jsonValue, BOOL * _Nonnull stop) {
-            @autoreleasepool {
-                id  propertyKey=[self _propertyKeysByKeyPath][keyPath];
-                if (propertyKey&&![jsonValue isKindOfClass:NSNull.class]) {
-                    id value=[self valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
-                    if (value) {
-                        [dictionary setObject:value forKey:propertyKey];
-                    }
-                }
-            }
-        }];
-    }
+    [[self _keyPathsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull propertyKey, id  _Nonnull keyPath, BOOL * _Nonnull stop) {
+        id value=[jsonDictionary valueForKeyPath:keyPath];
+        if (value) {
+            [dictionary setObject:value forKey:propertyKey];
+        }
+    }];
     return dictionary;
 }
 

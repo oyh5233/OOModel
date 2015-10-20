@@ -19,18 +19,23 @@
     [OOModel openDatabaseWithFile:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
     for (int i = 0; i < 3 ; i++){
         NSDictionary *jsonDictionary=@{
-                                       @"id":[NSString stringWithFormat:@"%d",i+1],@"creator":@{
-                                               @"id":i<2?[NSString stringWithFormat:@"%d",1]:[NSString stringWithFormat:@"%d",2]
+                                       @"id":[NSString stringWithFormat:@"%d",i+1],
+                                       @"extra":@{
+                                               @"creator":@{
+                                                       @"id":i<2?[NSString stringWithFormat:@"%d",1]:[NSString stringWithFormat:@"%d",2]
+                                                       }
                                                }
                                        };
         
         OORoadshow *roadshow=[OORoadshow oo_modelWithJsonDictionary:jsonDictionary];
+        [roadshow jsonDictionary];
         [self.roadshows addObject:roadshow];
     }
     [self.view addSubview:self.tableView];
     NSTimer *timer1=[NSTimer timerWithTimeInterval:0.2 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop]addTimer:timer1 forMode:NSRunLoopCommonModes];
     [timer1 fire];
+    
     NSTimer *timer2=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop]addTimer:timer2 forMode:NSRunLoopCommonModes];
     [timer2 fire];

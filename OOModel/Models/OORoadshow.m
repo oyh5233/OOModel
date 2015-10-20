@@ -11,7 +11,7 @@
 #pragma mark -- OODatabaseSerializing
 
 + (NSDictionary*)jsonKeyPathsByPropertyKey{
-    return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"rid":@"id"}];
+    return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"rid":@"id",@"creator":@"extra.creator"}];
 }
 
 + (NSValueTransformer*)jsonValueTransformerForKey:(NSString*)key{
