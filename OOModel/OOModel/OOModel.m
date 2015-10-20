@@ -84,6 +84,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     }];
     return YES;
 }
+
 - (BOOL)mergeWithModel:(OOModel*)model{
     [self mergeWithDictionary:[model dictionary]];
     return YES;
@@ -262,9 +263,12 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 + (NSDictionary*)_dictionaryWithJsonDictionary:(NSDictionary*)jsonDictionary{
     NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
     [[self _keyPathsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull propertyKey, id  _Nonnull keyPath, BOOL * _Nonnull stop) {
-        id value=[jsonDictionary valueForKeyPath:keyPath];
-        if (value) {
-            [dictionary setObject:value forKey:propertyKey];
+        id jsonValue=[jsonDictionary valueForKeyPath:keyPath];
+        if (jsonValue) {
+            id value=[self valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
+            if (value) {
+                [dictionary setObject:value forKey:propertyKey];
+            }
         }
     }];
     return dictionary;
