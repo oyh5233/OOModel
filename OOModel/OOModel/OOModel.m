@@ -224,6 +224,20 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     return [self.class _jsonDictionaryWithDictionary:[self dictionary]];
 }
 
++ (NSDictionary*)_dictionaryWithJsonDictionary:(NSDictionary*)jsonDictionary{
+    NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
+    [[self _keyPathsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull propertyKey, id  _Nonnull keyPath, BOOL * _Nonnull stop) {
+        id jsonValue=[jsonDictionary valueForKeyPath:keyPath];
+        if (jsonValue) {
+            id value=[self valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
+            if (value) {
+                [dictionary setObject:value forKey:propertyKey];
+            }
+        }
+    }];
+    return dictionary;
+}
+
 + (NSDictionary*)_jsonDictionaryWithDictionary:(NSDictionary*)dictionary{
     NSMutableDictionary *jsonDictionary=[NSMutableDictionary dictionary];
     [[self _keyPathsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull propertyKey, id  _Nonnull keyPath, BOOL * _Nonnull stop) {
@@ -260,19 +274,6 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 
 }
 
-+ (NSDictionary*)_dictionaryWithJsonDictionary:(NSDictionary*)jsonDictionary{
-    NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
-    [[self _keyPathsByPropertyKey] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull propertyKey, id  _Nonnull keyPath, BOOL * _Nonnull stop) {
-        id jsonValue=[jsonDictionary valueForKeyPath:keyPath];
-        if (jsonValue) {
-            id value=[self valueWithJsonValue:jsonValue forPropertyKey:propertyKey];
-            if (value) {
-                [dictionary setObject:value forKey:propertyKey];
-            }
-        }
-    }];
-    return dictionary;
-}
 
 + (NSDictionary*)_keyPathsByPropertyKey{
     NSDictionary * keyPathsByPropertyKey=objc_getAssociatedObject(self, @selector(_keyPathsByPropertyKey));
@@ -675,9 +676,11 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     if ([dictionary isKindOfClass:NSDictionary.class]) {
         [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, id  _Nonnull value, BOOL * _Nonnull stop) {
             NSString *databaseColumn=[self databaseColumnForPropertyKey:propertyKey];
-            id databaseValue=[self databaseValueWithValue:value forPropertyKey:propertyKey];
-            if (databaseValue) {
-                [databaseDictionary setObject:databaseValue forKey:databaseColumn];
+            if (databaseColumn) {
+                id databaseValue=[self databaseValueWithValue:value forPropertyKey:propertyKey];
+                if (databaseValue) {
+                    [databaseDictionary setObject:databaseValue forKey:databaseColumn];
+                }
             }
         }];
     }
@@ -692,7 +695,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
     [databaseDictionary enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull column, id  _Nonnull databaseValue, BOOL * _Nonnull stop) {
         @autoreleasepool {
             NSString * propertyKey=[self propertyKeyForDatabaseColumn:column];
-            if (propertyKey&&![databaseValue isKindOfClass:NSNull.class]) {
+            if (propertyKey) {
                id value =[self valueWithDatabaseValue:databaseValue forPropertyKey:propertyKey];
                 if (value) {
                     [dictionary setObject:value forKey:propertyKey];
