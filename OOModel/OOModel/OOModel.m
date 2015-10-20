@@ -344,7 +344,7 @@ inline static NSString* _columnTypeWithType(OODatabaseColumnType type) {
 }
 
 + (BOOL)openDatabaseWithFile:(NSString *)file{
-    if ([self closeDatabase]) {
+    if (![self closeDatabase]) {
         return NO;
     }
     OOModelDatabase=[OODatabase databaseWithFile:file];

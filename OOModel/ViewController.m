@@ -16,8 +16,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.extendedLayoutIncludesOpaqueBars=NO;
-    
     [OOModel openDatabaseWithFile:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
     for (int i = 0; i < 3 ; i++){
         NSDictionary *jsonDictionary=@{
@@ -30,12 +28,11 @@
         [self.roadshows addObject:roadshow];
     }
     [self.view addSubview:self.tableView];
-    NSTimer *timer1=[NSTimer timerWithTimeInterval:2.0 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
+    NSTimer *timer1=[NSTimer timerWithTimeInterval:0.2 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop]addTimer:timer1 forMode:NSRunLoopCommonModes];
     [timer1 fire];
-    NSTimer *timer2=[NSTimer timerWithTimeInterval:1.0 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
+    NSTimer *timer2=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop]addTimer:timer2 forMode:NSRunLoopCommonModes];
-    [timer1 fire];
     [timer2 fire];
 
     // Do any additional setup after loading the view, typically from a nib.
@@ -54,28 +51,33 @@
         NSString *membercount=[NSString stringWithFormat:@"%d",arc4random()%98+1];
         NSDictionary *roadshowDict=@{@"id":rid,@"membercount":membercount,@"title":title};
         [OORoadshow oo_modelWithJsonDictionary:roadshowDict];
+        [self timer2];
     };
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             block();
     });
 }
 - (void)timer2{
-    NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
+    void (^block)()=^{
+        NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
 
-    int location=arc4random()%str.length-1;
-    location=location<0?0:location;
-    int length=arc4random()%(11)+1;
-    if (location+length>str.length) {
-        length=(int)str.length-location;
-    }
-    NSString *name=[str substringWithRange:NSMakeRange(location, length)];
-    NSString *age=[NSString stringWithFormat:@"%d",arc4random()%52+18];
-    NSString *uid=[NSString stringWithFormat:@"%d",arc4random()%2+1];
-    NSString *sex=[NSString stringWithFormat:@"%d",arc4random()%2];
+        int location=arc4random()%str.length-1;
+        location=location<0?0:location;
+        int length=arc4random()%(11)+1;
+        if (location+length>str.length) {
+            length=(int)str.length-location;
+        }
+        NSString *name=[str substringWithRange:NSMakeRange(location, length)];
+        NSString *age=[NSString stringWithFormat:@"%d",arc4random()%52+18];
+        NSString *uid=[NSString stringWithFormat:@"%d",arc4random()%2+1];
+        NSString *sex=[NSString stringWithFormat:@"%d",arc4random()%2];
 
-    NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age};
-    [OOUser oo_modelWithJsonDictionary:userDict];
-
+        NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age};
+        [OOUser oo_modelWithJsonDictionary:userDict];
+    };
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        block();
+    });
 }
 #pragma mark --
 #pragma mark -- tableView delegate
