@@ -157,8 +157,6 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 - (BOOL)oo_mergeWithJsonDictionary:(NSDictionary*)jsonDictionary;
 
-- (void)oo_mergeWithModel:(OOModel*)model;
-
 + (void)oo_updateModels:(NSArray*)models;
 
 - (void)oo_update;

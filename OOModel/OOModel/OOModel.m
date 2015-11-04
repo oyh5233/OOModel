@@ -916,29 +916,26 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 
 + (void)oo_updateModels:(NSArray*)models{
     for (OOModel * model in models){
-        NSString * managerPrimaryKey=[model.class _managerPrimaryKey];
-        NSObject  *managerPrimaryValue=[model valueForKey:managerPrimaryKey];
-        if (managerPrimaryValue) {
-            OOModel * managedModel=[[self _mapTable] objectForKey:managerPrimaryValue];
-            if (managedModel) {
-                [managedModel mergeWithModel:model];
-                [managedModel update];
-            }else{
-                [model update];
-            }
-        }else{
-            OOModelLog(@"%@ dont have a managerPrimaryValue!",model);
-        }
+        [model oo_update];
     }
 }
 
 - (void)oo_update{
-    [self.class oo_updateModels:@[self]];
+    NSString * managerPrimaryKey=[self.class _managerPrimaryKey];
+    id primaryValue=[self valueForKey:managerPrimaryKey];
+    if (primaryValue) {
+        OOModel * managedModel=[self.class _modelInManagedMapTableWithManagedPrimaryValue:primaryValue];
+        if (managedModel&&managedModel!=self) {
+            [managedModel mergeWithModel:self];
+            [managedModel update];
+        }else{
+            [self update];
+        }
+    }else{
+        OOModelLog(@"%@ dont have a managerPrimaryValue!",self);
+    }
 }
 
-- (void)oo_mergeWithModel:(OOModel*)model{
-    
-}
 #pragma mark --
 #pragma mark -- getter
 
