@@ -151,7 +151,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
     NSMutableDictionary *dictionary=[NSMutableDictionary dictionary];
     [[self.class propertyKeys] enumerateObjectsUsingBlock:^(NSString *  _Nonnull propertyKey, NSUInteger idx, BOOL * _Nonnull stop) {
         id value=[self valueForKey:propertyKey];
-        if (![value isKindOfClass:NSNull.class]) {
+        if (value&&![value isKindOfClass:NSNull.class]) {
             [dictionary setObject:value forKey:propertyKey];
         }
     }];
@@ -858,6 +858,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
                 [databaseModel mergeWithModel:newModel];
                 newModel=databaseModel;
             }
+            [[self _mapTable] setObject:newModel forKey:primaryValue];
             [newModel update];
             return newModel;
         }

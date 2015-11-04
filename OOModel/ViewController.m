@@ -56,11 +56,8 @@
         NSString *membercount=[NSString stringWithFormat:@"%d",arc4random()%98+1];
         NSDictionary *roadshowDict=@{@"id":rid,@"membercount":membercount,@"title":title};
         [OORoadshow oo_modelWithJsonDictionary:roadshowDict];
-        [self timer2];
     };
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            block();
-    });
+        block();
 }
 - (void)timer2{
     void (^block)()=^{
@@ -80,9 +77,9 @@
         NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age,@"location":@"aaaa"};
         [OOUser oo_modelWithJsonDictionary:userDict];
     };
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         block();
-    });
+//    });
 }
 #pragma mark --
 #pragma mark -- tableView delegate

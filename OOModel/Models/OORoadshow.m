@@ -4,13 +4,15 @@
 //
 
 #import "OORoadshow.h"
+@interface OORoadshow() <OOManagedObject,OOJsonSerializing,OODatabaseSerializing>
 
+@end
 @implementation OORoadshow
 
 #pragma mark --
 #pragma mark -- OODatabaseSerializing
 
-+ (NSDictionary*)jsonKeyPathsByPropertyKey{
++ (NSDictionary*)jsonKeyPathsByPropertyKeys{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"rid":@"id",@"creator":@"extra.creator"}];
 }
 
@@ -46,11 +48,11 @@
 #pragma mark --
 #pragma mark -- OODatabaseSerializing
 
-+ (NSDictionary*)databaseColumnsByPropertyKey{
++ (NSDictionary*)databaseColumnsByPropertyKeys{
     return [NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self];
 }
 
-+ (NSDictionary*)databaseColumnTypesByPropertyKey{
++ (NSDictionary*)databaseColumnTypesByPropertyKeys{
     return @{
              @"rid":@(OODatabaseColumnTypeInteger),
              @"title":@(OODatabaseColumnTypeText),
@@ -92,11 +94,11 @@
 #pragma mark --
 #pragma mark -- OOManagerSerializing
 
-+ (NSString*)managerPrimaryKey{
++ (NSString*)managedPrimaryKey{
     return [self databasePrimaryKey];
 }
 
-+ (NSString*)managerMapTableName{
++ (NSString*)managedMapTableName{
     return [self databaseTableName];
 }
 

@@ -10,7 +10,7 @@ typedef NS_ENUM(NSInteger,UserSex) {
     UserSexWoman
 };
 
-@interface OOUser : OOModel <OODatabaseSerializing,OOJsonSerializing,OOManagerSerializing>
+@interface OOUser : OOModel <OODatabaseSerializing,OOJsonSerializing,OOManagedObject>
 
 @property (nonatomic, assign)NSInteger uid;
 @property (nonatomic, copy  )NSString *name;

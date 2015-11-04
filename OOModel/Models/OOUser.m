@@ -10,7 +10,7 @@
 #pragma mark --
 #pragma mark -- OOJsonSerializing
 
-+ (NSDictionary*)jsonKeyPathsByPropertyKey{
++ (NSDictionary*)jsonKeyPathsByPropertyKeys{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"uid":@"id"}];
 }
 
@@ -34,11 +34,11 @@
 #pragma mark --
 #pragma mark -- OODatabaseSerializing
 
-+ (NSDictionary*)databaseColumnsByPropertyKey{
++ (NSDictionary*)databaseColumnsByPropertyKeys{
     return [[NSDictionary oo_dictionaryByMappingKeypathsForPropertyWithClass:self]oo_dictionaryByAddingEntriesFromDictionary:@{@"uid":@"o_uid",@"name":@"o_name",@"sex":@"o_sex",@"age":@"o_age"}];
 }
 
-+ (NSDictionary*)databaseColumnTypesByPropertyKey{
++ (NSDictionary*)databaseColumnTypesByPropertyKeys{
     return @{
              @"uid":@(OODatabaseColumnTypeInteger),
              @"name":@(OODatabaseColumnTypeText),
@@ -57,11 +57,11 @@
 #pragma mark --
 #pragma mark -- OODatabaseSerializing
 
-+ (NSString*)managerMapTableName{
++ (NSString*)managedMapTableName{
     return [self databaseTableName];
 }
 
-+ (NSString*)managerPrimaryKey{
++ (NSString*)managedPrimaryKey{
     return [self databasePrimaryKey];
 }
 @end
