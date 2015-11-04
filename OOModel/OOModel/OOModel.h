@@ -18,7 +18,7 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @protocol OOJsonSerializing <NSObject>
 
-+ (NSDictionary*)jsonKeyPathsByPropertyKey;
++ (NSDictionary*)jsonKeyPathsByPropertyKeys;
 
 @optional
 
@@ -28,9 +28,9 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @protocol OODatabaseSerializing <NSObject>
 
-+ (NSDictionary*)databaseColumnsByPropertyKey;
++ (NSDictionary*)databaseColumnsByPropertyKeys;
 
-+ (NSDictionary*)databaseColumnTypesByPropertyKey;
++ (NSDictionary*)databaseColumnTypesByPropertyKeys;
 
 + (NSString*)databaseTableName;
 
@@ -44,16 +44,16 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @end
 
-@protocol OOManagerSerializing <NSObject>
+@protocol OOManagedObject <NSObject>
 
-+ (NSString*)managerPrimaryKey;
++ (NSString*)managedPrimaryKey;
 
-+ (NSString*)managerMapTableName;
++ (NSString*)managedMapTableName;
 
 
 @end
 
-@interface OOModel : NSObject
+@interface OOModel : NSObject <NSCoding>
 
 + (NSArray *)modelsWithDictionaries:(NSArray*)dictionaries;
 
@@ -83,9 +83,9 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 - (NSDictionary*)jsonDictionary;
 
-+ (NSString*)propertyKeyForKeyPath:(NSString*)keyPath;
++ (NSString*)propertyKeyForJsonKeyPath:(NSString*)keyPath;
 
-+ (NSString*)keyPathForPropertyKey:(NSString*)propertyKey;
++ (NSString*)jsonKeyPathForPropertyKey:(NSString*)propertyKey;
 
 + (id)valueWithJsonValue:(id)value forPropertyKey:(NSString*)propertyKey;
 
@@ -94,6 +94,11 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 @end
 
 @interface OOModel (OODatabaseSerializing)
+
++ (BOOL)openDatabaseWithFile:(NSString*)file;
+
++ (BOOL)closeDatabase;
+
 /**
  *  <#Description#>
  *
@@ -126,10 +131,6 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 - (void)update;
 
-+ (BOOL)openDatabaseWithFile:(NSString*)file;
-
-+ (BOOL)closeDatabase;
-
 - (NSDictionary*)databaseDictionary;
 
 + (NSString*)propertyKeyForDatabaseColumn:(NSString*)column;
@@ -142,7 +143,7 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 @end
 
-@interface OOModel (OOManagerSerializing)
+@interface OOModel (OOManagedObject)
 
 + (NSArray*)oo_modelsWithDictionaries:(NSArray*)dictionaryies;
 
@@ -150,12 +151,13 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 
 - (BOOL)oo_mergeWithDictionary:(NSDictionary*)dictionary;
 
-
 + (NSArray*)oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaryies;
 
 + (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
 
 - (BOOL)oo_mergeWithJsonDictionary:(NSDictionary*)jsonDictionary;
+
+- (void)oo_mergeWithModel:(OOModel*)model;
 
 + (void)oo_updateModels:(NSArray*)models;
 

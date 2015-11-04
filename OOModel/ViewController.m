@@ -77,7 +77,7 @@
         NSString *uid=[NSString stringWithFormat:@"%d",arc4random()%2+1];
         NSString *sex=[NSString stringWithFormat:@"%d",arc4random()%2];
 
-        NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age};
+        NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age,@"location":@"aaaa"};
         [OOUser oo_modelWithJsonDictionary:userDict];
     };
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
