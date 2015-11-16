@@ -54,7 +54,6 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 @end
 
 @interface OOModel : NSObject <NSCoding>
-
 + (NSArray *)modelsWithDictionaries:(NSArray*)dictionaries;
 
 + (instancetype)modelWithDictionary:(NSDictionary*)dictionary;
@@ -94,6 +93,7 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 @end
 
 @interface OOModel (OODatabaseSerializing)
+
 /**
  *  open database in file path
  *
@@ -102,6 +102,8 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
  *  @return success or fail
  */
 + (BOOL)openDatabaseWithFile:(NSString*)file;
+
++ (void)openDatabaseWithFile:(NSString *)file complete:(void(^)(BOOL success))complete;
 /**
  *  close database
  *
@@ -174,7 +176,7 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
  *
  *  <#Description#>
  *
- *  @param sql       sql after 'where ' 
+ *  @param sql       sql after 'where '
  *  @param arguments <#arguments description#>
  *
  *  @return <#return value description#>

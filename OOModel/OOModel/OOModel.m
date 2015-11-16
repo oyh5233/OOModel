@@ -10,7 +10,6 @@
 static OODatabase *OOModelDatabase=nil;
 static NSTimeInterval OOModelDatabaseOpenTime=-1;
 static NSString * const OOModelCoderKey=@"OOModelCoderKey";
-static void * OOModelIsDatabaseOpenKey=&OOModelIsDatabaseOpenKey;
 #define OOSelectSql(table,sql) [NSString stringWithFormat:@"select * from %@ where %@",table,sql]
 #define OOSelect(table) [NSString stringWithFormat:@"select * from %@",table]
 
@@ -335,9 +334,6 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- database open close
-+ (BOOL)isDatabaseOpen{
-    return objc_getAssociatedObject(self,OOModelIsDatabaseOpenKey);
-}
 
 + (BOOL)openDatabaseWithFile:(NSString *)file{
     __block BOOL result=NO;
@@ -356,7 +352,6 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
     OOModelDatabase=[OODatabase databaseWithFile:file];
     BOOL result = [OOModelDatabase open];
     if (result) {
-        objc_setAssociatedObject(self, OOModelIsDatabaseOpenKey, @(YES), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         OOModelDatabaseOpenTime=[[NSDate date]timeIntervalSince1970];
     }else{
         OOModelDatabaseOpenTime=-1;
@@ -371,7 +366,6 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
     if (OOModelDatabase) {
         result = [OOModelDatabase close];
         if (result) {
-            objc_setAssociatedObject(self, OOModelIsDatabaseOpenKey, @(NO), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             OOModelDatabase=nil;
         }else{
             OOModelLog(@"database close fail!");
