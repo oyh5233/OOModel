@@ -94,9 +94,19 @@ typedef NS_ENUM(NSInteger,OODatabaseColumnType) {
 @end
 
 @interface OOModel (OODatabaseSerializing)
-
+/**
+ *  open database in file path
+ *
+ *  @param file file path
+ *
+ *  @return success or fail
+ */
 + (BOOL)openDatabaseWithFile:(NSString*)file;
-
+/**
+ *  close database
+ *
+ *  @return success or fail
+ */
 + (BOOL)closeDatabase;
 
 /**

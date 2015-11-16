@@ -10,6 +10,7 @@
 static OODatabase *OOModelDatabase=nil;
 static NSTimeInterval OOModelDatabaseOpenTime=-1;
 static NSString * const OOModelCoderKey=@"OOModelCoderKey";
+static void * OOModelIsDatabaseOpenKey=&OOModelIsDatabaseOpenKey;
 #define OOSelectSql(table,sql) [NSString stringWithFormat:@"select * from %@ where %@",table,sql]
 #define OOSelect(table) [NSString stringWithFormat:@"select * from %@",table]
 
@@ -61,9 +62,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 - (instancetype)initWithDictionary:(NSDictionary*)dictionary{
     self=[self init];
     if (self) {
-        if (![self mergeWithDictionary:dictionary]) {
-            self=nil;
-        }
+        [self mergeWithDictionary:dictionary];
     }
     return self;
 }
@@ -76,8 +75,9 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
         OOModelLog(@"parameter is not a NSDictionary!");
         return NO;
     }
-    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        if (![obj isKindOfClass:NSNull.class]) {
+    [[self.class propertyKeys] enumerateObjectsUsingBlock:^(NSString *  _Nonnull key, NSUInteger idx, BOOL * _Nonnull stop) {
+        id obj=[dictionary objectForKey:key];
+        if (obj&&![obj isKindOfClass:NSNull.class]) {
             id validateObj=obj;
             NSError *error=nil;
             if ([self validateValue:&validateObj forKey:key error:&error]) {
@@ -91,7 +91,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 }
 
 - (BOOL)mergeWithModel:(OOModel*)model{
-   return [self mergeWithDictionary:[model dictionary]];
+    return [self mergeWithDictionary:[model dictionary]];
 }
 
 #pragma mark --
@@ -165,14 +165,13 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 }
 - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder{
     NSDictionary *dictionary=[aDecoder decodeObjectForKey:OOModelCoderKey];
-    Protocol *protocol= objc_getProtocol("OODatabaseSerializing");
+    Protocol *protocol= objc_getProtocol("OOManagedObject");
     if (class_conformsToProtocol(self.class, protocol)) {
         return [self.class oo_modelWithDictionary:dictionary];
     }else{
         return [self.class modelWithDictionary:dictionary];
     }
 }
-
 - (NSString*)description{
     return [[self dictionary] description];
 }
@@ -293,7 +292,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
             parentDictionary=childDictionary;
         }
     }
-
+    
 }
 
 + (NSDictionary*)_jsonKeyPathsByPropertyKeys{
@@ -336,27 +335,43 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 
 #pragma mark --
 #pragma mark -- database open close
++ (BOOL)isDatabaseOpen{
+    return objc_getAssociatedObject(self,OOModelIsDatabaseOpenKey);
+}
 
 + (BOOL)openDatabaseWithFile:(NSString *)file{
+    __block BOOL result=NO;
+    [self openDatabaseWithFile:file complete:^(BOOL success) {
+        result =success;
+    }];
+    return result;
+}
++ (void)openDatabaseWithFile:(NSString *)file complete:(void(^)(BOOL success))complete{
     if (![self closeDatabase]) {
-        return NO;
+        if (complete) {
+            complete(NO);
+        }
+        return;
     }
     OOModelDatabase=[OODatabase databaseWithFile:file];
     BOOL result = [OOModelDatabase open];
     if (result) {
+        objc_setAssociatedObject(self, OOModelIsDatabaseOpenKey, @(YES), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         OOModelDatabaseOpenTime=[[NSDate date]timeIntervalSince1970];
     }else{
         OOModelDatabaseOpenTime=-1;
         OOModelLog(@"open database fail:%@",file);
     }
-    return result;
+    if (complete) {
+        complete(result);
+    }
 }
-
 + (BOOL)closeDatabase{
     BOOL result = YES;
     if (OOModelDatabase) {
         result = [OOModelDatabase close];
         if (result) {
+            objc_setAssociatedObject(self, OOModelIsDatabaseOpenKey, @(NO), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             OOModelDatabase=nil;
         }else{
             OOModelLog(@"database close fail!");
@@ -376,7 +391,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
     if (sql) {
         databaseDictionaries=[OOModelDatabase executeQuery:OOSelectSql(table, sql) arguments:arguments];
     }else{
-       databaseDictionaries= [OOModelDatabase executeQuery:OOSelect(table) arguments:arguments];
+        databaseDictionaries= [OOModelDatabase executeQuery:OOSelect(table) arguments:arguments];
     }
     NSMutableArray *models=[NSMutableArray array];
     for (NSDictionary * databaseDictionary in databaseDictionaries) {
@@ -722,7 +737,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
         @autoreleasepool {
             NSString * propertyKey=[self propertyKeyForDatabaseColumn:column];
             if (propertyKey) {
-               id value =[self valueWithDatabaseValue:databaseValue forPropertyKey:propertyKey];
+                id value =[self valueWithDatabaseValue:databaseValue forPropertyKey:propertyKey];
                 if (value) {
                     [dictionary setObject:value forKey:propertyKey];
                 }
@@ -829,41 +844,39 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 
 + (instancetype)oo_modelWithDictionary:(NSDictionary*)dictionary{
     if (![dictionary isKindOfClass:NSDictionary.class]) {
-        OOModelLog(@"%@ is not a dictionary!",dictionary);
+        OOModelLog(@"argument is not a dictionary");
         return nil;
     }
     NSString *managerPrimaryKey=[self _managerPrimaryKey];
-    OOModel * newModel=[self modelWithDictionary:dictionary];
-    NSObject * managerPrimaryValue=(NSObject*)[newModel valueForKey:managerPrimaryKey];
+    id managerPrimaryValue=[dictionary objectForKey:managerPrimaryKey];
     if ((!managerPrimaryValue)||[managerPrimaryValue isKindOfClass:NSNull.class]) {
-        OOModelLog(@"primaryValue is nil!");
+        OOModelLog(@"managerPrimaryValue is nil!");
         return nil;
     }
-    OOModel * oldModel=[self _modelInManagedMapTableWithManagedPrimaryValue:(id)managerPrimaryValue];
-    if (oldModel) {
-        [oldModel mergeWithDictionary:dictionary];
-        [oldModel update];
-        return oldModel;
-    }else{
-        if (newModel) {
-            NSString *primaryKey=[self _databasePrimaryKey];
-            id primaryValue=[newModel valueForKey:primaryKey];
-            id databasePrimaryValue=[self databaseValueWithValue:primaryValue forPropertyKey:primaryKey];
-            if ((!databasePrimaryValue)||[databasePrimaryValue isKindOfClass:NSNull.class]) {
-                return nil;
-            }
-            NSString *databasePrimaryKey=[self _databaseColumnsByPropertyKeys][primaryKey];
-            OOModel *databaseModel=[self modelWithSql:[NSString stringWithFormat:@"%@=?",databasePrimaryKey] arguments:@[databasePrimaryValue]];
-            if (databaseModel) {
-                [databaseModel mergeWithModel:newModel];
-                newModel=databaseModel;
-            }
-            [[self _mapTable] setObject:newModel forKey:primaryValue];
-            [newModel update];
-            return newModel;
-        }
+    OOModel * managerModel=[self _modelInManagedMapTableWithManagedPrimaryValue:managerPrimaryValue];
+    if (managerModel) {
+        [managerModel mergeWithDictionary:dictionary];
+        [managerModel update];
+        return managerModel;
     }
-    OOModelLog(@"model is not exist in database!");
+    NSString * databasePrimaryKey=[self _databasePrimaryKey];
+    id databasePrimaryValue=[dictionary objectForKey:databasePrimaryKey];
+    NSString * databaseTransformedPrimaryKey=[self _databaseColumnsByPropertyKeys][databasePrimaryKey];
+    id databaseTransformedPrimaryValue=[self databaseValueWithValue:databasePrimaryValue forPropertyKey:databasePrimaryKey];
+    if (databaseTransformedPrimaryKey&&databaseTransformedPrimaryValue&&![databaseTransformedPrimaryKey isKindOfClass:NSNull.class]&&![databaseTransformedPrimaryValue isKindOfClass:NSNull.class]) {
+        OOModel *databaseModel=[self modelWithSql:[NSString stringWithFormat:@"%@=?",databaseTransformedPrimaryKey] arguments:@[databaseTransformedPrimaryValue]];
+        if (databaseModel) {
+            [databaseModel mergeWithDictionary:dictionary];
+            [databaseModel update];
+            [[self _mapTable] setObject:databaseModel forKey:managerPrimaryKey];
+            return databaseModel;
+        }
+        OOModel * newModel=[self modelWithDictionary:dictionary];
+        [newModel update];
+        [[self _mapTable] setObject:newModel forKey:managerPrimaryKey];
+        return newModel;
+    }
+    OOModelLog(@"databasePrimaryKey||databasePrimaryValue error!");
     return nil;
 }
 
@@ -921,19 +934,7 @@ inline static NSString* _databaseColumnTypeWithType(OODatabaseColumnType type) {
 }
 
 - (void)oo_update{
-    NSString * managerPrimaryKey=[self.class _managerPrimaryKey];
-    id primaryValue=[self valueForKey:managerPrimaryKey];
-    if (primaryValue) {
-        OOModel * managedModel=[self.class _modelInManagedMapTableWithManagedPrimaryValue:primaryValue];
-        if (managedModel&&managedModel!=self) {
-            [managedModel mergeWithModel:self];
-            [managedModel update];
-        }else{
-            [self update];
-        }
-    }else{
-        OOModelLog(@"%@ dont have a managerPrimaryValue!",self);
-    }
+    [self update];
 }
 
 #pragma mark --
