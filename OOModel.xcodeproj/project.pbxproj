@@ -13,6 +13,7 @@
 		51426D7F1BD37FD800456F3F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 51426D7E1BD37FD800456F3F /* Assets.xcassets */; };
 		51426D821BD37FD800456F3F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 51426D801BD37FD800456F3F /* LaunchScreen.storyboard */; };
 		515D3F6D1BD387A200AD56E2 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */; };
+		517079031CA5A24300DE475E /* OOModel.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 517079021CA5A24300DE475E /* OOModel.podspec */; };
 		51D1997C1BD552C1009225A0 /* DemoTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 51D1997A1BD552C1009225A0 /* DemoTableViewCell.m */; };
 		51D1997D1BD552C1009225A0 /* DemoTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51D1997B1BD552C1009225A0 /* DemoTableViewCell.xib */; };
 		CF969A5E1CA5394B00E33336 /* OOValueTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = CF969A541CA5394B00E33336 /* OOValueTransformer.m */; };
@@ -20,7 +21,6 @@
 		CF969A601CA5394B00E33336 /* NSObject+OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF969A581CA5394B00E33336 /* NSObject+OOModel.m */; };
 		CF969A611CA5394B00E33336 /* OODatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = CF969A5A1CA5394B00E33336 /* OODatabase.m */; };
 		CF969A621CA5394B00E33336 /* OOModelInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = CF969A5D1CA5394B00E33336 /* OOModelInfo.m */; };
-		CF969A641CA53B1A00E33336 /* user.json in Resources */ = {isa = PBXBuildFile; fileRef = CF969A631CA53B1A00E33336 /* user.json */; };
 		CF969A691CA53C3800E33336 /* OORoadshow.m in Sources */ = {isa = PBXBuildFile; fileRef = CF969A661CA53C3800E33336 /* OORoadshow.m */; };
 		CF969A6A1CA53C3800E33336 /* OOUser.m in Sources */ = {isa = PBXBuildFile; fileRef = CF969A681CA53C3800E33336 /* OOUser.m */; };
 		CFFA79BD1BE9A5B2003F7B3B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CFFA79BC1BE9A5B2003F7B3B /* Main.storyboard */; };
@@ -37,6 +37,7 @@
 		51426D811BD37FD800456F3F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		51426D831BD37FD800456F3F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		517079021CA5A24300DE475E /* OOModel.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OOModel.podspec; sourceTree = SOURCE_ROOT; };
 		51D199791BD552C1009225A0 /* DemoTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemoTableViewCell.h; sourceTree = "<group>"; };
 		51D1997A1BD552C1009225A0 /* DemoTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoTableViewCell.m; sourceTree = "<group>"; };
 		51D1997B1BD552C1009225A0 /* DemoTableViewCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DemoTableViewCell.xib; sourceTree = "<group>"; };
@@ -51,7 +52,6 @@
 		CF969A5B1CA5394B00E33336 /* OOModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOModel.h; sourceTree = "<group>"; };
 		CF969A5C1CA5394B00E33336 /* OOModelInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOModelInfo.h; sourceTree = "<group>"; };
 		CF969A5D1CA5394B00E33336 /* OOModelInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOModelInfo.m; sourceTree = "<group>"; };
-		CF969A631CA53B1A00E33336 /* user.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = user.json; sourceTree = "<group>"; };
 		CF969A651CA53C3800E33336 /* OORoadshow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OORoadshow.h; sourceTree = "<group>"; };
 		CF969A661CA53C3800E33336 /* OORoadshow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OORoadshow.m; sourceTree = "<group>"; };
 		CF969A671CA53C3800E33336 /* OOUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOUser.h; sourceTree = "<group>"; };
@@ -109,6 +109,7 @@
 		51426D721BD37FD800456F3F /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				517079021CA5A24300DE475E /* OOModel.podspec */,
 				515D3F6C1BD387A200AD56E2 /* libsqlite3.tbd */,
 				51426D731BD37FD800456F3F /* main.m */,
 			);
@@ -136,7 +137,6 @@
 		51B842151BD3D14200766DE4 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				CF969A631CA53B1A00E33336 /* user.json */,
 				CF969A651CA53C3800E33336 /* OORoadshow.h */,
 				CF969A661CA53C3800E33336 /* OORoadshow.m */,
 				CF969A671CA53C3800E33336 /* OOUser.h */,
@@ -216,7 +216,7 @@
 				51426D7F1BD37FD800456F3F /* Assets.xcassets in Resources */,
 				51D1997D1BD552C1009225A0 /* DemoTableViewCell.xib in Resources */,
 				CFFA79BD1BE9A5B2003F7B3B /* Main.storyboard in Resources */,
-				CF969A641CA53B1A00E33336 /* user.json in Resources */,
+				517079031CA5A24300DE475E /* OOModel.podspec in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -2,9 +2,6 @@
 //  NSObject+OOModel.m
 //  OOModel
 //
-//  Created by oo on 16/2/17.
-//  Copyright © 2016年 oo. All rights reserved.
-//
 
 #import "NSObject+OOModel.h"
 #import <objc/message.h>

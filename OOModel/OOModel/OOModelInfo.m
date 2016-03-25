@@ -2,9 +2,6 @@
 //  OOPropertyInfo.m
 //  OOModel
 //
-//  Created by oo on 16/1/18.
-//  Copyright © 2016年 oo. All rights reserved.
-//
 
 #import "OOModelInfo.h"
 #import "NSObject+OOModel.h"
