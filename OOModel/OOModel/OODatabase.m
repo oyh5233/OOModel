@@ -4,18 +4,29 @@
 //
 
 #import "OODatabase.h"
-#import "sqlite3.h"
-#import "OOModel.h"
 @interface OODatabase ()
 
-@property (nonatomic, copy  ) NSString         *file;
-@property (nonatomic, strong) dispatch_queue_t queue;
-@property (nonatomic, assign) void             *queueKey;
-@property (nonatomic, assign) sqlite3          *database;
+@property (nonatomic, copy   ) NSString         *file;
+@property (nonatomic, assign ) sqlite3          *sqlite;
+@property (nonatomic, assign ) NSTimeInterval   dbTimestamp;
+@property (nonatomic, strong ) dispatch_queue_t queue;
+@property (nonatomic, assign ) void             *queueKey;
+@property (nonatomic, assign ) bool             isInTransaction;
 
 @end
 
 @implementation OODatabase
+
+- (void)inDB:(void(^)(OODatabase *db))block{
+    if(dispatch_get_specific(self.queueKey)){
+        block(self);
+    }else{
+        dispatch_barrier_sync(self.queue,^{
+            block(self);
+        });
+    }
+  
+}
 #pragma mark --
 #pragma mark -- init
 
@@ -34,85 +45,60 @@
 - (instancetype)init{
     self=[super init];
     if (self) {
-        self.queue=dispatch_queue_create("OOModelDatabaseQueue", NULL);
+        self.queue=dispatch_queue_create("OODatabase", NULL);
         self.queueKey=&_queueKey;
-        dispatch_queue_set_specific(self.queue, self.queueKey, (__bridge void *)self, NULL);
+        dispatch_queue_set_specific(self.queue, self.queueKey, (__bridge void*)self, NULL);
     }
     return self;
-}
-
-#pragma mark --
-#pragma mark -- in database
-
-- (void)_inDatabase:(void (^)(OODatabase * db))block{
-    if (!block) {
-        return;
-    }
-    if (dispatch_get_specific(self.queueKey)) {
-        block(self);
-    }else{
-        dispatch_sync(self.queue, ^{
-            block(self);
-        });
-    }
 }
 
 #pragma mark --
 #pragma mark -- open and close
 
 - (BOOL)open{
-    __block BOOL ret;
-    [self _inDatabase:^(OODatabase *db) {
-        [db close];
-        sqlite3 *database=db.database;
+    __block bool ret=NO;
+    [self inDB:^(OODatabase *db){
+        if (self.sqlite) {
+            sqlite3_close(self.sqlite);
+            self.dbTimestamp=0;
+        }
+        sqlite3 *database;
         int result=sqlite3_open([self.file cStringUsingEncoding:NSUTF8StringEncoding], &database);
-//        int result=sqlite3_open_v2([self.file UTF8String], &database, SQLITE_OPEN_CREATE|SQLITE_OPEN_READWRITE, NULL);
-        if (result != SQLITE_OK) {
-            OOModelLog(@"%@",[self _lastError]);
-            ret=NO;
+        if (result!=SQLITE_OK) {
+            NSLog(@"%@",[self _lastError]);
         }else{
+            self.sqlite=database;
+            self.dbTimestamp=[[NSDate date]timeIntervalSince1970];
             ret=YES;
-            db.database=database;
         }
     }];
     return ret;
 }
 
 - (BOOL)close{
-    __block BOOL ret;
-    [self _inDatabase:^(OODatabase *db) {
-        if (db) {
-            int result = sqlite3_close(db.database);
-            if (result != SQLITE_OK) {
-                OOModelLog(@"%@",[db _lastError]);
-                ret=NO;
-            }else{
-                ret=YES;
-                db.database = nil;
-            }
-        }else{
-            ret=YES;
+    [self inDB:^(OODatabase *db){
+        if (self.sqlite) {
+            sqlite3_close(self.sqlite);
+            self.sqlite=nil;
+            self.dbTimestamp=0;
         }
     }];
-    return ret;
+    return YES;
 }
 
 #pragma mark --
 #pragma mark -- query
 
 - (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments{
-    __block NSMutableArray *sets  = nil;
-    [self _inDatabase:^(OODatabase *db) {
-        NSParameterAssert(db.database);
+    __block NSArray *ret=[NSArray array];
+    [self inDB:^(OODatabase *db){
+        NSAssert(self.sqlite, @"should open database at first！");
+        NSMutableArray *sets  = nil;
         sqlite3_stmt *stmt = NULL;
-        if (arguments&&![arguments isKindOfClass:NSArray.class]) {
-            OOModelLog(@"arguments is not a array!");
-            return;
-        }
-        int result = sqlite3_prepare_v2(db.database, [sql UTF8String], -1, &stmt, 0);
+        int result = sqlite3_prepare_v2(self.sqlite, [sql UTF8String], -1, &stmt, 0);
         if (result != SQLITE_OK) {
             sqlite3_finalize(stmt);
-            OOModelLog(@"%@",[db _lastError]);
+            NSLog(@"%@",[self _lastError]);
             return;
         }
         int index=0;
@@ -120,20 +106,20 @@
         int parameterCount = sqlite3_bind_parameter_count(stmt);
         if (parameterCount != arguments.count) {
             sqlite3_finalize(stmt);
-            OOModelLog(@"arguments's count is not equal to parameter's count!");
+            NSLog(@"arguments's count is not equal to parameter's count!");
             return;
         }
         sets=[NSMutableArray array];
         while (index < parameterCount) {
             obj = [arguments objectAtIndex:index];
             index++;
-            [db _bindObject:obj toColumn:index inStatement:stmt];
+            [self _bindObject:obj toColumn:index inStatement:stmt];
         }
         while (YES) {
             result = sqlite3_step(stmt);
             if (result == SQLITE_ROW) {
                 int dataCount = sqlite3_data_count(stmt);
-                NSDictionary *resultDictionary = [db _dictionaryInStmt:stmt count:dataCount];
+                NSDictionary *resultDictionary = [self _dictionaryInStmt:stmt count:dataCount];
                 if (resultDictionary.count>0) {
                     [sets addObject:resultDictionary];
                 }
@@ -142,22 +128,22 @@
             }
         }
         sqlite3_finalize(stmt);
+        ret=sets;
     }];
-    return sets;
+    return ret;
 }
 
 #pragma mark --
 #pragma mark -- update
 
 - (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments{
-    __block BOOL ret;
-    [self _inDatabase:^(OODatabase *db) {
+    __block bool ret=NO;
+    [self inDB:^(OODatabase *db){
         sqlite3_stmt *stmt = NULL;
-        int result = sqlite3_prepare_v2(db.database, [sql UTF8String], -1, &stmt, 0);
+        int result = sqlite3_prepare_v2(self.sqlite, [sql UTF8String], -1, &stmt, 0);
         if (result != SQLITE_OK) {
             sqlite3_finalize(stmt);
-            OOModelLog(@"%@",[db _lastError]);
-            ret = NO;
+            NSLog(@"%@",[self _lastError]);
             return;
         }
         int index=0;
@@ -165,8 +151,7 @@
         int parameterCount = sqlite3_bind_parameter_count(stmt);
         if (parameterCount != arguments.count) {
             sqlite3_finalize(stmt);
-            OOModelLog(@"arguments's count is not equal to parameter's count!");
-            ret=NO;
+            NSLog(@"arguments's count is not equal to parameter's count!");
             return;
         }
         while(index < parameterCount) {
@@ -176,22 +161,66 @@
         }
         result = sqlite3_step(stmt);
         if (result != SQLITE_DONE) {
-            OOModelLog(@"%@",[self _lastError]);
-            ret=NO;
-        }else{
-            ret=YES; 
+            sqlite3_finalize(stmt);
+            if (![sql hasPrefix:@"INSERT INTO"]) {
+                NSLog(@"%@",[self _lastError]);
+            }
+            return;
         }
         sqlite3_finalize(stmt);
+        ret=YES;
+    }];
+    return ret;
+}
+- (BOOL)beginTransaction{
+    __block bool ret=NO;
+    [self inDB:^(OODatabase *db){
+        if (self.isInTransaction) {
+            return;
+        }
+        if ([self executeUpdate:@"begin exclusive transaction" arguments:nil]) {
+            self.isInTransaction=YES;
+            ret=YES;
+        }
+    }];
+    return ret;
+   
+}
+- (BOOL)rollback{
+    __block bool ret=NO;
+    [self inDB:^(OODatabase *db){
+        if (!self.isInTransaction) {
+            ret=YES;
+            return;
+        }
+        if ([self executeUpdate:@"rollback transaction" arguments:nil]) {
+            self.isInTransaction=NO;
+            ret=YES;
+        }
     }];
     return ret;
 }
 
+- (BOOL)commit{
+    __block bool ret=NO;
+    [self inDB:^(OODatabase* db){
+        if (!self.isInTransaction) {
+            ret=YES;
+            return;
+        }
+        if ([self executeUpdate:@"commit transaction" arguments:nil]) {
+            self.isInTransaction=NO;
+            ret=YES;
+        }
+    }];
+    return ret;
+}
 #pragma mark --
 #pragma mark -- bind object to column
 
 - (void)_bindObject:(id)obj toColumn:(int)index inStatement:(sqlite3_stmt*)stmt {
     int result=SQLITE_OK;
-    if ((!obj) || ((NSNull *)obj == [NSNull null])) {
+    if ((!obj) || obj==(id)kCFNull) {
         result = sqlite3_bind_null(stmt, index);
     }else if ([obj isKindOfClass:NSData.class]) {
         const void *bytes = [obj bytes];
@@ -200,11 +229,7 @@
         }
         result = sqlite3_bind_blob(stmt, index, bytes, (int)[obj length], SQLITE_STATIC);
     }else if ([obj isKindOfClass:NSDate.class]) {
-        if (self.dateFormatter) {
-            result = sqlite3_bind_text(stmt, index, [[self.dateFormatter stringFromDate:obj] UTF8String], -1, SQLITE_STATIC);
-        }else{
-            result = sqlite3_bind_double(stmt, index, [obj timeIntervalSince1970]);
-        }
+        result = sqlite3_bind_double(stmt, index, [obj timeIntervalSince1970]);
     }else if ([obj isKindOfClass:NSNumber.class]) {
         if (strcmp([obj objCType], @encode(char)) == 0) {
             result = sqlite3_bind_int(stmt, index, [obj charValue]);
@@ -236,10 +261,10 @@
             result = sqlite3_bind_text(stmt, index, [[obj description] UTF8String], -1, SQLITE_STATIC);
         }
     }else{
-            result = sqlite3_bind_text(stmt, index, [[obj description] UTF8String], -1, SQLITE_STATIC);
+        result = sqlite3_bind_text(stmt, index, [[obj description] UTF8String], -1, SQLITE_STATIC);
     }
     if (result!=SQLITE_OK) {
-        OOModelLog(@"%@",[self _lastError]);
+        NSLog(@"%@",[self _lastError]);
     }
 }
 #pragma mark --
@@ -272,7 +297,7 @@
 }
 
 - (NSError*)_lastError{
-    return [NSError errorWithDomain:NSStringFromClass(self.class) code:sqlite3_errcode(self.database) userInfo:@{NSLocalizedDescriptionKey:[[NSString alloc]initWithCString:sqlite3_errmsg(self.database) encoding:NSUTF8StringEncoding]}];
+    return [NSError errorWithDomain:NSStringFromClass(self.class) code:sqlite3_errcode(self.sqlite) userInfo:@{NSLocalizedDescriptionKey:[[NSString alloc]initWithCString:sqlite3_errmsg(self.sqlite) encoding:NSUTF8StringEncoding]}];
 }
 
 @end

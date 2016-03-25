@@ -1,13 +1,13 @@
 //
-//  NSDictionary+OOModelAddition.h
+//  NSDictionary+OOAdditions.h
 //  OOModel
 //
 
 #import <Foundation/Foundation.h>
 
-@interface NSDictionary (OOModelAddition)
+@interface NSDictionary (OOAdditions)
 
-+ (NSDictionary*)oo_dictionaryByMappingKeypathsForPropertyWithClass:(Class)modelClass;
++ (NSDictionary*)oo_dictionaryByMappingKeyPathsForPropertiesWithClass:(Class)modelClass;
 
 -(NSDictionary*)oo_dictionaryByAddingEntriesFromDictionary:(NSDictionary*)dictionary;
 

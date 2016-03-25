@@ -6,7 +6,7 @@
 #import "OOModel.h"
 #import "OOUser.h"
 
-@interface OORoadshow : OOModel
+@interface OORoadshow : NSObject<OODbModel,OOUniqueModel,OOJsonModel>
 
 @property (nonatomic, assign) NSInteger rid;
 @property (nonatomic, copy  ) NSString  *title;

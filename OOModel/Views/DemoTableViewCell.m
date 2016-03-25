@@ -52,21 +52,23 @@
 - (void)valueDidChange:(NSDictionary*)change{
     NSString *keyPath=change[@"keyPath"];
     id value=change[@"value"];
-    if ([keyPath isEqualToString:@"roadshow.title"]) {
-        self.titleLabel.text=[NSString stringWithFormat:@"title:%@",value];
-    }else if ([keyPath isEqualToString:@"roadshow.membercount"]) {
-        self.countLabel.text=[NSString stringWithFormat:@"count:%@",value];
-    }else if ([keyPath isEqualToString:@"roadshow.creator.name"]) {
-        self.nameLabel.text=[NSString stringWithFormat:@"name:%@",value];
-    }else if ([keyPath isEqualToString:@"roadshow.creator.sex"]) {
-        self.sexLabel.text=[NSString stringWithFormat:@"sex:%@",value];
-    }else if ([keyPath isEqualToString:@"roadshow.creator.age"]) {
-        self.ageLabel.text=[NSString stringWithFormat:@"age:%@",value];
-    }else if ([keyPath isEqualToString:@"roadshow.rid"]) {
-        self.ridLabel.text=[NSString stringWithFormat:@"rid:%@",value];
-    }else if ([keyPath isEqualToString:@"roadshow.creator.uid"]) {
-        self.uidLabel.text=[NSString stringWithFormat:@"uid:%@",value];
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([keyPath isEqualToString:@"roadshow.title"]) {
+            self.titleLabel.text=[NSString stringWithFormat:@"title:%@",value];
+        }else if ([keyPath isEqualToString:@"roadshow.membercount"]) {
+            self.countLabel.text=[NSString stringWithFormat:@"count:%@",value];
+        }else if ([keyPath isEqualToString:@"roadshow.creator.name"]) {
+            self.nameLabel.text=[NSString stringWithFormat:@"name:%@",value];
+        }else if ([keyPath isEqualToString:@"roadshow.creator.sex"]) {
+            self.sexLabel.text=[NSString stringWithFormat:@"sex:%@",value];
+        }else if ([keyPath isEqualToString:@"roadshow.creator.age"]) {
+            self.ageLabel.text=[NSString stringWithFormat:@"age:%@",value];
+        }else if ([keyPath isEqualToString:@"roadshow.rid"]) {
+            self.ridLabel.text=[NSString stringWithFormat:@"rid:%@",value];
+        }else if ([keyPath isEqualToString:@"roadshow.creator.uid"]) {
+            self.uidLabel.text=[NSString stringWithFormat:@"uid:%@",value];
+        }
+    });
 }
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context{
     id value=change[NSKeyValueChangeNewKey];
