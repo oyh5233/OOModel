@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "OOModel"
-  s.version      = "0.0.4.beta"
+  s.version      = "0.0.5.beta"
   s.summary      = "useful model framework for ios."
 
   # This description is used to generate tags and improve search results.
