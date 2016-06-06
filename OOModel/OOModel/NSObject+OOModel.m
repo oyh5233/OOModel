@@ -262,7 +262,7 @@ static void oo_set_value_for_property_apply(const void *_value, void *_context){
     __unsafe_unretained id model=(__bridge id)context->model;
     __unsafe_unretained OOPropertyInfo *propertyInfo=(__bridge id)_value;
     __unsafe_unretained id jsonKeyPath= propertyInfo.jsonKeyPath;
-    __unsafe_unretained id value=jsonDictionary;
+    id value=jsonDictionary;
     if ([jsonKeyPath isKindOfClass:NSString.class]) {
         value=jsonDictionary[jsonKeyPath];
     }else{
@@ -354,7 +354,7 @@ static void oo_set_value_for_property_apply_db(const void *_value, void *_contex
     __unsafe_unretained NSDictionary *  dbDictionary=(__bridge id)context->storage;
     __unsafe_unretained id model=(__bridge id)context->model;
     __unsafe_unretained OOPropertyInfo *propertyInfo=(__bridge id)_value;
-    __unsafe_unretained id value=dbDictionary[propertyInfo.dbColumn];
+    id value=dbDictionary[propertyInfo.dbColumn];
     if (!value) {
         return;
     }
