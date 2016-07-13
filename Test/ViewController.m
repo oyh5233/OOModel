@@ -65,6 +65,7 @@
         block();
     });
 }
+
 - (void)timer2{
     void (^block)()=^{
         NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
