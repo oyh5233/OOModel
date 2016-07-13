@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
 s.name     = 'OOModel'
 s.version  = '0.0.8'
 s.license  = 'MIT'
-s.summary  = 'A fast && useful json model framework'
+s.summary  = 'A fast model framework in memory and in database'
 s.homepage = 'https://github.com/oyh5233/OOModel'
 s.author   = { 'oyh5233' => 'oyh5233@outlook.com' }
 s.source   = { :git => 'https://github.com/oyh5233/OOModel.git',
