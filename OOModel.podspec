@@ -19,7 +19,7 @@ s.watchos.deployment_target = '2.0'
 s.default_subspecs = 'Default'
 
 s.subspec 'Default' do |ss|
-ss.source_files = 'Classes/*.{h,m}'
+ss.source_files = 'OOModel/Classes/*.{h,m}'
 end
 
 end
