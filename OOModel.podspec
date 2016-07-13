@@ -16,5 +16,5 @@ s.requires_arc   = true
 s.ios.deployment_target = '7.0'
 
 s.source_files = 'OOModel/Classes/*.{h,m}'
-
+s.libraries = 'sqlite3'
 end
