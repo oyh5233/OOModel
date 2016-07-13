@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 s.name     = 'OOModel'
-s.version  = '1.0.0'
+s.version  = '0.0.8'
 s.license  = 'MIT'
 s.summary  = 'A fast && useful json model framework'
 s.homepage = 'https://github.com/oyh5233/OOModel'
