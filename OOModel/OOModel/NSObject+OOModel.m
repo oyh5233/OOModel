@@ -849,6 +849,18 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 
 #pragma mark --
+#pragma mark -- getter setter
+
+- (void)setIsNew:(bool)isNew{
+    [self willChangeValueForKey:@"isNew"];
+    objc_setAssociatedObject(self, @selector(isNew), @(isNew), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [self didChangeValueForKey:@"isNew"];
+}
+
+- (bool)isNew{
+    return objc_getAssociatedObject(self, @selector(isNew));
+}
+#pragma mark --
 #pragma mark -- check func
 
 + (BOOL)oo_checkTable:(NSString*)table db:(OODatabase*)db{
