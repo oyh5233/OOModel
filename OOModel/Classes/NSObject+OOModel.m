@@ -516,6 +516,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         if (uniqueValue) {
             id mapTableModel=[self oo_modelInMapTableWithUniqueTransformedValue:uniqueValue classInfo:classInfo];
             if (mapTableModel) {
+                [mapTableModel setIsNew:YES];
                 [mapTableModel oo_mergeWithJsonDictionary:jsonDictionary];
                 if (classInfo.conformsToOODbModel) {
                     [mapTableModel oo_saveToDb:classInfo];
