@@ -47,7 +47,6 @@
 
 /* Begin PBXFileReference section */
 		CF052AF71D35F22D00826666 /* OOModel.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OOModel.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CF052AFA1D35F22D00826666 /* OOModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OOModel.h; sourceTree = "<group>"; };
 		CF052AFC1D35F22D00826666 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CF052B031D35F24E00826666 /* NSDictionary+OOAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+OOAdditions.h"; sourceTree = "<group>"; };
 		CF052B041D35F24E00826666 /* NSDictionary+OOAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+OOAdditions.m"; sourceTree = "<group>"; };
@@ -121,7 +120,6 @@
 			isa = PBXGroup;
 			children = (
 				CF052B021D35F24E00826666 /* Classes */,
-				CF052AFA1D35F22D00826666 /* OOModel.h */,
 				CF052AFC1D35F22D00826666 /* Info.plist */,
 			);
 			path = OOModel;
