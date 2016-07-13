@@ -505,6 +505,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         return nil;
     }
     OOClassInfo *classInfo=[self oo_classInfo];
+    [self.class oo_createTableIfNeed:classInfo];
     if (classInfo.conformsToOOUniqueModel) {
         NSString * uniqueKey=[self.class uniquePropertyKey];
         OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[uniqueKey];
@@ -516,10 +517,10 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         if (uniqueValue) {
             id mapTableModel=[self oo_modelInMapTableWithUniqueTransformedValue:uniqueValue classInfo:classInfo];
             if (mapTableModel) {
-                [mapTableModel setIsNew:YES];
+                [mapTableModel setIsReplaced:YES];
                 [mapTableModel oo_mergeWithJsonDictionary:jsonDictionary];
                 if (classInfo.conformsToOODbModel) {
-                    [mapTableModel oo_saveToDb:classInfo];
+                    [mapTableModel oo_updateToDb:classInfo];
                 }
                 return mapTableModel;
             }
@@ -527,7 +528,9 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
             if (newModel) {
                 [newModel oo_mergeWithJsonDictionary:jsonDictionary];
                 if (classInfo.conformsToOODbModel) {
-                    [newModel oo_saveToDb:classInfo];
+                    if([newModel oo_saveToDb:classInfo]){
+                        [newModel setIsReplaced:YES];
+                    }
                     newModel=[self oo_modelInDbWithUniqueTransformedValue:uniqueValue classInfo:classInfo];
                 }
                 [classInfo.mapTable setObject:newModel forKey:uniqueValue];
@@ -588,6 +591,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     if (!classInfo.conformsToOOUniqueModel) {
         return nil;
     }
+    [self.class oo_createTableIfNeed:classInfo];
     return [self oo_modelWithUniqueValue:value classInfo:classInfo];
 }
 
@@ -705,15 +709,15 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 
 - (BOOL)oo_saveToDb:(OOClassInfo*)classInfo{
-    [self.class oo_createTableIfNeed:classInfo];
     if (classInfo.conformsToOOUniqueModel) {
         if (![self oo_insertToDb:classInfo]) {
-            return [self oo_updateToDb:classInfo];
+            [self oo_updateToDb:classInfo];
+            return YES;
         }
-        return YES;
     }else{
-        return [self oo_insertToDb:classInfo];
+        [self oo_insertToDb:classInfo];
     }
+    return NO;
 }
 
 - (BOOL)oo_updateToDb:(OOClassInfo*)classInfo{
@@ -852,14 +856,14 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 #pragma mark --
 #pragma mark -- getter setter
 
-- (void)setIsNew:(bool)isNew{
-    [self willChangeValueForKey:@"isNew"];
-    objc_setAssociatedObject(self, @selector(isNew), @(isNew), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [self didChangeValueForKey:@"isNew"];
+- (void)setIsReplaced:(bool)isReplaced{
+    [self willChangeValueForKey:@"isReplaced"];
+    objc_setAssociatedObject(self, @selector(isReplaced), @(isReplaced), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [self didChangeValueForKey:@"isReplaced"];
 }
 
-- (bool)isNew{
-    return objc_getAssociatedObject(self, @selector(isNew));
+- (bool)isReplaced{
+    return objc_getAssociatedObject(self, @selector(isReplaced));
 }
 #pragma mark --
 #pragma mark -- check func

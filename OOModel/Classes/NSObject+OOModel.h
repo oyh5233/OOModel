@@ -86,7 +86,7 @@ extern const NSString * oo_compaction_prefix;
 
 @property (nonatomic,copy,readonly) NSString     *oo_jsonString;
 
-@property (nonatomic,assign,readonly) bool       isNew;
+@property (nonatomic,assign,readonly) bool       isReplaced;
 
 + (NSArray*)oo_modelsWithJsonDictionaries:(NSArray*)jsonDictionaries;
 /**
