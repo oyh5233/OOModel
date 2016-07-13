@@ -17,4 +17,7 @@ s.ios.deployment_target = '7.0'
 
 s.source_files = 'OOModel/Classes/*.{h,m}'
 s.libraries = 'sqlite3'
+ s.xcconfig = {
+      'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES' => 'YES'
+    }
 end
