@@ -14,7 +14,6 @@ s.description = 'single,synchronous and thread safety model in memory and in dat
 s.requires_arc   = true
 
 s.ios.deployment_target = '7.0'
-s.watchos.deployment_target = '2.0'
 
 s.source_files = 'OOModel/Classes/*.{h,m}'
 
