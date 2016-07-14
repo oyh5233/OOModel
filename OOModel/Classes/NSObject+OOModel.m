@@ -863,7 +863,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 
 - (bool)isReplaced{
-    return objc_getAssociatedObject(self, @selector(isReplaced));
+    return [objc_getAssociatedObject(self, @selector(isReplaced)) boolValue];
 }
 #pragma mark --
 #pragma mark -- check func
