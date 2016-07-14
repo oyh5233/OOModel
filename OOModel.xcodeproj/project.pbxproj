@@ -77,6 +77,8 @@
 		CF052B401D35F30B00826666 /* OOUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOUser.h; sourceTree = "<group>"; };
 		CF052B411D35F30B00826666 /* OOUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOUser.m; sourceTree = "<group>"; };
 		CF052B691D35F5F100826666 /* OOModel.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = OOModel.podspec; sourceTree = "<group>"; };
+		CFA407631D372CF100B90376 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		CFA407641D372CF100B90376 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,8 @@
 		CF052AED1D35F22D00826666 = {
 			isa = PBXGroup;
 			children = (
+				CFA407631D372CF100B90376 /* LICENSE */,
+				CFA407641D372CF100B90376 /* README.md */,
 				CF052B691D35F5F100826666 /* OOModel.podspec */,
 				CF052AF91D35F22D00826666 /* OOModel */,
 				CF052B211D35F2EF00826666 /* Test */,
