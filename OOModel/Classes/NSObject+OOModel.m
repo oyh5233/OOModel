@@ -862,7 +862,9 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 - (void)oo_setIsReplaced:(bool)isReplaced{
     static NSString *key=@"oo_isReplaced";
+    [self willChangeValueForKey:key];
     objc_setAssociatedObject(self, @selector(oo_isReplaced), @(isReplaced), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [self didChangeValueForKey:key];
 }
 
 - (bool)oo_isReplaced{
