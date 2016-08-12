@@ -517,24 +517,27 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         if (uniqueValue) {
             id mapTableModel=[self oo_modelInMapTableWithUniqueTransformedValue:uniqueValue classInfo:classInfo];
             if (mapTableModel) {
-                [mapTableModel setIsReplaced:YES];
+                [mapTableModel oo_setIsReplaced:YES];
                 [mapTableModel oo_mergeWithJsonDictionary:jsonDictionary];
                 if (classInfo.conformsToOODbModel) {
                     [mapTableModel oo_updateToDb:classInfo];
                 }
                 return mapTableModel;
             }
-            id newModel=[[self alloc]init];
-            if (newModel) {
-                [newModel oo_mergeWithJsonDictionary:jsonDictionary];
-                if (classInfo.conformsToOODbModel) {
-                    if([newModel oo_saveToDb:classInfo]){
-                        [newModel setIsReplaced:YES];
-                    }
-                    newModel=[self oo_modelInDbWithUniqueTransformedValue:uniqueValue classInfo:classInfo];
+            if (classInfo.conformsToOODbModel) {
+                id dbModel=[self oo_modelInDbWithUniqueTransformedValue:uniqueValue classInfo:classInfo];
+                if (dbModel) {
+                    [dbModel oo_mergeWithJsonDictionary:jsonDictionary];
+                    [dbModel oo_updateToDb:classInfo];
+                    [dbModel oo_setIsReplaced:YES];
+                }else{
+                    dbModel=[[self alloc]init];
+                    [dbModel oo_mergeWithJsonDictionary:jsonDictionary];
+                    [dbModel oo_insertToDb:classInfo];
+                    [dbModel oo_setIsReplaced:NO];
                 }
-                [classInfo.mapTable setObject:newModel forKey:uniqueValue];
-                return newModel;
+                [classInfo.mapTable setObject:dbModel forKey:uniqueValue];
+                return dbModel;
             }
         }
         return nil;
@@ -546,6 +549,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     if (classInfo.conformsToOODbModel) {
         [model oo_saveToDb:classInfo];
     }
+    [model oo_setIsReplaced:NO];
     return model;
 }
 
@@ -856,14 +860,13 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 #pragma mark --
 #pragma mark -- getter setter
 
-- (void)setIsReplaced:(bool)isReplaced{
-    [self willChangeValueForKey:@"isReplaced"];
-    objc_setAssociatedObject(self, @selector(isReplaced), @(isReplaced), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [self didChangeValueForKey:@"isReplaced"];
+- (void)oo_setIsReplaced:(bool)isReplaced{
+    static NSString *key=@"oo_isReplaced";
+    objc_setAssociatedObject(self, @selector(oo_isReplaced), @(isReplaced), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (bool)isReplaced{
-    return [objc_getAssociatedObject(self, @selector(isReplaced)) boolValue];
+- (bool)oo_isReplaced{
+    return [objc_getAssociatedObject(self, @selector(oo_isReplaced)) boolValue];
 }
 #pragma mark --
 #pragma mark -- check func
