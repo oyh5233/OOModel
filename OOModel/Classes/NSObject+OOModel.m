@@ -8,7 +8,7 @@
 #import "OODatabase.h"
 
 const NSString * oo_compaction_prefix    = @"oo_";
-static NSString * oo_latest_use_timestamp = @"oo_latest_use_timestamp";
+static NSString * oo_latest_used_timestamp = @"oo_latest_used_timestamp";
 static OODatabase *oo_db=nil;
 
 typedef struct {
@@ -731,7 +731,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     CFArrayApplyFunction(propertyInfos, CFRangeMake(0, CFArrayGetCount(propertyInfos)), oo_db_update_apply, &context);
     if (sql.length>0) {
         [sql insertString:[NSString stringWithFormat:@"UPDATE %@ SET ",classInfo.dbTable] atIndex:0];
-        [sql appendFormat:@"%@=? WHERE %@=?",oo_latest_use_timestamp,OOCOMPACT(classInfo.uniquePropertyKey)];
+        [sql appendFormat:@"%@=? WHERE %@=?",oo_latest_used_timestamp,OOCOMPACT(classInfo.uniquePropertyKey)];
         [arguments addObject:@([[NSDate date] timeIntervalSince1970])];
         OOPropertyInfo *uniquePropertyInfo=classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
         id uniqueValue;
@@ -754,7 +754,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     context.model=(__bridge void *)self;
     CFArrayApplyFunction(propertyInfos, CFRangeMake(0, CFArrayGetCount(propertyInfos)), oo_db_insert_apply, &context);
     if (sql1.length>0&&sql2.length>0) {
-        [sql1 appendString:oo_latest_use_timestamp];
+        [sql1 appendString:oo_latest_used_timestamp];
         [sql1 insertString:@"(" atIndex:0];
         [sql1 appendString:@")"];
         [sql2 appendString:@"?"];
@@ -786,9 +786,9 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
             OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[uniquePropertyKey];
             NSString *uniqueDbColumn=propertyInfo.dbColumn;
             NSString * uniqueDbColumnType=oo_databaseColumnTypeWithType(propertyInfo.dbColumnType);
-            sql=[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' %@ NOT NULL UNIQUE,'%@' REAL)",table,uniqueDbColumn,uniqueDbColumnType,oo_latest_use_timestamp];
+            sql=[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' %@ NOT NULL UNIQUE,'%@' REAL)",table,uniqueDbColumn,uniqueDbColumnType,oo_latest_used_timestamp];
         }else{
-            sql=[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' REAL)",table,oo_latest_use_timestamp];
+            sql=[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' REAL)",table,oo_latest_used_timestamp];
         }
         [oo_db executeUpdate:sql arguments:nil];
     }
@@ -818,7 +818,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
             [databaseIndexesKeys addObject:column];
         }];
     }
-    [databaseIndexesKeys addObject:oo_latest_use_timestamp];
+    [databaseIndexesKeys addObject:oo_latest_used_timestamp];
     [databaseIndexesKeys enumerateObjectsUsingBlock:^(NSString *  _Nonnull databaseIndexKey, NSUInteger idx, BOOL * _Nonnull stop) {
         if (![self oo_checkTable:classInfo.dbTable index:databaseIndexKey db:oo_db]) {
             NSString *index=[NSString stringWithFormat:@"%@_%@_index",classInfo.dbTable,databaseIndexKey];
@@ -830,7 +830,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 + (void)oo_deleteModelsBeforeDate:(NSDate*)date{
     OOClassInfo *classInfo=[self oo_classInfo];
-    NSString *sql=[NSString stringWithFormat:@"DELETE FROM %@ WHERE %@<%f",classInfo.dbTable,oo_latest_use_timestamp,[date timeIntervalSince1970]];
+    NSString *sql=[NSString stringWithFormat:@"DELETE FROM %@ WHERE %@<%f",classInfo.dbTable,oo_latest_used_timestamp,[date timeIntervalSince1970]];
     [oo_db executeUpdate:sql arguments:nil];
 }
 
