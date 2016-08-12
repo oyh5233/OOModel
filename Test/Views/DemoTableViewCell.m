@@ -54,7 +54,6 @@
 - (void)valueDidChange:(NSDictionary*)change{
     NSString *keyPath=change[@"keyPath"];
     id value=change[@"value"];
-//    dispatch_async(dispatch_get_main_queue(), ^{
         if ([keyPath isEqualToString:@"roadshow.title"]) {
             self.titleLabel.text=[NSString stringWithFormat:@"title:%@",value];
         }else if ([keyPath isEqualToString:@"roadshow.membercount"]) {
@@ -69,15 +68,15 @@
             self.ridLabel.text=[NSString stringWithFormat:@"rid:%@",value];
         }else if ([keyPath isEqualToString:@"roadshow.creator.uid"]) {
             self.uidLabel.text=[NSString stringWithFormat:@"uid:%@",value];
-        }else if ([keyPath isEqualToString:@"roadshow.oo_isReplaced"]){
-            NSLog(@"%p....isReplaced:%@",self.roadshow,value);
         }
-//    });
 }
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context{
     id value=change[NSKeyValueChangeNewKey];
     if (!value||[value isKindOfClass:NSNull.class]) {
         return;
+    }
+    if ([keyPath isEqualToString:@"roadshow.oo_isReplaced"]){
+        NSLog(@"%@,%@",[NSThread currentThread],value);
     }
     [self performSelectorOnMainThread:@selector(valueDidChange:) withObject:@{@"keyPath":keyPath,@"value":value} waitUntilDone:NO modes:@[NSRunLoopCommonModes]];
 }

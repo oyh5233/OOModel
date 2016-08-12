@@ -6,11 +6,15 @@
 #import "ViewController.h"
 #import "OORoadshow.h"
 #import "DemoTableViewCell.h"
+typedef void (^RoadshowBlock) ();
+typedef void (^UserBlock) ();
 
 @interface ViewController ()<UITableViewDataSource,UITableViewDelegate>
 
 @property (nonatomic, strong) NSMutableArray * roadshows;
 @property (nonatomic, strong) UITableView    *tableView;
+@property (nonatomic, strong) RoadshowBlock  roadshowBlock;
+@property (nonatomic, strong) UserBlock      userBlock;
 
 @end
 
@@ -48,44 +52,20 @@
 }
 
 - (void)timer1{
-    void (^block)()=^{
-        NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
-        int location=arc4random()%str.length-1;
-        location=location<0?0:location;
-        int length=arc4random()%((str.length-location-1))+1;
-        NSString *title=[str substringWithRange:NSMakeRange(location, length)];
-  
-
-        NSString *rid=[NSString stringWithFormat:@"%d",arc4random()%3+1];
-        NSString *membercount=[NSString stringWithFormat:@"%d",arc4random()%98+1];
-        NSDictionary *roadshowDict=@{@"id":rid,@"membercount":membercount,@"title":title};
-        [OORoadshow oo_modelWithJson:roadshowDict];
-    };
+   
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        block();
+        self.roadshowBlock();
+        self.userBlock();
+        self.userBlock();
     });
 }
 
 - (void)timer2{
-    void (^block)()=^{
-        NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
-
-        int location=arc4random()%str.length-1;
-        location=location<0?0:location;
-        int length=arc4random()%(11)+1;
-        if (location+length>str.length) {
-            length=(int)str.length-location;
-        }
-        NSString *name=[str substringWithRange:NSMakeRange(location, length)];
-        NSString *age=[NSString stringWithFormat:@"%d",arc4random()%52+18];
-        NSString *uid=[NSString stringWithFormat:@"%d",arc4random()%2+1];
-        NSString *sex=[NSString stringWithFormat:@"%d",arc4random()%2];
-
-        NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age,@"location":@"aaaa"};
-        [OOUser oo_modelWithJson:userDict];
-    };
+   
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        block();
+        self.roadshowBlock();
+        self.userBlock();
+        self.userBlock();
     });
 }
 
@@ -127,6 +107,47 @@
     return _roadshows;
 }
 
+- (RoadshowBlock)roadshowBlock{
+    if (!_roadshowBlock) {
+        _roadshowBlock=^{
+            NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
+            int location=arc4random()%str.length-1;
+            location=location<0?0:location;
+            int length=arc4random()%((str.length-location-1))+1;
+            NSString *title=[str substringWithRange:NSMakeRange(location, length)];
+            
+            
+            NSString *rid=[NSString stringWithFormat:@"%d",arc4random()%3+1];
+            NSString *membercount=[NSString stringWithFormat:@"%d",arc4random()%98+1];
+            NSDictionary *roadshowDict=@{@"id":rid,@"membercount":membercount,@"title":title};
+            [OORoadshow oo_modelWithJson:roadshowDict];
+        };
+    }
+    return _roadshowBlock;
+}
+
+- (UserBlock)userBlock{
+    if(!_userBlock){
+        _userBlock=^{
+            NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
+            
+            int location=arc4random()%str.length-1;
+            location=location<0?0:location;
+            int length=arc4random()%(11)+1;
+            if (location+length>str.length) {
+                length=(int)str.length-location;
+            }
+            NSString *name=[str substringWithRange:NSMakeRange(location, length)];
+            NSString *age=[NSString stringWithFormat:@"%d",arc4random()%52+18];
+            NSString *uid=[NSString stringWithFormat:@"%d",arc4random()%2+1];
+            NSString *sex=[NSString stringWithFormat:@"%d",arc4random()%2];
+            
+            NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age,@"location":@"aaaa"};
+            [OOUser oo_modelWithJson:userDict];
+        };
+    }
+    return _userBlock;
+}
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
