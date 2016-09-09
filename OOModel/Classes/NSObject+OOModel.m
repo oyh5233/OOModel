@@ -572,7 +572,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     OOModelContext context={0};
     context.model=(__bridge void*)self;
     context.storage=(__bridge void *)jsonDictionary;
-    CFArrayRef propertyInfos=(__bridge CFArrayRef)[self.class oo_classInfo].propertyInfos;
+    CFArrayRef propertyInfos=(__bridge CFArrayRef)[self.class oo_classInfo].jsonPropertyInfos;
     CFArrayApplyFunction(propertyInfos, CFRangeMake(0, CFArrayGetCount(propertyInfos)), oo_set_value_for_property_apply,&context);
 }
 
@@ -581,7 +581,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     OOModelContext context={0};
     context.model=(__bridge void *)self;
     context.storage=(__bridge void *)jsonDictionary;
-    CFArrayRef propertyInfos=(__bridge CFArrayRef)[self.class oo_classInfo].propertyInfos;
+    CFArrayRef propertyInfos=(__bridge CFArrayRef)[self.class oo_classInfo].jsonPropertyInfos;
     CFArrayApplyFunction(propertyInfos, CFRangeMake(0, CFArrayGetCount(propertyInfos)), oo_get_value_for_property_apply,&context);
     return jsonDictionary;
 }
@@ -691,7 +691,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 + (NSArray *)oo_modelsInDbWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments classInfo:(OOClassInfo*)classInfo{
     [self oo_createTableIfNeed:classInfo];
     NSMutableArray *models=[NSMutableArray array];
-    CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.propertyInfos;
+    CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.dbPropertyInfos;
     NSMutableString *sql=nil;
     if (afterWhereSql.length>0) {
         sql=[NSMutableString string];
@@ -727,7 +727,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 - (BOOL)oo_updateToDb:(OOClassInfo*)classInfo{
     NSMutableString *sql=[NSMutableString string];
     NSMutableArray *arguments=[NSMutableArray array];
-    CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.propertyInfos;
+    CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.dbPropertyInfos;
     OOModelDbUpdateContext context={0};
     context.sql=(__bridge void *)sql;
     context.arguments=(__bridge void*)arguments;
@@ -750,7 +750,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     NSMutableString *sql1=[NSMutableString string];
     NSMutableString *sql2=[NSMutableString string];
     NSMutableArray *arguments=[NSMutableArray array];
-    CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.propertyInfos;
+    CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.dbPropertyInfos;
     OOModelDbInsertContext context={0};
     context.sql1=(__bridge void *)sql1;
     context.sql2=(__bridge void *)sql2;
@@ -800,7 +800,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 + (void)oo_addColumn:(OOClassInfo*)classInfo{
     NSString * table=classInfo.dbTable;
-    [classInfo.propertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo * _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+    [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo * _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([propertyInfo.propertyKey isEqualToString:classInfo.uniquePropertyKey]) {
             return;
         }

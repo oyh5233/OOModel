@@ -86,6 +86,8 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 
 @property (nonatomic, assign,readonly) Class        cls;
 @property (nonatomic, strong,readonly) NSArray      *propertyInfos;
+@property (nonatomic, strong,readonly) NSArray      *dbPropertyInfos;
+@property (nonatomic, strong,readonly) NSArray      *jsonPropertyInfos;
 @property (nonatomic, strong,readonly) NSArray      *propertyKeys;
 @property (nonatomic, strong,readonly) NSDictionary *uninitializedPropertyInfosByPropertyKeys;
 @property (nonatomic, strong,readonly) NSDictionary *propertyInfosByPropertyKeys;

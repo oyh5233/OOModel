@@ -33,6 +33,8 @@
 
 @property (nonatomic, assign) Class        cls;
 @property (nonatomic, strong) NSArray      *propertyInfos;
+@property (nonatomic, strong) NSArray      *dbPropertyInfos;
+@property (nonatomic, strong) NSArray      *jsonPropertyInfos;
 @property (nonatomic, strong) NSArray      *propertyKeys;
 @property (nonatomic, strong) NSDictionary *uninitializedPropertyInfosByPropertyKeys;
 @property (nonatomic, strong) NSDictionary *propertyInfosByPropertyKeys;
@@ -259,7 +261,6 @@
         }else{
             propertyInfo.dbColumnType=OODbColumnTypeText;
         }
-
     }
     propertyInfo.ownClassInfo=self;
     return propertyInfo;
@@ -291,18 +292,49 @@
     }
     return _propertyInfosByPropertyKeys;
 }
+- (NSArray*)dbPropertyInfos{
+    if (!_dbPropertyInfos) {
+        NSMutableArray *dbPropertyInfos=[NSMutableArray array];
+        for (OOPropertyInfo * propertyInfo in self.propertyInfos){
+            BOOL shouldAdd=NO;
+            for (NSString * propertyKey in [self.cls dbColumnsInPropertyKeys]){
+                if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
+                    shouldAdd=YES;
+                    break;
+                }
+            }
+            if (shouldAdd) {
+                [dbPropertyInfos addObject:propertyInfo];
+            }
+        }
+        _dbPropertyInfos=dbPropertyInfos;
+    }
+    return _dbPropertyInfos;
+}
+
+- (NSArray*)jsonPropertyInfos{
+    if (!_jsonPropertyInfos) {
+        NSMutableArray *jsonPropertyInfos=[NSMutableArray array];
+        for (OOPropertyInfo * propertyInfo in self.propertyInfos){
+            BOOL shouldAdd=NO;
+            for (NSString * propertyKey in [[self.cls jsonKeyPathsByPropertyKeys]allKeys]){
+                if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
+                    shouldAdd=YES;
+                    break;
+                }
+            }
+            if (shouldAdd) {
+                [jsonPropertyInfos addObject:propertyInfo];
+            }
+        }
+        _jsonPropertyInfos=jsonPropertyInfos;
+    }
+    return _jsonPropertyInfos;
+}
 
 - (NSArray*)propertyInfos{
     if (!_propertyInfos) {
         _propertyInfos=[self.propertyInfosByPropertyKeys allValues];
-        if (self.conformsToOODbModel) {
-            _propertyInfos=[_propertyInfos sortedArrayUsingComparator:^NSComparisonResult(OOPropertyInfo * _Nonnull obj1, OOPropertyInfo * _Nonnull obj2) {
-                if (obj1.dbColumn.length>obj2.dbColumn.length) {
-                    return NSOrderedDescending;
-                }
-                return NSOrderedDescending;
-            }];
-        }
     }
     return _propertyInfos;
 }
