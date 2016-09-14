@@ -85,11 +85,10 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 @interface OOClassInfo : NSObject
 
 @property (nonatomic, assign,readonly) Class        cls;
-@property (nonatomic, strong,readonly) NSArray      *propertyInfos;
 @property (nonatomic, strong,readonly) NSArray      *dbPropertyInfos;
 @property (nonatomic, strong,readonly) NSArray      *jsonPropertyInfos;
 @property (nonatomic, strong,readonly) NSArray      *propertyKeys;
-@property (nonatomic, strong,readonly) NSDictionary *uninitializedPropertyInfosByPropertyKeys;
+@property (nonatomic, strong,readonly) NSArray      *propertyInfos;
 @property (nonatomic, strong,readonly) NSDictionary *propertyInfosByPropertyKeys;
 @property (nonatomic, assign,readonly) BOOL         conformsToOOJsonModel;
 @property (nonatomic, assign,readonly) BOOL         conformsToOODbModel;

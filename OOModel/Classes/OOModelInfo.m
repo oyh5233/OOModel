@@ -187,11 +187,10 @@
 @implementation OOClassInfo
 + (instancetype)classInfoWithClass:(Class)cls{
     OOClassInfo *classInfo=[[self alloc]initWithClass:cls];
-    
     return classInfo;
 }
 - (instancetype)initWithClass:(Class)cls{
-    self=[super init];
+    self=[self init];
     if (self) {
         self.cls=cls;
         if ([cls conformsToProtocol:@protocol(OOJsonModel)]) {
@@ -212,11 +211,12 @@
         if ([cls conformsToProtocol:@protocol(OOUniqueModel)]) {
             self.conformsToOOUniqueModel=YES;
         }
+        [self dbPropertyInfos];
+        [self jsonPropertyInfos];
+        [self propertyKeys];
     }
     return self;
 }
-
-
 
 - (OOPropertyInfo*)initializePropertyInfo:(OOPropertyInfo*)propertyInfo{
     if (!propertyInfo.ivarKey||(propertyInfo.propertyType&OOPropertyTypeReadonly)) {
@@ -279,19 +279,7 @@
     }
     return _dbTable;
 }
-- (NSDictionary*)propertyInfosByPropertyKeys{
-    if(!_propertyInfosByPropertyKeys){
-        NSMutableDictionary * propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
-        [self.uninitializedPropertyInfosByPropertyKeys enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, OOPropertyInfo *  _Nonnull propertyInfo, BOOL * _Nonnull stop) {
-            propertyInfo =[self initializePropertyInfo:propertyInfo];
-            if (propertyInfo) {
-                [propertyInfosByPropertyKeys setObject:propertyInfo forKey:key];
-            }
-        }];
-        _propertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
-    }
-    return _propertyInfosByPropertyKeys;
-}
+
 - (NSArray*)dbPropertyInfos{
     if (!_dbPropertyInfos) {
         NSMutableArray *dbPropertyInfos=[NSMutableArray array];
@@ -341,9 +329,23 @@
 
 - (NSArray*)propertyKeys{
     if (!_propertyKeys) {
-        _propertyKeys=[self.uninitializedPropertyInfosByPropertyKeys allKeys];
+        _propertyKeys=[self.propertyInfosByPropertyKeys allKeys];
     }
     return _propertyKeys;
+}
+
+- (NSDictionary*)propertyInfosByPropertyKeys{
+    if(!_propertyInfosByPropertyKeys){
+        NSMutableDictionary * propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
+        [self.uninitializedPropertyInfosByPropertyKeys enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, OOPropertyInfo *  _Nonnull propertyInfo, BOOL * _Nonnull stop) {
+            propertyInfo =[self initializePropertyInfo:propertyInfo];
+            if (propertyInfo) {
+                [propertyInfosByPropertyKeys setObject:propertyInfo forKey:key];
+            }
+        }];
+        _propertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
+    }
+    return _propertyInfosByPropertyKeys;
 }
 
 - (NSDictionary*)uninitializedPropertyInfosByPropertyKeys{

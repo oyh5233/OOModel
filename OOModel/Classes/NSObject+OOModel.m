@@ -928,12 +928,12 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 
 + (OOClassInfo*)oo_classInfo{
+    static CFMutableDictionaryRef classInfoRoot;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        classInfoRoot=CFDictionaryCreateMutable(CFAllocatorGetDefault(), 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    });
     @synchronized(self) {
-        static CFMutableDictionaryRef classInfoRoot;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            classInfoRoot=CFDictionaryCreateMutable(CFAllocatorGetDefault(), 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-        });
         OOClassInfo * classInfo=CFDictionaryGetValue(classInfoRoot, (__bridge void *)self);
         if (!classInfo) {
             classInfo=[OOClassInfo classInfoWithClass:self];
