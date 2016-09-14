@@ -6,18 +6,24 @@
 #import "OORoadshow.h"
 @implementation OORoadshow
 
-+ (NSDictionary*)jsonKeyPathsByPropertyKeys{
-    NSDictionary * dictionary=@{
-                                @"rid":@"id",
-                                @"creator":@"extra.creator"
-                                };
-    dictionary= [[NSDictionary oo_dictionaryByMappingKeyPathsForPropertiesWithClass:self] oo_dictionaryByAddingEntriesFromDictionary:dictionary];
-    return dictionary;
-}
+//+ (NSDictionary*)jsonKeyPathsByPropertyKeys{
+//    NSDictionary * dictionary=@{
+//                                @"rid":@"id",
+//                                @"creator":@"extra.creator"
+//                                };
+//    dictionary= [[NSDictionary oo_dictionaryByMappingKeyPathsForPropertiesWithClass:self] oo_dictionaryByAddingEntriesFromDictionary:dictionary];
+//    return dictionary;
+//}
 
-+ (NSArray*)dbColumnsInPropertyKeys{
-    return [[self jsonKeyPathsByPropertyKeys] allKeys];
-}
+OO_MODEL_IMPLEMENTION_JSON_KEYS(OO_PAIR(rid,id),
+                                OO_PAIR(creator,extra.creator),
+                                OO_PAIR(title,title),
+                                OO_PAIR(membercount,membercount)
+                                )
+
+OO_MODEL_IMPLEMENTION_UNIQUE(rid)
+
+OO_MODEL_IMPLEMENTION_DB_KEYS(rid,title,creator,membercount)
 
 + (NSValueTransformer*)dbValueTransformerForPropertyKey:(NSString *)propertyKey{
     if ([propertyKey isEqualToString:@"creator"]) {
@@ -29,9 +35,5 @@
     }
     return nil;
 }
-+ (NSString *)uniquePropertyKey{
-    return @"rid";
-}
-
 
 @end

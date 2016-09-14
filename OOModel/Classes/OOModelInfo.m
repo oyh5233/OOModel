@@ -320,6 +320,7 @@
     return _jsonPropertyInfos;
 }
 
+
 - (NSArray*)propertyInfos{
     if (!_propertyInfos) {
         _propertyInfos=[self.propertyInfosByPropertyKeys allValues];

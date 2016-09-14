@@ -20,3 +20,38 @@ FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 #import "OOModelInfo.h"
 #import "OOValueTransformer.h"
 #import "OODatabase.h"
+
+#ifndef OO_MODEL_IMPLEMENTION_UNIQUE
+#define OO_MODEL_IMPLEMENTION_UNIQUE(x) \
++ (NSString*)uniquePropertyKey{\
+return @#x;\
+}
+#endif
+//+ (NSArray*)dbColumnsInPropertyKeys{\
+//return [[@#__VA_ARGS__ stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsSeparatedByString:@","];\
+//}
+
+
+#ifndef OO_NO_WHITESPACE_NEWLINE
+#define OO_NO_WHITESPACE_NEWLINE(x) [x stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
+#endif
+
+#ifndef OO_MODEL_IMPLEMENTION_DB_KEYS
+#define OO_MODEL_IMPLEMENTION_DB_KEYS(...) \
++ (NSArray*)dbColumnsInPropertyKeys{\
+    return [OO_NO_WHITESPACE_NEWLINE(@#__VA_ARGS__) componentsSeparatedByString:@","];\
+}
+#endif
+
+#ifndef OO_PAIR
+#define OO_PAIR(x,y) @#x:@#y
+#endif
+
+#ifndef OO_MODEL_IMPLEMENTION_JSON_KEYS
+#define OO_MODEL_IMPLEMENTION_JSON_KEYS(...) \
++ (NSDictionary*)jsonKeyPathsByPropertyKeys{\
+    return @{\
+__VA_ARGS__\
+};\
+}
+#endif

@@ -7,19 +7,14 @@
 
 @implementation OOUser
 
-+ (NSDictionary*)jsonKeyPathsByPropertyKeys{
-    NSDictionary * dictionary=@{
-                                @"uid":@"id",
-                                };
-    dictionary= [[NSDictionary oo_dictionaryByMappingKeyPathsForPropertiesWithClass:self] oo_dictionaryByAddingEntriesFromDictionary:dictionary];
-    return dictionary;
-}
+OO_MODEL_IMPLEMENTION_JSON_KEYS(OO_PAIR(uid,id),
+                                OO_PAIR(name,name),
+                                OO_PAIR(sex,sex),
+                                OO_PAIR(age,age)
+                                )
 
-+ (NSArray*)dbColumnsInPropertyKeys{
-    return [[self jsonKeyPathsByPropertyKeys] allKeys];
-}
+OO_MODEL_IMPLEMENTION_UNIQUE(uid)
 
-+ (NSString *)uniquePropertyKey{
-    return @"uid";
-}
+OO_MODEL_IMPLEMENTION_DB_KEYS(uid,name,sex,age)
+
 @end
