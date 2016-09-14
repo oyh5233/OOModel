@@ -15,7 +15,6 @@ FOUNDATION_EXPORT double OOModelVersionNumber;
 FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <OOModel/PublicHeader.h>
-#import "NSDictionary+OOAdditions.h"
 #import "NSObject+OOModel.h"
 #import "OOModelInfo.h"
 #import "OOValueTransformer.h"

@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CF052B0E1D35F24E00826666 /* NSDictionary+OOAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = CF052B031D35F24E00826666 /* NSDictionary+OOAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CF052B0F1D35F24E00826666 /* NSDictionary+OOAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B041D35F24E00826666 /* NSDictionary+OOAdditions.m */; };
 		CF052B101D35F24E00826666 /* NSObject+OOModel.h in Headers */ = {isa = PBXBuildFile; fileRef = CF052B051D35F24E00826666 /* NSObject+OOModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CF052B111D35F24E00826666 /* NSObject+OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B061D35F24E00826666 /* NSObject+OOModel.m */; };
 		CF052B131D35F24E00826666 /* OODatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B081D35F24E00826666 /* OODatabase.m */; };
@@ -48,8 +46,6 @@
 /* Begin PBXFileReference section */
 		CF052AF71D35F22D00826666 /* OOModel.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OOModel.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF052AFC1D35F22D00826666 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CF052B031D35F24E00826666 /* NSDictionary+OOAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+OOAdditions.h"; sourceTree = "<group>"; };
-		CF052B041D35F24E00826666 /* NSDictionary+OOAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+OOAdditions.m"; sourceTree = "<group>"; };
 		CF052B051D35F24E00826666 /* NSObject+OOModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+OOModel.h"; sourceTree = "<group>"; };
 		CF052B061D35F24E00826666 /* NSObject+OOModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+OOModel.m"; sourceTree = "<group>"; };
 		CF052B071D35F24E00826666 /* OODatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OODatabase.h; sourceTree = "<group>"; };
@@ -132,8 +128,6 @@
 		CF052B021D35F24E00826666 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				CF052B031D35F24E00826666 /* NSDictionary+OOAdditions.h */,
-				CF052B041D35F24E00826666 /* NSDictionary+OOAdditions.m */,
 				CF052B051D35F24E00826666 /* NSObject+OOModel.h */,
 				CF052B061D35F24E00826666 /* NSObject+OOModel.m */,
 				CF052B071D35F24E00826666 /* OODatabase.h */,
@@ -206,7 +200,6 @@
 				CF052B1B1D35F2B200826666 /* OOModelInfo.h in Headers */,
 				CF052B101D35F24E00826666 /* NSObject+OOModel.h in Headers */,
 				CF052B171D35F24E00826666 /* OOValueTransformer.h in Headers */,
-				CF052B0E1D35F24E00826666 /* NSDictionary+OOAdditions.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,7 +304,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CF052B0F1D35F24E00826666 /* NSDictionary+OOAdditions.m in Sources */,
 				CF052B131D35F24E00826666 /* OODatabase.m in Sources */,
 				CF052B181D35F24E00826666 /* OOValueTransformer.m in Sources */,
 				CF052B111D35F24E00826666 /* NSObject+OOModel.m in Sources */,
