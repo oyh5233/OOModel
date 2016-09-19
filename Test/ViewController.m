@@ -6,6 +6,8 @@
 #import "ViewController.h"
 #import "OORoadshow.h"
 #import "DemoTableViewCell.h"
+#import "WMUser.h"
+#import <sys/time.h>
 typedef void (^RoadshowBlock) ();
 typedef void (^UserBlock) ();
 
@@ -21,7 +23,31 @@ typedef void (^UserBlock) ();
 @implementation ViewController
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [OORoadshow oo_openDb:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
+    [NSObject oo_openDb:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
+    
+    [self test1];
+    
+  
+    // Do any additional setup after loading the view, typically from a nib.
+}
+
+- (void)test1{
+    NSMutableDictionary * json=[[NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:[[NSBundle mainBundle]pathForResource:@"user" ofType:@"json"]] options:NSJSONReadingAllowFragments error:nil] mutableCopy];
+    NSMutableArray *jsons=[NSMutableArray array];
+    int count=10000;
+    for (int i=0;i<count;i++){
+        [json setObject:@(count+i) forKey:@"user_id"];
+        [jsons addObject:json];
+    }
+    YYBenchmark(^{
+        NSArray *users=[WMUser oo_modelsWithJsonDictionaries:jsons];
+    }, ^(double ms) {
+        NSLog(@"%.2f",ms);
+    });
+
+}
+
+- (void)test2{
     for (int i = 0; i < 3 ; i++){
         NSDictionary *jsonDictionary=@{
                                        @"id":[NSString stringWithFormat:@"%d",i+1],
@@ -48,9 +74,7 @@ typedef void (^UserBlock) ();
     NSTimer *timer22=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop]addTimer:timer22 forMode:NSRunLoopCommonModes];
     [timer22 fire];
-    // Do any additional setup after loading the view, typically from a nib.
 }
-
 - (void)timer1{
    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -147,6 +171,27 @@ typedef void (^UserBlock) ();
         };
     }
     return _userBlock;
+}
+
+static inline void YYBenchmark(void (^block)(void), void (^complete)(double ms)) {
+    // <QuartzCore/QuartzCore.h> version
+    /*
+     extern double CACurrentMediaTime (void);
+     double begin, end, ms;
+     begin = CACurrentMediaTime();
+     block();
+     end = CACurrentMediaTime();
+     ms = (end - begin) * 1000.0;
+     complete(ms);
+     */
+    
+    // <sys/time.h> version
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
+    block();
+    gettimeofday(&t1, NULL);
+    double ms = (double)(t1.tv_sec - t0.tv_sec) * 1e3 + (double)(t1.tv_usec - t0.tv_usec) * 1e-3;
+    complete(ms);
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

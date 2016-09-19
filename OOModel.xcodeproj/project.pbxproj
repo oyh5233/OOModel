@@ -27,6 +27,9 @@
 		CF052B421D35F30B00826666 /* OORoadshow.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B3F1D35F30B00826666 /* OORoadshow.m */; };
 		CF052B431D35F30B00826666 /* OOUser.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B411D35F30B00826666 /* OOUser.m */; };
 		CF052B681D35F53100826666 /* OOModel.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CF052AF71D35F22D00826666 /* OOModel.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CF1F9E521D8F8C05005234FC /* TestMD.m in Sources */ = {isa = PBXBuildFile; fileRef = CF1F9E4E1D8F8C05005234FC /* TestMD.m */; };
+		CF1F9E541D8F8C05005234FC /* WMUser.m in Sources */ = {isa = PBXBuildFile; fileRef = CF1F9E511D8F8C05005234FC /* WMUser.m */; };
+		CF1F9E561D8F9446005234FC /* user.json in Resources */ = {isa = PBXBuildFile; fileRef = CF1F9E4F1D8F8C05005234FC /* user.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -73,6 +76,11 @@
 		CF052B401D35F30B00826666 /* OOUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOUser.h; sourceTree = "<group>"; };
 		CF052B411D35F30B00826666 /* OOUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOUser.m; sourceTree = "<group>"; };
 		CF052B691D35F5F100826666 /* OOModel.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = OOModel.podspec; sourceTree = "<group>"; };
+		CF1F9E4D1D8F8C05005234FC /* TestMD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestMD.h; sourceTree = "<group>"; };
+		CF1F9E4E1D8F8C05005234FC /* TestMD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestMD.m; sourceTree = "<group>"; };
+		CF1F9E4F1D8F8C05005234FC /* user.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = user.json; sourceTree = "<group>"; };
+		CF1F9E501D8F8C05005234FC /* WMUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WMUser.h; sourceTree = "<group>"; };
+		CF1F9E511D8F8C05005234FC /* WMUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WMUser.m; sourceTree = "<group>"; };
 		CFA407631D372CF100B90376 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		CFA407641D372CF100B90376 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -180,6 +188,11 @@
 		CF052B3D1D35F30B00826666 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CF1F9E4D1D8F8C05005234FC /* TestMD.h */,
+				CF1F9E4E1D8F8C05005234FC /* TestMD.m */,
+				CF1F9E4F1D8F8C05005234FC /* user.json */,
+				CF1F9E501D8F8C05005234FC /* WMUser.h */,
+				CF1F9E511D8F8C05005234FC /* WMUser.m */,
 				CF052B3E1D35F30B00826666 /* OORoadshow.h */,
 				CF052B3F1D35F30B00826666 /* OORoadshow.m */,
 				CF052B401D35F30B00826666 /* OOUser.h */,
@@ -290,6 +303,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF1F9E561D8F9446005234FC /* user.json in Resources */,
 				CF052B321D35F2EF00826666 /* LaunchScreen.storyboard in Resources */,
 				CF052B2F1D35F2EF00826666 /* Assets.xcassets in Resources */,
 				CF052B3C1D35F30400826666 /* DemoTableViewCell.xib in Resources */,
@@ -320,6 +334,8 @@
 				CF052B3B1D35F30400826666 /* DemoTableViewCell.m in Sources */,
 				CF052B421D35F30B00826666 /* OORoadshow.m in Sources */,
 				CF052B431D35F30B00826666 /* OOUser.m in Sources */,
+				CF1F9E521D8F8C05005234FC /* TestMD.m in Sources */,
+				CF1F9E541D8F8C05005234FC /* WMUser.m in Sources */,
 				CF052B241D35F2EF00826666 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

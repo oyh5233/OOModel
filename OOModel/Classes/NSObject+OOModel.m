@@ -772,13 +772,16 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 
 + (void)oo_createTableIfNeed:(OOClassInfo*)classInfo{
+    dispatch_semaphore_wait(classInfo.mapTableSemaphore, DISPATCH_TIME_FOREVER);
     if(classInfo.dbTimestamp==oo_db.dbTimestamp){
+        dispatch_semaphore_signal(classInfo.mapTableSemaphore);
         return;
     }
     [self oo_createTable:classInfo];
     [self oo_addColumn:classInfo];
     [self oo_addIndexes:classInfo];
     classInfo.dbTimestamp=oo_db.dbTimestamp;
+    dispatch_semaphore_signal(classInfo.mapTableSemaphore);
 }
 
 + (void)oo_createTable:(OOClassInfo*)classInfo{
@@ -885,8 +888,9 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 + (BOOL)oo_checkTable:(NSString*)table column:(NSString*)column db:(OODatabase*)db{
     BOOL ret=NO;
-    NSString * sql=@"SELECT sql FROM sqlite_master WHERE tbl_name=? AND type='table'";
+    NSString * sql=@"SELECT * FROM sqlite_master WHERE tbl_name=? AND type='table'";
     NSArray * sets=[db executeQuery:sql arguments:@[table]];
+    column=[NSString stringWithFormat:@"'%@'",column];
     if (sets.count>0) {
         for(NSDictionary * set in sets) {
             NSString *createSql=set[@"sql"];
@@ -904,6 +908,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     NSString * sql=@"SELECT * FROM sqlite_master WHERE tbl_name=? AND type='index'";
     ret=NO;
     NSArray * sets=[db executeQuery:sql arguments:@[table]];
+    index=[NSString stringWithFormat:@"(%@)",index];
     if (sets.count>0) {
         for(NSDictionary * set in sets) {
             NSString *createSql=set[@"sql"];
