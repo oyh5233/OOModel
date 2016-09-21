@@ -119,7 +119,7 @@ extern const NSString * oo_compaction_prefix;
  */
 - (void)oo_mergeWithJson:(id)json;
 /**
- *  if model class conforms to OODbModel,should open a db at first.
+ *  if model class conforms to OODbModel,should open a db at first.All models use the same db.
  *
  *  @param file db file path.
  *
