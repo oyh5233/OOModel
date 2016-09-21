@@ -600,9 +600,9 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 
 + (instancetype)oo_modelWithUniqueValue:(id)value classInfo:(OOClassInfo*)classInfo{
-    OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
-    if (propertyInfo.dbValueTransformer) {
-        value=[propertyInfo.dbValueTransformer reverseTransformedValue:value];
+    OOPropertyInfo *uniquePropertyInfo=classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
+    if (uniquePropertyInfo.dbValueTransformer) {
+        value=[uniquePropertyInfo.dbValueTransformer reverseTransformedValue:value];
     }
     if (!value) {
         return nil;
@@ -617,18 +617,11 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         return model;
     }
     model =[[self alloc]init];
-    if (propertyInfo.jsonForwards) {
-        value=((id (*)(Class, SEL,id))(void *) objc_msgSend)(propertyInfo.propertyCls,propertyInfo.jsonForwards,value);
-        if (!oo_set_object_for_property(model, value, propertyInfo)) {
-            return nil;
-        }
-    }else{
-        if (!oo_set_object_for_property(model, value, propertyInfo)) {
-            return nil;
-        }
+    if (!oo_set_object_for_property(model, value, uniquePropertyInfo)) {
+        return nil;
     }
     if (classInfo.conformsToOODbModel) {
-        [model oo_saveToDb:classInfo];
+        [model oo_insertToDb:classInfo];
     }
     [self oo_saveToMapTable:model forKey:value classInfo:classInfo];
     return model;
