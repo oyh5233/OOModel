@@ -33,6 +33,7 @@
 
 - (void)awakeFromNib {
     // Initialization code
+    [super awakeFromNib];
     [self addObserver:self forKeyPath:@"roadshow.title" options:NSKeyValueObservingOptionNew context:NULL];
     [self addObserver:self forKeyPath:@"roadshow.membercount" options:NSKeyValueObservingOptionNew context:NULL];
     [self addObserver:self forKeyPath:@"roadshow.rid" options:NSKeyValueObservingOptionNew context:NULL];

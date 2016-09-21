@@ -773,14 +773,12 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 + (void)oo_createTableIfNeed:(OOClassInfo*)classInfo{
     dispatch_semaphore_wait(classInfo.mapTableSemaphore, DISPATCH_TIME_FOREVER);
-    if(classInfo.dbTimestamp==oo_db.dbTimestamp){
-        dispatch_semaphore_signal(classInfo.mapTableSemaphore);
-        return;
+    if(classInfo.dbTimestamp!=oo_db.dbTimestamp){
+        [self oo_createTable:classInfo];
+        [self oo_addColumn:classInfo];
+        [self oo_addIndexes:classInfo];
+        classInfo.dbTimestamp=oo_db.dbTimestamp;
     }
-    [self oo_createTable:classInfo];
-    [self oo_addColumn:classInfo];
-    [self oo_addIndexes:classInfo];
-    classInfo.dbTimestamp=oo_db.dbTimestamp;
     dispatch_semaphore_signal(classInfo.mapTableSemaphore);
 }
 

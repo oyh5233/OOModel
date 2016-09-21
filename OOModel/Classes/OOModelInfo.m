@@ -193,6 +193,10 @@
     self=[self init];
     if (self) {
         self.cls=cls;
+        self.mapTable=[NSMapTable strongToWeakObjectsMapTable];
+        self.uniquePropertyKey=[self.cls uniquePropertyKey];
+        self.dbTable=OOCOMPACT(NSStringFromClass(self.cls));
+        self.mapTableSemaphore = dispatch_semaphore_create(1);
         if ([cls conformsToProtocol:@protocol(OOJsonModel)]) {
             self.conformsToOOJsonModel=YES;
             if ([cls respondsToSelector:@selector(jsonValueTransformerForPropertyKey:)]) {
@@ -211,9 +215,45 @@
         if ([cls conformsToProtocol:@protocol(OOUniqueModel)]) {
             self.conformsToOOUniqueModel=YES;
         }
-        [self dbPropertyInfos];
-        [self jsonPropertyInfos];
-        [self propertyKeys];
+        NSMutableDictionary *propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
+        [self enumeratePropertiesUsingBlock:^(objc_property_t property) {
+            OOPropertyInfo *propertyInfo=[OOPropertyInfo propertyInfoWithProperty:property ownCls:self.cls];
+            if (propertyInfo.ivarKey) {
+                propertyInfo =[self initializePropertyInfo:propertyInfo];
+                [propertyInfosByPropertyKeys setObject:propertyInfo forKey:propertyInfo.propertyKey];
+            }
+        }];
+        self.propertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
+        self.propertyKeys=[self.propertyInfosByPropertyKeys allKeys];
+        self.propertyInfos=[self.propertyInfosByPropertyKeys allValues];
+        NSMutableArray *dbPropertyInfos=[NSMutableArray array];
+        for (OOPropertyInfo * propertyInfo in self.propertyInfos){
+            BOOL shouldAdd=NO;
+            for (NSString * propertyKey in [self.cls dbColumnsInPropertyKeys]){
+                if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
+                    shouldAdd=YES;
+                    break;
+                }
+            }
+            if (shouldAdd) {
+                [dbPropertyInfos addObject:propertyInfo];
+            }
+        }
+        self.dbPropertyInfos=dbPropertyInfos;
+        NSMutableArray *jsonPropertyInfos=[NSMutableArray array];
+        for (OOPropertyInfo * propertyInfo in self.propertyInfos){
+            BOOL shouldAdd=NO;
+            for (NSString * propertyKey in [[self.cls jsonKeyPathsByPropertyKeys]allKeys]){
+                if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
+                    shouldAdd=YES;
+                    break;
+                }
+            }
+            if (shouldAdd) {
+                [jsonPropertyInfos addObject:propertyInfo];
+            }
+        }
+        self.jsonPropertyInfos=jsonPropertyInfos;
     }
     return self;
 }
@@ -266,109 +306,6 @@
     return propertyInfo;
 }
 
-- (NSString*)uniquePropertyKey{
-    if (!_uniquePropertyKey) {
-        _uniquePropertyKey=[self.cls uniquePropertyKey];
-    }
-    return  _uniquePropertyKey;
-}
-
-- (NSString*)dbTable{
-    if (!_dbTable) {
-        _dbTable=OOCOMPACT(NSStringFromClass(self.cls));
-    }
-    return _dbTable;
-}
-
-- (NSArray*)dbPropertyInfos{
-    if (!_dbPropertyInfos) {
-        NSMutableArray *dbPropertyInfos=[NSMutableArray array];
-        for (OOPropertyInfo * propertyInfo in self.propertyInfos){
-            BOOL shouldAdd=NO;
-            for (NSString * propertyKey in [self.cls dbColumnsInPropertyKeys]){
-                if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
-                    shouldAdd=YES;
-                    break;
-                }
-            }
-            if (shouldAdd) {
-                [dbPropertyInfos addObject:propertyInfo];
-            }
-        }
-        _dbPropertyInfos=dbPropertyInfos;
-    }
-    return _dbPropertyInfos;
-}
-
-- (NSArray*)jsonPropertyInfos{
-    if (!_jsonPropertyInfos) {
-        NSMutableArray *jsonPropertyInfos=[NSMutableArray array];
-        for (OOPropertyInfo * propertyInfo in self.propertyInfos){
-            BOOL shouldAdd=NO;
-            for (NSString * propertyKey in [[self.cls jsonKeyPathsByPropertyKeys]allKeys]){
-                if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
-                    shouldAdd=YES;
-                    break;
-                }
-            }
-            if (shouldAdd) {
-                [jsonPropertyInfos addObject:propertyInfo];
-            }
-        }
-        _jsonPropertyInfos=jsonPropertyInfos;
-    }
-    return _jsonPropertyInfos;
-}
-
-
-- (NSArray*)propertyInfos{
-    if (!_propertyInfos) {
-        _propertyInfos=[self.propertyInfosByPropertyKeys allValues];
-    }
-    return _propertyInfos;
-}
-
-- (NSArray*)propertyKeys{
-    if (!_propertyKeys) {
-        _propertyKeys=[self.propertyInfosByPropertyKeys allKeys];
-    }
-    return _propertyKeys;
-}
-
-- (NSDictionary*)propertyInfosByPropertyKeys{
-    if(!_propertyInfosByPropertyKeys){
-        NSMutableDictionary * propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
-        [self.uninitializedPropertyInfosByPropertyKeys enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, OOPropertyInfo *  _Nonnull propertyInfo, BOOL * _Nonnull stop) {
-            propertyInfo =[self initializePropertyInfo:propertyInfo];
-            if (propertyInfo) {
-                [propertyInfosByPropertyKeys setObject:propertyInfo forKey:key];
-            }
-        }];
-        _propertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
-    }
-    return _propertyInfosByPropertyKeys;
-}
-
-- (NSDictionary*)uninitializedPropertyInfosByPropertyKeys{
-    if (!_uninitializedPropertyInfosByPropertyKeys) {
-        NSMutableDictionary *propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
-        [self enumeratePropertiesUsingBlock:^(objc_property_t property) {
-            OOPropertyInfo *propertyInfo=[OOPropertyInfo propertyInfoWithProperty:property ownCls:self.cls];
-            if (propertyInfo.ivarKey) {
-                [propertyInfosByPropertyKeys setObject:propertyInfo forKey:propertyInfo.propertyKey];
-            }
-        }];
-        _uninitializedPropertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
-    }
-    return _uninitializedPropertyInfosByPropertyKeys;
-}
-
-- (NSMapTable*)mapTable{
-    if (!_mapTable) {
-        _mapTable=[NSMapTable strongToWeakObjectsMapTable];
-    }
-    return _mapTable;
-}
 - (void)enumeratePropertiesUsingBlock:(void (^)(objc_property_t property))block{
     Class cls=self.cls;
     while (YES) {
@@ -388,13 +325,6 @@
         free(properties);
         cls = cls.superclass;
     }
-}
-
-- (dispatch_semaphore_t)mapTableSemaphore{
-    if (!_mapTableSemaphore) {
-       _mapTableSemaphore = dispatch_semaphore_create(1);
-    }
-    return _mapTableSemaphore;
 }
 
 @end

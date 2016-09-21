@@ -55,28 +55,30 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
     OOPropertyTypeDynamic=1<<1,
     OOPropertyTypeReadonly=1<<2
 };
+
 @class OOClassInfo;
+
 @interface OOPropertyInfo : NSObject
 
-@property (nonatomic, copy  ,readonly) NSString           *ivarKey;
-@property (nonatomic, copy  ,readonly) NSString           *propertyKey;
-@property (nonatomic, assign,readonly) Class              propertyCls;
-@property (nonatomic, assign,readonly) Class              ownCls;
-@property (nonatomic, assign,readonly) OOClassInfo        *propertyClassInfo;
-@property (nonatomic, assign,readonly) OOClassInfo        *ownClassInfo;
-@property (nonatomic, assign,readonly) SEL                setter;
-@property (nonatomic, assign,readonly) SEL                getter;
-@property (nonatomic, assign,readonly) OOEncodingType     encodingType;
-@property (nonatomic, assign,readonly) OOPropertyType     propertyType;
-@property (nonatomic, assign,readonly) ptrdiff_t          ivarOffset;
-@property (nonatomic, assign,readonly) OOReferenceType    referenceType;
-@property (nonatomic, copy  ,readonly) id                 jsonKeyPath;
-@property (nonatomic, strong,readonly) NSValueTransformer *jsonValueTransformer;
-@property (nonatomic, strong,readonly) NSString           *dbColumn;
-@property (nonatomic, strong,readonly) NSValueTransformer *dbValueTransformer;
-@property (nonatomic, assign,readonly) OODbColumnType     dbColumnType;
-@property (nonatomic, assign,readonly) SEL                jsonForwards;
-@property (nonatomic, assign,readonly) SEL                jsonBackwards;
+@property (nonatomic,copy  ,readonly) NSString           *ivarKey;
+@property (nonatomic,copy  ,readonly) NSString           *propertyKey;
+@property (nonatomic,assign,readonly) Class              propertyCls;
+@property (nonatomic,assign,readonly) Class              ownCls;
+@property (nonatomic,assign,readonly) OOClassInfo        *propertyClassInfo;
+@property (nonatomic,assign,readonly) OOClassInfo        *ownClassInfo;
+@property (nonatomic,assign,readonly) SEL                setter;
+@property (nonatomic,assign,readonly) SEL                getter;
+@property (nonatomic,assign,readonly) OOEncodingType     encodingType;
+@property (nonatomic,assign,readonly) OOPropertyType     propertyType;
+@property (nonatomic,assign,readonly) ptrdiff_t          ivarOffset;
+@property (nonatomic,assign,readonly) OOReferenceType    referenceType;
+@property (nonatomic,copy  ,readonly) id                 jsonKeyPath;
+@property (nonatomic,strong,readonly) NSValueTransformer *jsonValueTransformer;
+@property (nonatomic,strong,readonly) NSString           *dbColumn;
+@property (nonatomic,strong,readonly) NSValueTransformer *dbValueTransformer;
+@property (nonatomic,assign,readonly) OODbColumnType     dbColumnType;
+@property (nonatomic,assign,readonly) SEL                jsonForwards;
+@property (nonatomic,assign,readonly) SEL                jsonBackwards;
 
 + (OOPropertyInfo*)propertyInfoWithProperty:(objc_property_t)property ownCls:(Class)ownCls;
 
@@ -84,23 +86,23 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 
 @interface OOClassInfo : NSObject
 
-@property (nonatomic, assign,readonly) Class        cls;
-@property (nonatomic, strong,readonly) NSArray      *dbPropertyInfos;
-@property (nonatomic, strong,readonly) NSArray      *jsonPropertyInfos;
-@property (nonatomic, strong,readonly) NSArray      *propertyKeys;
-@property (nonatomic, strong,readonly) NSArray      *propertyInfos;
-@property (nonatomic, strong,readonly) NSDictionary *propertyInfosByPropertyKeys;
-@property (nonatomic, assign,readonly) BOOL         conformsToOOJsonModel;
-@property (nonatomic, assign,readonly) BOOL         conformsToOODbModel;
-@property (nonatomic, assign,readonly) BOOL         conformsToOOUniqueModel;
-@property (nonatomic, assign,readonly) BOOL         hasJsonValueTransformer;
-@property (nonatomic, assign,readonly) BOOL         hasDbValueTransformer;
-@property (nonatomic, assign,readonly) BOOL         hasDbColumnType;
-@property (nonatomic, strong,readonly) NSMapTable   *mapTable;
-@property (nonatomic, copy  ,readonly) NSString     *uniquePropertyKey;
-@property (nonatomic, copy  ,readonly) NSString     *dbTable;
-@property (nonatomic, strong,readonly) dispatch_semaphore_t mapTableSemaphore;
-@property (nonatomic, assign) NSTimeInterval        dbTimestamp;
+@property (nonatomic,assign,readonly) Class                cls;
+@property (nonatomic,strong,readonly) NSArray              *dbPropertyInfos;
+@property (nonatomic,strong,readonly) NSArray              *jsonPropertyInfos;
+@property (nonatomic,strong,readonly) NSArray              *propertyKeys;
+@property (nonatomic,strong,readonly) NSArray              *propertyInfos;
+@property (nonatomic,strong,readonly) NSDictionary         *propertyInfosByPropertyKeys;
+@property (nonatomic,assign,readonly) BOOL                 conformsToOOJsonModel;
+@property (nonatomic,assign,readonly) BOOL                 conformsToOODbModel;
+@property (nonatomic,assign,readonly) BOOL                 conformsToOOUniqueModel;
+@property (nonatomic,assign,readonly) BOOL                 hasJsonValueTransformer;
+@property (nonatomic,assign,readonly) BOOL                 hasDbValueTransformer;
+@property (nonatomic,assign,readonly) BOOL                 hasDbColumnType;
+@property (nonatomic,strong,readonly) NSMapTable           *mapTable;
+@property (nonatomic,copy  ,readonly) NSString             *uniquePropertyKey;
+@property (nonatomic,copy  ,readonly) NSString             *dbTable;
+@property (nonatomic,strong,readonly) dispatch_semaphore_t mapTableSemaphore;
+@property (nonatomic,assign         ) NSTimeInterval       dbTimestamp;
 
 + (instancetype)classInfoWithClass:(Class)cls;
 
