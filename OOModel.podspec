@@ -9,7 +9,7 @@ s.author   = { 'oyh5233' => 'oyh5233@outlook.com' }
 s.source   = { :git => 'https://github.com/oyh5233/OOModel.git',
 :tag => "#{s.version}" }
 
-s.description = 'single,synchronous and thread safety model in memory and in database,support json mapping.concise api to use.'
+s.description = 'single,synchronous and thread safety model in memory and in database,support json mapping,concise api to use.'
 
 s.requires_arc   = true
 
