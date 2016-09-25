@@ -5,6 +5,8 @@
 
 #import "OOModelInfo.h"
 #import "NSObject+OOModel.h"
+static OODatabase *oo_global_database=nil;
+
 @interface OOPropertyInfo()
 
 @property (nonatomic, copy  ) NSString           *ivarKey;
@@ -31,23 +33,24 @@
 
 @interface OOClassInfo ()
 
-@property (nonatomic, assign) Class        cls;
-@property (nonatomic, strong) NSArray      *propertyInfos;
-@property (nonatomic, strong) NSArray      *dbPropertyInfos;
-@property (nonatomic, strong) NSArray      *jsonPropertyInfos;
-@property (nonatomic, strong) NSArray      *propertyKeys;
-@property (nonatomic, strong) NSDictionary *uninitializedPropertyInfosByPropertyKeys;
-@property (nonatomic, strong) NSDictionary *propertyInfosByPropertyKeys;
-@property (nonatomic, assign) BOOL         conformsToOOJsonModel;
-@property (nonatomic, assign) BOOL         conformsToOODbModel;
-@property (nonatomic, assign) BOOL         conformsToOOUniqueModel;
-@property (nonatomic, assign) BOOL         hasJsonValueTransformer;
-@property (nonatomic, assign) BOOL         hasDbValueTransformer;
-@property (nonatomic, assign) BOOL         hasDbColumnType;
-@property (nonatomic, strong) NSMapTable   *mapTable;
-@property (nonatomic, strong) dispatch_semaphore_t mapTableSemaphore;
-@property (nonatomic, copy) NSString     *uniquePropertyKey;
-@property (nonatomic, copy) NSString     *dbTable;
+@property (nonatomic,assign) Class          cls;
+
+@property (nonatomic,strong) NSArray        *propertyKeys;
+@property (nonatomic,strong) NSArray        *propertyInfos;
+@property (nonatomic,strong) NSArray        *jsonPropertyInfos;
+@property (nonatomic,strong) NSDictionary   *propertyInfosByPropertyKeys;
+
+@property (nonatomic,assign) BOOL           conformsToOOJsonModel;
+@property (nonatomic,assign) BOOL           hasJsonValueTransformer;
+
+@property (nonatomic,assign) BOOL           conformsToOOUniqueModel;
+@property (nonatomic,strong) NSArray        *dbPropertyInfos;
+@property (nonatomic,copy  ) NSString       *uniquePropertyKey;
+
+@property (nonatomic,assign) BOOL           conformsToOODbModel;
+@property (nonatomic,assign) BOOL           hasDbValueTransformer;
+@property (nonatomic,assign) BOOL           hasDbColumnType;
+@property (nonatomic,copy  ) NSString       *dbTable;
 
 @end
 
@@ -193,27 +196,20 @@
     self=[self init];
     if (self) {
         self.cls=cls;
-        self.mapTable=[NSMapTable strongToWeakObjectsMapTable];
-        self.uniquePropertyKey=[self.cls uniquePropertyKey];
-        self.dbTable=OOCOMPACT(NSStringFromClass(self.cls));
-        self.mapTableSemaphore = dispatch_semaphore_create(1);
         if ([cls conformsToProtocol:@protocol(OOJsonModel)]) {
             self.conformsToOOJsonModel=YES;
-            if ([cls respondsToSelector:@selector(jsonValueTransformerForPropertyKey:)]) {
-                self.hasJsonValueTransformer=YES;
-            }
+            self.hasJsonValueTransformer=[cls respondsToSelector:@selector(jsonValueTransformerForPropertyKey:)];
         }
         if ([cls conformsToProtocol:@protocol(OODbModel)]) {
             self.conformsToOODbModel=YES;
-            if ([cls respondsToSelector:@selector(dbValueTransformerForPropertyKey:)]) {
-                self.hasDbValueTransformer=YES;
-            }
-            if ([cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)]) {
-                self.hasDbColumnType=YES;
-            }
+            self.hasDbValueTransformer=[cls respondsToSelector:@selector(dbValueTransformerForPropertyKey:)];
+            self.hasDbColumnType=[cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)];
+            self.dbTable=OOCOMPACT(NSStringFromClass(self.cls));
         }
         if ([cls conformsToProtocol:@protocol(OOUniqueModel)]) {
             self.conformsToOOUniqueModel=YES;
+            self.mapTable=[OOMapTable strongToWeakObjectsMapTable];
+            self.uniquePropertyKey=[self.cls uniquePropertyKey];
         }
         NSMutableDictionary *propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
         [self enumeratePropertiesUsingBlock:^(objc_property_t property) {
@@ -326,5 +322,27 @@
         cls = cls.superclass;
     }
 }
-
++ (NSRecursiveLock*)globalLock{
+    static NSRecursiveLock * lock=nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        lock=[[NSRecursiveLock alloc]init];
+    });
+    return lock;
+}
++ (void)setGlobalDatabase:(OODatabase*)database{
+    NSRecursiveLock *lock=[self globalLock];
+    [lock lock];
+    if (oo_global_database!=database) {
+        oo_global_database=database;
+    }
+    [lock unlock];
+}
++ (OODatabase*)globalDatabase{
+    NSRecursiveLock *lock=[self globalLock];
+    [lock lock];
+    OODatabase *db=oo_global_database;
+    [lock unlock];
+    return db;
+}
 @end

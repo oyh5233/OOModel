@@ -21,11 +21,10 @@
     if(dispatch_get_specific(self.queueKey)){
         block(self);
     }else{
-        dispatch_barrier_sync(self.queue,^{
+        dispatch_sync(self.queue,^{
             block(self);
         });
     }
-  
 }
 #pragma mark --
 #pragma mark -- init

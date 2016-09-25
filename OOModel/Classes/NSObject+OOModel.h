@@ -104,7 +104,7 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return instance
  */
-+ (instancetype)oo_modelWithUniqueValue:(id)value;
++ (instancetype)oo_modelWithUniqueValue:(id)uniqueValue;
 
 /*
  *  e.g.
@@ -125,8 +125,6 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return result
  */
-+ (BOOL)oo_openDb:(NSString*)file;
-
 + (void)oo_deleteModelsBeforeDate:(NSDate*)date;
 /**
  *

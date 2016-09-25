@@ -6,6 +6,7 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 #import "OODatabase.h"
+#import "OOMapTable.h"
 typedef NS_ENUM(NSInteger,OODbColumnType) {
     OODbColumnTypeText,
     OODbColumnTypeInteger,
@@ -86,25 +87,29 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 
 @interface OOClassInfo : NSObject
 
-@property (nonatomic,assign,readonly) Class                cls;
-@property (nonatomic,strong,readonly) NSArray              *dbPropertyInfos;
-@property (nonatomic,strong,readonly) NSArray              *jsonPropertyInfos;
-@property (nonatomic,strong,readonly) NSArray              *propertyKeys;
-@property (nonatomic,strong,readonly) NSArray              *propertyInfos;
-@property (nonatomic,strong,readonly) NSDictionary         *propertyInfosByPropertyKeys;
-@property (nonatomic,assign,readonly) BOOL                 conformsToOOJsonModel;
-@property (nonatomic,assign,readonly) BOOL                 conformsToOODbModel;
-@property (nonatomic,assign,readonly) BOOL                 conformsToOOUniqueModel;
-@property (nonatomic,assign,readonly) BOOL                 hasJsonValueTransformer;
-@property (nonatomic,assign,readonly) BOOL                 hasDbValueTransformer;
-@property (nonatomic,assign,readonly) BOOL                 hasDbColumnType;
-@property (nonatomic,strong,readonly) NSMapTable           *mapTable;
-@property (nonatomic,copy  ,readonly) NSString             *uniquePropertyKey;
-@property (nonatomic,copy  ,readonly) NSString             *dbTable;
-@property (nonatomic,strong,readonly) dispatch_semaphore_t mapTableSemaphore;
-@property (nonatomic,assign         ) NSTimeInterval       dbTimestamp;
+@property (nonatomic,assign,readonly) Class          cls;
 
+@property (nonatomic,strong,readonly) NSArray        *propertyKeys;
+@property (nonatomic,strong,readonly) NSArray        *propertyInfos;
+@property (nonatomic,strong,readonly) NSArray        *jsonPropertyInfos;
+@property (nonatomic,strong,readonly) NSDictionary   *propertyInfosByPropertyKeys;
+
+@property (nonatomic,assign,readonly) BOOL           conformsToOOJsonModel;
+@property (nonatomic,assign,readonly) BOOL           hasJsonValueTransformer;
+
+@property (nonatomic,assign,readonly) BOOL           conformsToOOUniqueModel;
+@property (nonatomic,copy  ,readonly) NSString       *uniquePropertyKey;
+@property (nonatomic                ) OOMapTable     *mapTable;
+
+@property (nonatomic,assign,readonly) BOOL           conformsToOODbModel;
+@property (nonatomic,strong,readonly) NSArray        *dbPropertyInfos;
+@property (nonatomic,assign,readonly) BOOL           hasDbValueTransformer;
+@property (nonatomic,assign,readonly) BOOL           hasDbColumnType;
+@property (nonatomic                ) OODatabase     *database;
+@property (nonatomic,copy  ,readonly) NSString       *dbTable;
+@property (nonatomic,assign         ) NSTimeInterval dbTimestamp;
 + (instancetype)classInfoWithClass:(Class)cls;
-
++ (void)setGlobalDatabase:(OODatabase*)database;
++ (NSRecursiveLock*)globalLock;
 @end
 
