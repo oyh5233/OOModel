@@ -364,6 +364,8 @@ static void oo_set_value_for_property_apply_db(const void *_value, void *_contex
     __unsafe_unretained NSValueTransformer *valueTransformer=propertyInfo.dbValueTransformer;
     if (valueTransformer) {
         value=[valueTransformer transformedValue:value];
+    }else if (propertyInfo.dbForwards) {
+        value=((id (*)(Class, SEL,id))(void *) objc_msgSend)(propertyInfo.propertyCls,propertyInfo.dbForwards,value);
     }
     if (!oo_set_object_for_property(model, value, propertyInfo)) {
         goto set_fail;
@@ -568,6 +570,10 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }else{
         NSLog(@"json is not a string or dictionary!---%@",json);
     }
+}
+
+- (void)oo_uniqueValue{
+    
 }
 
 - (void)oo_mergeWithJsonString:(NSString*)string{

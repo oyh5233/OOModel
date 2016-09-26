@@ -81,6 +81,7 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 @property (nonatomic,assign,readonly) OODbColumnType     dbColumnType;
 @property (nonatomic,assign,readonly) SEL                jsonForwards;
 @property (nonatomic,assign,readonly) SEL                jsonBackwards;
+@property (nonatomic,assign,readonly) SEL                dbForwards;
 
 + (OOPropertyInfo*)propertyInfoWithProperty:(objc_property_t)property ownCls:(Class)ownCls;
 
@@ -92,23 +93,21 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 
 @property (nonatomic,strong,readonly) NSArray        *propertyKeys;
 @property (nonatomic,strong,readonly) NSArray        *propertyInfos;
-@property (nonatomic,strong,readonly) NSArray        *jsonPropertyInfos;
 @property (nonatomic,strong,readonly) NSDictionary   *propertyInfosByPropertyKeys;
 
-@property (nonatomic,assign,readonly) BOOL           conformsToOOJsonModel;
-@property (nonatomic,assign,readonly) BOOL           hasJsonValueTransformer;
+@property (nonatomic,strong,readonly) NSArray        *jsonPropertyInfos;
 
-@property (nonatomic,assign,readonly) BOOL           conformsToOOUniqueModel;
 @property (nonatomic,copy  ,readonly) NSString       *uniquePropertyKey;
 @property (nonatomic                ) OOMapTable     *mapTable;
 
-@property (nonatomic,assign,readonly) BOOL           conformsToOODbModel;
 @property (nonatomic,strong,readonly) NSArray        *dbPropertyInfos;
-@property (nonatomic,assign,readonly) BOOL           hasDbValueTransformer;
 @property (nonatomic,assign,readonly) BOOL           hasDbColumnType;
-@property (nonatomic                ) OODatabase     *database;
 @property (nonatomic,copy  ,readonly) NSString       *dbTable;
+@property (nonatomic                ) OODatabase     *database;
 @property (nonatomic,assign         ) NSTimeInterval dbTimestamp;
+@property (nonatomic,assign,readonly) sqlite3_stmt   *insertStmt;
+@property (nonatomic,assign,readonly) sqlite3_stmt   *updateStmt;
+@property (nonatomic,assign,readonly) sqlite3_stmt   *uniqueStmt;
 + (instancetype)classInfoWithClass:(Class)cls;
 + (void)setGlobalDatabase:(OODatabase*)database;
 + (NSLock*)globalLock;

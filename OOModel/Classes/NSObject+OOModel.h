@@ -118,6 +118,8 @@ extern const NSString * oo_compaction_prefix;
  *  @param json 
  */
 - (void)oo_mergeWithJson:(id)json;
+
+- (void)oo_uniqueValue;
 /**
  *  if model class conforms to OODbModel,should open a db at first.All models use the same db.
  *
