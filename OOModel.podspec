@@ -12,7 +12,7 @@ s.source   = { :git => 'https://github.com/oyh5233/OOModel.git',
 s.description = 'single,synchronous and thread safety model in memory and in database,support json mapping,concise api to use.'
 
 s.requires_arc   = true
-
+s.platform     = :ios
 s.ios.deployment_target = '7.0'
 
 s.source_files = 'OOModel/Classes/*.{h,m}'
