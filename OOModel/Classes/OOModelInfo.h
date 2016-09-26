@@ -7,6 +7,7 @@
 #import <objc/runtime.h>
 #import "OODatabase.h"
 #import "OOMapTable.h"
+#import "sqlite3.h"
 typedef NS_ENUM(NSInteger,OODbColumnType) {
     OODbColumnTypeText,
     OODbColumnTypeInteger,

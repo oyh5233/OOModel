@@ -205,10 +205,11 @@ static OODatabase *oo_global_database=nil;
             self.hasDbValueTransformer=[cls respondsToSelector:@selector(dbValueTransformerForPropertyKey:)];
             self.hasDbColumnType=[cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)];
             self.dbTable=OOCOMPACT(NSStringFromClass(self.cls));
+            self.database=oo_global_database;
         }
         if ([cls conformsToProtocol:@protocol(OOUniqueModel)]) {
             self.conformsToOOUniqueModel=YES;
-            self.mapTable=[OOMapTable strongToWeakObjectsMapTable];
+            self.mapTable=[[OOMapTable alloc]initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];;
             self.uniquePropertyKey=[self.cls uniquePropertyKey];
         }
         NSMutableDictionary *propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
@@ -335,6 +336,7 @@ static OODatabase *oo_global_database=nil;
     [lock lock];
     if (oo_global_database!=database) {
         oo_global_database=database;
+        [oo_global_database open];
     }
     [lock unlock];
 }

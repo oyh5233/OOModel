@@ -8,8 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
-@interface OOMapTable : NSMapTable
+@interface OOMapTable : NSObject
+- (instancetype)initWithKeyOptions:(NSPointerFunctionsOptions)keyOptions valueOptions:(NSPointerFunctionsOptions)valueOptions capacity:(NSUInteger)initialCapacity;
 
+- (id)objectForKey:(id)key;
+- (void)setObject:(id)object forKey:(id)key;
+- (void)removeObjectForKey:(id)key;
 - (void)inMt:(void(^)(OOMapTable *mt))block;
 
 @end

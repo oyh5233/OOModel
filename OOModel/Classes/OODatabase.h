@@ -18,7 +18,11 @@
 
 - (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments;
 
+- (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments disableUseDbQueue:(BOOL)autoUseDbQueue;
+
 - (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments;
+
+- (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments disableUseDbQueue:(BOOL)disableUseDbQueue;
 
 - (BOOL)open;
 

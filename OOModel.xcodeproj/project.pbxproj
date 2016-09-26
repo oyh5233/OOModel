@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		113195AF1D9815B700DBE839 /* OOMapTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 113195AD1D9815B700DBE839 /* OOMapTable.h */; };
+		113195AF1D9815B700DBE839 /* OOMapTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 113195AD1D9815B700DBE839 /* OOMapTable.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		113195B01D9815B700DBE839 /* OOMapTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 113195AE1D9815B700DBE839 /* OOMapTable.m */; };
 		CF052B101D35F24E00826666 /* NSObject+OOModel.h in Headers */ = {isa = PBXBuildFile; fileRef = CF052B051D35F24E00826666 /* NSObject+OOModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CF052B111D35F24E00826666 /* NSObject+OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B061D35F24E00826666 /* NSObject+OOModel.m */; };
@@ -214,11 +214,11 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				113195AF1D9815B700DBE839 /* OOMapTable.h in Headers */,
 				CF052B191D35F2B200826666 /* OODatabase.h in Headers */,
 				CF052B1A1D35F2B200826666 /* OOModel.h in Headers */,
 				CF052B1B1D35F2B200826666 /* OOModelInfo.h in Headers */,
 				CF052B101D35F24E00826666 /* NSObject+OOModel.h in Headers */,
+				113195AF1D9815B700DBE839 /* OOMapTable.h in Headers */,
 				CF052B171D35F24E00826666 /* OOValueTransformer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

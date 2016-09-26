@@ -23,7 +23,8 @@ typedef void (^UserBlock) ();
 @implementation ViewController
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [NSObject oo_openDb:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
+    [NSObject oo_setGlobalDB:[OODatabase databaseWithFile:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]]];
+//    [NSObject oo_openDb:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
     
     [self test1];
     
@@ -32,12 +33,13 @@ typedef void (^UserBlock) ();
 }
 
 - (void)test1{
-    NSMutableDictionary * json=[[NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:[[NSBundle mainBundle]pathForResource:@"user" ofType:@"json"]] options:NSJSONReadingAllowFragments error:nil] mutableCopy];
+  
     NSMutableArray *jsons=[NSMutableArray array];
     int count=10000;
     for (int i=0;i<count;i++){
+        NSMutableDictionary * json=[[NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:[[NSBundle mainBundle]pathForResource:@"user" ofType:@"json"]] options:NSJSONReadingAllowFragments error:nil] mutableCopy];
         [json setObject:@(count+i) forKey:@"user_id"];
-        [jsons addObject:json];
+        [jsons addObject:[json copy]];
     }
     YYBenchmark(^{
         NSArray *users=[WMUser oo_modelsWithJsonDictionaries:jsons];
