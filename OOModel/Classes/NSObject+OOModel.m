@@ -483,7 +483,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }else{
         block(mt,db,NO);
     }
-    return models?:models,nil;
+    return models?models:nil;
 }
 + (instancetype)oo_modelWithJson:(id)json{
     OOClassInfo *classInfo=[self oo_classInfo];
@@ -506,7 +506,6 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     return [self oo_modelsWithAfterWhereSql:afterWhereSql arguments:arguments classInfo:classInfo mt:mt db:db isInDbQueue:NO];
 }
 
-
 #pragma mark --
 #pragma mark -- json
 
@@ -516,7 +515,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }else if ([json isKindOfClass:[NSDictionary class]]){
         return [self oo_modelWithJsonDictionary:json classInfo:classInfo mt:mt db:db isInDbQueue:NO];
     }else{
-        NSLog(@"json is not a string or dictionary!---",json);
+        NSLog(@"json is not a string or dictionary!---%@",json);
     }
     return nil;
 }
@@ -532,7 +531,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 + (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
     if (![jsonDictionary isKindOfClass:NSDictionary.class]) {
-        NSLog(@"jsonDictionary must be a dictionary!---",jsonDictionary);
+        NSLog(@"jsonDictionary must be a dictionary!---%@",jsonDictionary);
         return nil;
     }
     NSString * uniqueKey=classInfo.uniquePropertyKey;
@@ -567,7 +566,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }else if([json isKindOfClass:NSDictionary.class]){
         [self oo_mergeWithJsonDictionary:json];
     }else{
-        NSLog(@"json is not a string or dictionary!---",json);
+        NSLog(@"json is not a string or dictionary!---%@",json);
     }
 }
 
@@ -634,7 +633,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
             id value=nil;;
             oo_get_object_for_property(dbModel, &value,uniquePropertyInfo);
             if (!value) {
-                NSLog(@"db model does not have a unique value!---",dbModel);
+                NSLog(@"db model does not have a unique value!---%@",dbModel);
                 return;
             }
             mtModel=[mt objectForKey:value];
@@ -795,7 +794,11 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         }
     }];
 }
-
++ (void)oo_deleteModelsBeforeDate:(NSDate*)date{
+    OOClassInfo *classInfo=[self oo_classInfo];
+    OODatabase *db=classInfo.database;
+    [self oo_deleteModelsBeforeDate:date classInfo:classInfo db:db];
+}
 + (void)oo_deleteModelsBeforeDate:(NSDate*)date classInfo:(OOClassInfo*)classInfo db:(OODatabase*)db{
     NSString *sql=[NSString stringWithFormat:@"DELETE FROM %@ WHERE %@<%f",classInfo.dbTable,oo_latest_used_timestamp,[date timeIntervalSince1970]];
     [db executeUpdate:sql arguments:nil];
@@ -925,4 +928,10 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     [lock unlock];
 }
 
++ (void)oo_setDb:(OODatabase*)db{
+    NSLock *lock=[OOClassInfo globalLock];
+    [lock lock];
+    [self oo_classInfo].database=db;
+    [lock unlock];
+}
 @end

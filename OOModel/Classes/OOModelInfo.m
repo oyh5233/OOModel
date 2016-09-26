@@ -323,16 +323,16 @@ static OODatabase *oo_global_database=nil;
         cls = cls.superclass;
     }
 }
-+ (NSRecursiveLock*)globalLock{
-    static NSRecursiveLock * lock=nil;
++ (NSLock*)globalLock{
+    static NSLock * lock=nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        lock=[[NSRecursiveLock alloc]init];
+        lock=[[NSLock alloc]init];
     });
     return lock;
 }
 + (void)setGlobalDatabase:(OODatabase*)database{
-    NSRecursiveLock *lock=[self globalLock];
+    NSLock *lock=[self globalLock];
     [lock lock];
     if (oo_global_database!=database) {
         oo_global_database=database;
@@ -341,7 +341,7 @@ static OODatabase *oo_global_database=nil;
     [lock unlock];
 }
 + (OODatabase*)globalDatabase{
-    NSRecursiveLock *lock=[self globalLock];
+    NSLock *lock=[self globalLock];
     [lock lock];
     OODatabase *db=oo_global_database;
     [lock unlock];

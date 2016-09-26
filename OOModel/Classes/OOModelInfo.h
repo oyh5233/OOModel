@@ -111,6 +111,6 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 @property (nonatomic,assign         ) NSTimeInterval dbTimestamp;
 + (instancetype)classInfoWithClass:(Class)cls;
 + (void)setGlobalDatabase:(OODatabase*)database;
-+ (NSRecursiveLock*)globalLock;
++ (NSLock*)globalLock;
 @end
 
