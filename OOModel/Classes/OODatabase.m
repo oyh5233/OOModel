@@ -87,12 +87,10 @@
 
 #pragma mark --
 #pragma mark -- query
+
 - (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments{
-    return [self executeQuery:sql arguments:arguments disableUseDbQueue:NO];
-}
-- (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments disableUseDbQueue:(BOOL)disableUseDbQueue{
     __block NSArray *ret=[NSArray array];
-    void (^block)(OODatabase *db)=^(OODatabase *db){
+    [self inDB:^(OODatabase *db){
         NSAssert(self.sqlite, @"should open database at first！");
         NSMutableArray *sets  = nil;
         sqlite3_stmt *stmt = NULL;
@@ -130,15 +128,7 @@
         }
         sqlite3_finalize(stmt);
         ret=sets;
-    };
-    if (disableUseDbQueue) {
-        block(self);
-    }else{
-        [self inDB:^(OODatabase *db){
-            block(db);
-        }];
-    }
-
+    }];
     return ret;
 }
 
@@ -146,12 +136,8 @@
 #pragma mark -- update
 
 - (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments{
-    return [self executeUpdate:sql arguments:arguments disableUseDbQueue:NO];
-}
-
-- (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments disableUseDbQueue:(BOOL)disableUseDbQueue{
     __block bool ret=NO;
-    void (^block)(OODatabase *db)=^(OODatabase *db){
+    [self inDB:^(OODatabase *db){
         sqlite3_stmt *stmt = NULL;
         int result = sqlite3_prepare_v2(self.sqlite, [sql UTF8String], -1, &stmt, 0);
         if (result != SQLITE_OK) {
@@ -182,14 +168,7 @@
         }
         sqlite3_finalize(stmt);
         ret=YES;
-    };
-    if (disableUseDbQueue) {
-        block(self);
-    }else{
-        [self inDB:^(OODatabase *db){
-            block(db);
-        }];
-    }
+    }];
     return ret;
 }
 

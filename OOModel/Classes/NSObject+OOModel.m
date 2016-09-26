@@ -466,7 +466,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     void(^block)(OOMapTable *mt,OODatabase *db,BOOL isInDbQueue)=^(OOMapTable *mt,OODatabase *db,BOOL isInDbQueue){
         for (int i=0;i<jsonDictionaries.count;i++){
             NSDictionary *jsonDictionary=jsonDictionaries[i];
-            id model=[self oo_modelWithJsonDictionary:jsonDictionary classInfo:classInfo mt:mt db:db isInDbQueue:isInDbQueue];
+            id model=[self oo_modelWithJsonDictionary:jsonDictionary classInfo:classInfo mt:mt db:db];
             if (model) {
                 [models addObject:model];
             }
@@ -496,14 +496,14 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     OOClassInfo *classInfo=[self oo_classInfo];
     OOMapTable *mt=classInfo.mapTable;
     OODatabase *db=classInfo.database;
-    return [self oo_modelWithTransformedUniqueValue:uniqueValue classInfo:classInfo mt:mt db:db isInDbQueue:NO];
+    return [self oo_modelWithTransformedUniqueValue:uniqueValue classInfo:classInfo mt:mt db:db];
 }
 
 + (NSArray *)oo_modelsWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments{
     OOClassInfo *classInfo=[self oo_classInfo];
     OOMapTable *mt=classInfo.mapTable;
     OODatabase *db=classInfo.database;
-    return [self oo_modelsWithAfterWhereSql:afterWhereSql arguments:arguments classInfo:classInfo mt:mt db:db isInDbQueue:NO];
+    return [self oo_modelsWithAfterWhereSql:afterWhereSql arguments:arguments classInfo:classInfo mt:mt db:db];
 }
 
 #pragma mark --
@@ -511,25 +511,25 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 
 + (instancetype)oo_modelWithJson:(id)json classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db{
     if ([json isKindOfClass:[NSString class]]) {
-        return [self oo_modelWithJsonString:json classInfo:classInfo mt:mt db:db isInDbQueue:NO];
+        return [self oo_modelWithJsonString:json classInfo:classInfo mt:mt db:db];
     }else if ([json isKindOfClass:[NSDictionary class]]){
-        return [self oo_modelWithJsonDictionary:json classInfo:classInfo mt:mt db:db isInDbQueue:NO];
+        return [self oo_modelWithJsonDictionary:json classInfo:classInfo mt:mt db:db];
     }else{
         NSLog(@"json is not a string or dictionary!---%@",json);
     }
     return nil;
 }
 
-+ (instancetype)oo_modelWithJsonString:(NSString*)jsonString classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (instancetype)oo_modelWithJsonString:(NSString*)jsonString classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db{
     id json=[NSJSONSerialization JSONObjectWithData:[jsonString dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingAllowFragments error:nil];
     if ([json isKindOfClass:NSDictionary.class]) {
-        return [self oo_modelWithJsonDictionary:json classInfo:classInfo mt:mt db:db isInDbQueue:isInDbQueue];
+        return [self oo_modelWithJsonDictionary:json classInfo:classInfo mt:mt db:db];
     }
     NSLog(@"jsonString can not serializate to object!---%@",jsonString);
     return nil;
 }
 
-+ (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (instancetype)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db{
     if (![jsonDictionary isKindOfClass:NSDictionary.class]) {
         NSLog(@"jsonDictionary must be a dictionary!---%@",jsonDictionary);
         return nil;
@@ -545,7 +545,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         NSLog(@"json dictionary must have unique key value!---%@",jsonDictionary);
         return nil;
     }
-    id  model=[self oo_modelWithTransformedUniqueValue:uniqueValue classInfo:classInfo mt:mt db:db isInDbQueue:isInDbQueue];
+    id  model=[self oo_modelWithTransformedUniqueValue:uniqueValue classInfo:classInfo mt:mt db:db];
     [model oo_setIsReplaced:YES];
     if (!model) {
         model=[[self alloc]init];
@@ -600,24 +600,20 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 }
 #pragma mark --
 #pragma mark -- value
-+ (instancetype)oo_modelWithTransformedUniqueValue:(id)value classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (instancetype)oo_modelWithTransformedUniqueValue:(id)value classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db{
     __block id model=nil;
-    if (mt) {
-        [mt inMt:^(OOMapTable *mt) {
-            model=[mt objectForKey:value];
-            if (!model) {
-                model=[[self oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@=?",OOCOMPACT(classInfo.uniquePropertyKey)] arguments:@[value] classInfo:classInfo mt:mt db:db  isInDbQueue:isInDbQueue] lastObject];
-            }
-        }];
-    }else{
-        model = [[self oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@=?",OOCOMPACT(classInfo.uniquePropertyKey)] arguments:@[value] classInfo:classInfo mt:mt db:db isInDbQueue:isInDbQueue] lastObject];
+    [mt inMt:^(OOMapTable *mt) {
+        model=[mt objectForKey:value];
+    }];
+    if (!model) {
+        model=[[self oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@=?",OOCOMPACT(classInfo.uniquePropertyKey)] arguments:@[value] classInfo:classInfo mt:mt db:db ] lastObject];
     }
     return model;
 }
 
 //search in db
-+ (NSArray *)oo_modelsWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
-    NSArray * results=[self oo_modelsWithAfterWhereSql:afterWhereSql arguments:arguments classInfo:classInfo db:db isInDbQueue:isInDbQueue];
++ (NSArray *)oo_modelsWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODatabase*)db{
+    NSArray * results=[self oo_modelsWithAfterWhereSql:afterWhereSql arguments:arguments classInfo:classInfo db:db];
     if (!results) {
         return nil;
     }
@@ -648,11 +644,11 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     return models;
 }
 // search in db only
-+ (NSArray *)oo_modelsWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments classInfo:(OOClassInfo*)classInfo db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (NSArray *)oo_modelsWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments classInfo:(OOClassInfo*)classInfo db:(OODatabase*)db{
     if (!db) {
         return nil;
     }
-    [self oo_createTableIfNeed:classInfo db:db isInDbQueue:isInDbQueue];
+    [self oo_createTableIfNeed:classInfo db:db];
     NSMutableArray *models=[NSMutableArray array];
     CFArrayRef propertyInfos=(__bridge CFArrayRef)classInfo.dbPropertyInfos;
     NSMutableString *sql=nil;
@@ -663,7 +659,7 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }else{
         sql=[[NSString stringWithFormat:@"SELECT * FROM %@",classInfo.dbTable] mutableCopy];
     }
-    NSArray *results=[db executeQuery:sql arguments:arguments disableUseDbQueue:isInDbQueue];
+    NSArray *results=[db executeQuery:sql arguments:arguments];
     [results enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
         id model=[[[classInfo cls] alloc]init];
         OOModelContext context={0};
@@ -734,19 +730,19 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     return YES;
 }
 
-+ (BOOL)oo_createTableIfNeed:(OOClassInfo*)classInfo db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (BOOL)oo_createTableIfNeed:(OOClassInfo*)classInfo db:(OODatabase*)db{
     if(classInfo.dbTimestamp!=db.dbTimestamp){
-        [self oo_createTable:classInfo db:db isInDbQueue:isInDbQueue];
-        [self oo_addColumn:classInfo db:db isInDbQueue:isInDbQueue];
-        [self oo_addIndexes:classInfo db:db isInDbQueue:isInDbQueue];
+        [self oo_createTable:classInfo db:db];
+        [self oo_addColumn:classInfo db:db];
+        [self oo_addIndexes:classInfo db:db];
         classInfo.dbTimestamp=db.dbTimestamp;
     }
     return YES;
 }
 
-+ (void)oo_createTable:(OOClassInfo*)classInfo db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (void)oo_createTable:(OOClassInfo*)classInfo db:(OODatabase*)db{
     NSString * table=classInfo.dbTable;
-    if (![self oo_checkTable:table db:db isInDbQueue:isInDbQueue]) {
+    if (![self oo_checkTable:table db:db]) {
         NSString *sql;
         if ([self conformsToProtocol:@protocol(OOUniqueModel)]) {
             NSString *uniquePropertyKey=[self.class uniquePropertyKey];
@@ -757,25 +753,25 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
         }else{
             sql=[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' REAL)",table,oo_latest_used_timestamp];
         }
-        [db executeUpdate:sql arguments:nil disableUseDbQueue:isInDbQueue];
+        [db executeUpdate:sql arguments:nil];
     }
 }
 
-+ (void)oo_addColumn:(OOClassInfo*)classInfo db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (void)oo_addColumn:(OOClassInfo*)classInfo db:(OODatabase*)db{
     NSString * table=classInfo.dbTable;
     [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo * _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([propertyInfo.propertyKey isEqualToString:classInfo.uniquePropertyKey]) {
             return;
         }
-        if (![self oo_checkTable:table column:propertyInfo.dbColumn db:db isInDbQueue:isInDbQueue]) {
+        if (![self oo_checkTable:table column:propertyInfo.dbColumn db:db]) {
             NSString *dbColumnType=oo_databaseColumnTypeWithType(propertyInfo.dbColumnType);
             NSString *sql=[NSString stringWithFormat:@"ALTER TABLE '%@' ADD COLUMN '%@' %@",table,propertyInfo.dbColumn,dbColumnType];
-            [db executeUpdate:sql arguments:nil disableUseDbQueue:isInDbQueue];
+            [db executeUpdate:sql arguments:nil];
         }
     }];
 }
 
-+ (void)oo_addIndexes:(OOClassInfo*)classInfo db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (void)oo_addIndexes:(OOClassInfo*)classInfo db:(OODatabase*)db{
     NSMutableArray *databaseIndexesKeys=[NSMutableArray array];
     if ([self respondsToSelector:@selector(dbIndexesInPropertyKeys)]) {
         NSArray *indexesKeys=[self.class dbIndexesInPropertyKeys];
@@ -787,10 +783,10 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }
     [databaseIndexesKeys addObject:oo_latest_used_timestamp];
     [databaseIndexesKeys enumerateObjectsUsingBlock:^(NSString *  _Nonnull databaseIndexKey, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (![self oo_checkTable:classInfo.dbTable index:databaseIndexKey db:db isInDbQueue:isInDbQueue]) {
+        if (![self oo_checkTable:classInfo.dbTable index:databaseIndexKey db:db]) {
             NSString *index=[NSString stringWithFormat:@"%@_%@_index",classInfo.dbTable,databaseIndexKey];
             NSString *sql=[NSString stringWithFormat:@"CREATE INDEX %@ on %@(%@)",index,classInfo.dbTable,databaseIndexKey];
-            [db executeUpdate:sql arguments:nil disableUseDbQueue:isInDbQueue];
+            [db executeUpdate:sql arguments:nil];
         }
     }];
 }
@@ -839,9 +835,9 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
 #pragma mark --
 #pragma mark -- check func
 
-+ (BOOL)oo_checkTable:(NSString*)table db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (BOOL)oo_checkTable:(NSString*)table db:(OODatabase*)db{
     NSString * sql=@"SELECT * FROM sqlite_master WHERE tbl_name=? AND type='table'";
-    NSArray * sets=[db executeQuery:sql arguments:@[table] disableUseDbQueue:isInDbQueue];
+    NSArray * sets=[db executeQuery:sql arguments:@[table]];
     if (sets.count>0) {
         return YES;
     }else{
@@ -849,10 +845,10 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     }
 }
 
-+ (BOOL)oo_checkTable:(NSString*)table column:(NSString*)column db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (BOOL)oo_checkTable:(NSString*)table column:(NSString*)column db:(OODatabase*)db{
     BOOL ret=NO;
     NSString * sql=@"SELECT * FROM sqlite_master WHERE tbl_name=? AND type='table'";
-    NSArray * sets=[db executeQuery:sql arguments:@[table] disableUseDbQueue:isInDbQueue];
+    NSArray * sets=[db executeQuery:sql arguments:@[table]];
     column=[NSString stringWithFormat:@"'%@'",column];
     if (sets.count>0) {
         for(NSDictionary * set in sets) {
@@ -866,11 +862,11 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     return ret;
 }
 
-+ (BOOL)oo_checkTable:(NSString*)table index:(NSString*)index db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (BOOL)oo_checkTable:(NSString*)table index:(NSString*)index db:(OODatabase*)db{
     __block BOOL ret;
     NSString * sql=@"SELECT * FROM sqlite_master WHERE tbl_name=? AND type='index'";
     ret=NO;
-    NSArray * sets=[db executeQuery:sql arguments:@[table] disableUseDbQueue:isInDbQueue];
+    NSArray * sets=[db executeQuery:sql arguments:@[table]];
     index=[NSString stringWithFormat:@"(%@)",index];
     if (sets.count>0) {
         for(NSDictionary * set in sets) {
@@ -884,10 +880,10 @@ static void oo_decode_apply(const void *_propertyInfo, void *_context){
     return ret;
 }
 
-+ (BOOL)oo_checkTable:(NSString*)table primaryKey:(NSString*)key primaryValue:(id)value db:(OODatabase*)db isInDbQueue:(BOOL)isInDbQueue{
++ (BOOL)oo_checkTable:(NSString*)table primaryKey:(NSString*)key primaryValue:(id)value db:(OODatabase*)db{
     NSParameterAssert(value);
     NSString *sql=[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@=?",table,key];
-    NSArray * sets=[db executeQuery:sql arguments:@[value] disableUseDbQueue:isInDbQueue];
+    NSArray * sets=[db executeQuery:sql arguments:@[value]];
     if (sets.count>0) {
         return YES;
     }else{
