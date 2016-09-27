@@ -15,7 +15,9 @@
 
 - (instancetype)initWithFile:(NSString *)file;
 
-- (void)inDb:(void(^)(OODb *db))block;
+- (void)syncInDb:(void(^)(OODb *db))block;
+
+- (void)asyncInDb:(void(^)(OODb *db))block;
 
 - (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments;
 
@@ -27,9 +29,8 @@
 
 - (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments;
 
-- (BOOL)beginTransaction;
-- (BOOL)rollback;
-- (BOOL)commit;
+- (void)beginTransaction;
 
+- (void)commit;
 
 @end

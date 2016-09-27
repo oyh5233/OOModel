@@ -13,7 +13,6 @@ extern const NSString * oo_compaction_prefix;
  *
  *  NSArray * models = [oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@ like ?",OOCOMPACT(@"keyword")] arguments:@[@"world"]];
  */
-#define OOCOMPACT(tableorcolumn) [NSString stringWithFormat:@"%@%@",oo_compaction_prefix,tableorcolumn]
 
 @protocol OOUniqueModel<NSObject>
 /**

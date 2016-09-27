@@ -28,7 +28,7 @@
 - (instancetype)initWithKeyOptions:(NSPointerFunctionsOptions)keyOptions valueOptions:(NSPointerFunctionsOptions)valueOptions capacity:(NSUInteger)initialCapacity{
     self=[self init];
     if (self) {
-        self.mapTable=[[NSMapTable alloc] initWithKeyOptions:keyOptions valueOptions:valueOptions capacity:0];
+        self.mapTable=[[NSMapTable alloc] initWithKeyOptions:keyOptions valueOptions:valueOptions capacity:initialCapacity];
     }
     return self;
 }
@@ -45,11 +45,20 @@
     [self.mapTable removeObjectForKey:key];
 }
 
-- (void)inMt:(void(^)(OOMapTable *mt))block{
+- (void)syncInMt:(void(^)(OOMapTable *mt))block{
     if(dispatch_get_specific(self.queueKey)){
         block(self);
     }else{
         dispatch_sync(self.queue,^{
+            block(self);
+        });
+    }
+}
+- (void)asyncInMt:(void(^)(OOMapTable *mt))block{
+    if(dispatch_get_specific(self.queueKey)){
+        block(self);
+    }else{
+        dispatch_async(self.queue,^{
             block(self);
         });
     }

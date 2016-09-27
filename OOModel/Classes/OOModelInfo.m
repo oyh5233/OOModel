@@ -7,31 +7,6 @@
 #import "NSObject+OOModel.h"
 static OODb *oo_global_db=nil;
 
-@interface OOPropertyInfo()
-
-@property (nonatomic,copy  ) NSString           *ivarKey;
-@property (nonatomic,copy  ) NSString           *propertyKey;
-@property (nonatomic,assign) Class              propertyCls;
-@property (nonatomic,assign) Class              ownCls;
-@property (nonatomic,assign) OOClassInfo        *propertyClassInfo;
-@property (nonatomic,assign) OOClassInfo        *ownClassInfo;
-@property (nonatomic,assign) SEL                setter;
-@property (nonatomic,assign) SEL                getter;
-@property (nonatomic,assign) OOEncodingType     encodingType;
-@property (nonatomic,assign) OOPropertyType     propertyType;
-@property (nonatomic,assign) ptrdiff_t          ivarOffset;
-@property (nonatomic,assign) OOReferenceType    referenceType;
-@property (nonatomic,copy  ) id                 jsonKeyPath;
-@property (nonatomic,strong) NSValueTransformer *jsonValueTransformer;
-@property (nonatomic,strong) NSString           *dbColumn;
-@property (nonatomic,strong) NSValueTransformer *dbValueTransformer;
-@property (nonatomic,assign) OODbColumnType     dbColumnType;
-@property (nonatomic,assign) SEL                jsonForwards;
-@property (nonatomic,assign) SEL                jsonBackwards;
-@property (nonatomic,assign) SEL                dbForwards;
-
-@end
-
 @interface OOClassInfo ()
 
 @property (nonatomic,assign) Class        cls;
@@ -45,24 +20,193 @@ static OODb *oo_global_db=nil;
 @property (nonatomic,copy  ) NSString     *uniquePropertyKey;
 
 @property (nonatomic,strong) NSArray      *dbPropertyInfos;
-@property (nonatomic,assign) BOOL         hasDbColumnType;
-@property (nonatomic,copy  ) NSString     *dbTable;
-@property (nonatomic,assign) sqlite3_stmt *insertStmt;
-@property (nonatomic,assign) sqlite3_stmt *updateStmt;
-@property (nonatomic,assign) sqlite3_stmt *uniqueStmt;
+@property (nonatomic,copy  ) NSString     *dbTableName;
+@property (nonatomic,copy  ) NSString     *uniqueSelectSql;
+@property (nonatomic,copy  ) NSString     *insertSql;
+@property (nonatomic,copy  ) NSString     *updateSql;
 
 @end
 
-@implementation OOPropertyInfo
+@interface OOPropertyInfo()
+@property (nonatomic,copy  ) NSString           *ivarKey;
+@property (nonatomic,copy  ) NSString           *propertyKey;
+@property (nonatomic,assign) Class              propertyCls;
+@property (nonatomic,assign) OOEncodingType     encodingType;
+@property (nonatomic,assign) OOPropertyType     propertyType;
+@property (nonatomic,assign) OOReferenceType    referenceType;
+@property (nonatomic,assign) SEL                setter;
+@property (nonatomic,assign) SEL                getter;
 
-+ (instancetype)propertyInfoWithProperty:(objc_property_t)property ownCls:(__unsafe_unretained Class)ownCls{
-    return [[self alloc]initWithProperty:property ownCls:ownCls];
+@property (nonatomic,weak  ) OOClassInfo        *ownClassInfo;
+
+@property (nonatomic,strong) NSValueTransformer *jsonValueTransformer;
+@property (nonatomic,copy  ) NSString           *jsonKeyPathInString;
+@property (nonatomic,strong) NSArray            *jsonKeyPathInArray;
+@property (nonatomic,assign) SEL                jsonForwards;
+@property (nonatomic,assign) SEL                jsonBackwards;
+
+@property (nonatomic,strong) NSValueTransformer *dbValueTransformer;
+@property (nonatomic,assign) OODbColumnType     dbColumnType;
+@property (nonatomic,assign) SEL                dbForwards;
+
+@end
+
+
+@implementation OOClassInfo
+- (instancetype)initWithClass:(Class)cls{
+    self=[self init];
+    if (self) {
+        self.cls=cls;
+        NSMutableDictionary *propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
+        [self enumeratePropertiesUsingBlock:^(objc_property_t property) {
+            OOPropertyInfo *propertyInfo=[[OOPropertyInfo alloc]initWithProperty:property];
+            propertyInfo.ownClassInfo=self;
+            [propertyInfosByPropertyKeys setObject:propertyInfo forKey:propertyInfo.propertyKey];
+        }];
+        self.propertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
+        self.propertyKeys=[self.propertyInfosByPropertyKeys allKeys];
+        self.propertyInfos=[self.propertyInfosByPropertyKeys allValues];
+        
+        NSMutableArray  *dbPropertyInfos=[NSMutableArray array];
+        NSMutableArray  *jsonPropertyInfos=[NSMutableArray array];
+        NSDictionary *jsonKeyPathsByPropertyKeys=[cls jsonKeyPathsByPropertyKeys];
+        NSArray *dbPropertyKeys=[cls dbColumnsInPropertyKeys];
+
+        [self.propertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo*  _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (!propertyInfo.ivarKey) {
+                return;
+            }
+            if ([cls conformsToProtocol:@protocol(OOJsonModel)]) {
+                NSString *jsonKeyPath=jsonKeyPathsByPropertyKeys[propertyInfo.propertyKey];
+                if (jsonKeyPath.length!=0) {
+                    NSArray *jsonKeyPathArr=[jsonKeyPath componentsSeparatedByString:@"."];
+                    propertyInfo.jsonKeyPathInString=jsonKeyPath;
+                    propertyInfo.jsonKeyPathInArray=jsonKeyPathArr;
+                    if ([cls respondsToSelector:@selector(jsonValueTransformerForPropertyKey:)]) {
+                        propertyInfo.jsonValueTransformer=[self.cls jsonValueTransformerForPropertyKey:propertyInfo.propertyKey];
+                    }
+                    if(propertyInfo.encodingType&OOEncodingTypeOtherObject){
+                        if ([propertyInfo.propertyCls conformsToProtocol:@protocol(OOJsonModel)]) {
+                            propertyInfo.jsonForwards=@selector(oo_modelWithJson:);
+                            propertyInfo.jsonBackwards=@selector(oo_jsonDictionary);
+                        }
+                    }
+                }
+                [jsonPropertyInfos addObject:propertyInfo];
+            }
+            if ([cls conformsToProtocol:@protocol(OODbModel)]) {
+                if ([dbPropertyKeys containsObject:propertyInfo.propertyKey]) {
+                    if ([cls respondsToSelector:@selector(dbValueTransformerForPropertyKey:)]) {
+                        propertyInfo.dbValueTransformer=[self.cls dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
+                    }
+                    if (propertyInfo.encodingType>=OOEncodingTypeBool&&propertyInfo.encodingType<=OOEncodingTypeUInt64) {
+                        propertyInfo.dbColumnType=OODbColumnTypeInteger;
+                    }else if (propertyInfo.encodingType==OOEncodingTypeFloat||propertyInfo.encodingType==OOEncodingTypeDouble||propertyInfo.encodingType==OOEncodingTypeNSDate||propertyInfo.encodingType==OOEncodingTypeNSNumber) {
+                        propertyInfo.dbColumnType=OODbColumnTypeReal;
+                    }else if (propertyInfo.encodingType&OOEncodingTypeNSData){
+                        propertyInfo.dbColumnType=OODbColumnTypeBlob;
+                    }else if (propertyInfo.encodingType==OOEncodingTypeNSString||propertyInfo.encodingType==OOEncodingTypeNSURL){
+                        propertyInfo.dbColumnType=OODbColumnTypeText;
+                    }else if ([cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)]) {
+                        propertyInfo.dbColumnType=[self.cls dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
+                    }
+                    if (propertyInfo.dbColumnType==OODbColumnTypeUnknow) {
+                        NSParameterAssert(0);
+                    }
+                }
+                [dbPropertyInfos addObject:propertyInfo];
+            }
+        }];
+        self.dbPropertyInfos=dbPropertyInfos.count?dbPropertyInfos:nil;
+        self.jsonPropertyInfos=jsonPropertyInfos.count?jsonPropertyInfos:nil;
+        
+        if ([cls conformsToProtocol:@protocol(OOUniqueModel)]) {
+            self.mapTable=[[OOMapTable alloc]initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];;
+            self.uniquePropertyKey=[self.cls uniquePropertyKey];
+        }
+        if ([cls conformsToProtocol:@protocol(OODbModel)]) {
+            self.dbTableName=NSStringFromClass(cls);
+            if (self.uniquePropertyKey) {
+                self.uniqueSelectSql=[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@=?",self.dbTableName,[self.propertyInfosByPropertyKeys[self.uniquePropertyKey] propertyKey]];
+            }
+            if (self.dbPropertyInfos) {
+                NSMutableString *sql=[NSMutableString stringWithFormat:@"UPDATE %@ SET ",self.dbTableName];
+
+                NSMutableString * sql1=[NSMutableString stringWithFormat:@"INSERT %@(",self.dbTableName];
+                NSMutableString * sql2=[NSMutableString stringWithFormat:@" VALUES( "];
+                
+                [self.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo * _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+                    [sql appendFormat:@"%@=?,",propertyInfo.propertyKey];
+                    [sql1 appendFormat:@"%@,",propertyInfo.propertyKey];
+                    [sql2 appendFormat:@"?,"];
+                }];
+                [sql appendFormat:@" WHERE %@=?",[self.propertyInfosByPropertyKeys[self.uniquePropertyKey] propertyKey]];
+                [sql1 deleteCharactersInRange:NSMakeRange(sql1.length-2, 1)];
+                [sql1 appendFormat:@")"];
+                [sql2 deleteCharactersInRange:NSMakeRange(sql1.length-2, 1)];
+                [sql2 appendFormat:@")"];
+                self.insertSql=[NSString stringWithFormat:@"%@%@",sql1,sql2];
+                
+                
+            }
+        }
+    }
+    return self;
 }
 
-- (instancetype)initWithProperty:(objc_property_t)property ownCls:(__unsafe_unretained Class)ownCls{
+
+
+- (void)enumeratePropertiesUsingBlock:(void (^)(objc_property_t property))block{
+    Class cls=self.cls;
+    while (YES) {
+        if (cls==NSObject.class) {
+            break;
+        }
+        unsigned int count = 0;
+        objc_property_t *properties = class_copyPropertyList(cls, &count);
+        if (properties == NULL) {
+            cls = cls.superclass;
+            continue;
+        }
+        for (unsigned i = 0; i < count; i++) {
+            objc_property_t property=properties[i];
+            block(property);
+        }
+        free(properties);
+        cls = cls.superclass;
+    }
+}
++ (NSLock*)globalLock{
+    static NSLock * lock=nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        lock=[[NSLock alloc]init];
+    });
+    return lock;
+}
++ (void)setGlobalDb:(OODb*)db{
+    NSLock *lock=[self globalLock];
+    [lock lock];
+    if (oo_global_db!=db) {
+        oo_global_db=db;
+    }
+    [lock unlock];
+}
++ (OODb*)globalDb{
+    NSLock *lock=[self globalLock];
+    [lock lock];
+    OODb *db=oo_global_db;
+    [lock unlock];
+    return db;
+}
+@end
+
+
+@implementation OOPropertyInfo
+
+- (instancetype)initWithProperty:(objc_property_t)property{
     self=[super init];
     if (self) {
-        self.ownCls=ownCls;
         self.propertyKey=[NSString stringWithCString:property_getName(property) encoding:NSUTF8StringEncoding];
         NSString * attributes=[NSString stringWithCString:property_getAttributes(property) encoding:NSUTF8StringEncoding];
         for (NSString * attr in [attributes componentsSeparatedByString:@","]){
@@ -82,7 +226,7 @@ static OODb *oo_global_db=nil;
                         }else if (strcmp(encoding, "@\"NSData\"")==0){
                             self.encodingType=OOEncodingTypeNSData;
                         }else{
-                            self.encodingType=OOEncodingTypeUnsupportedObject;
+                            self.encodingType=OOEncodingTypeOtherObject;
                         }
                         size_t size=strlen(encoding);
                         if (size>3) {
@@ -117,7 +261,7 @@ static OODb *oo_global_db=nil;
                         }else if (strcmp(encoding, @encode(bool)) == 0) {
                             self.encodingType=OOEncodingTypeBool;
                         }else {
-                            self.encodingType=OOEncodingTypeUnSupported;
+                            self.encodingType=OOEncodingTypeUnknow;
                         }
                     }
                 }
@@ -166,8 +310,6 @@ static OODb *oo_global_db=nil;
                     break;
             }
         }
-        Ivar ivar= class_getInstanceVariable(ownCls, [self.ivarKey UTF8String]);
-        self.ivarOffset=ivar_getOffset(ivar);
         if (self.ivarKey&&!(self.propertyType&OOPropertyTypeDynamic)) {
             if (!self.getter) {
                 NSString * getterString = self.propertyKey;
@@ -179,174 +321,15 @@ static OODb *oo_global_db=nil;
                 self.setter=NSSelectorFromString(setterString);
             }
         }
+        self.ownClassInfo=nil;
+        self.jsonKeyPathInString=nil;
+        self.jsonKeyPathInArray=nil;
+        self.jsonKeyPathInArray=nil;
+        self.jsonBackwards=nil;
+        self.jsonValueTransformer=nil;
+        self.dbColumnType=OODbColumnTypeUnknow;
+        self.dbValueTransformer=nil;
     }
     return self;
-}
-@end
-
-
-
-@implementation OOClassInfo
-+ (instancetype)classInfoWithClass:(Class)cls{
-    OOClassInfo *classInfo=[[self alloc]initWithClass:cls];
-    return classInfo;
-}
-- (instancetype)initWithClass:(Class)cls{
-    self=[self init];
-    if (self) {
-        self.cls=cls;
-        NSMutableDictionary *propertyInfosByPropertyKeys=[NSMutableDictionary dictionary];
-        [self enumeratePropertiesUsingBlock:^(objc_property_t property) {
-            OOPropertyInfo *propertyInfo=[OOPropertyInfo propertyInfoWithProperty:property ownCls:self.cls];
-            if (propertyInfo.ivarKey) {
-                propertyInfo =[self initializePropertyInfo:propertyInfo];
-                [propertyInfosByPropertyKeys setObject:propertyInfo forKey:propertyInfo.propertyKey];
-            }
-        }];
-        self.propertyInfosByPropertyKeys=propertyInfosByPropertyKeys;
-        self.propertyKeys=[self.propertyInfosByPropertyKeys allKeys];
-        self.propertyInfos=[self.propertyInfosByPropertyKeys allValues];
-        
-        if ([cls conformsToProtocol:@protocol(OOJsonModel)]) {
-            NSMutableArray *jsonPropertyInfos=[NSMutableArray array];
-            for (OOPropertyInfo * propertyInfo in self.propertyInfos){
-                BOOL shouldAdd=NO;
-                for (NSString * propertyKey in [[self.cls jsonKeyPathsByPropertyKeys]allKeys]){
-                    if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
-                        shouldAdd=YES;
-                        break;
-                    }
-                }
-                if (shouldAdd) {
-                    [jsonPropertyInfos addObject:propertyInfo];
-                }
-            }
-            self.jsonPropertyInfos=jsonPropertyInfos;
-        }
-        
-        if ([cls conformsToProtocol:@protocol(OOUniqueModel)]) {
-            self.mapTable=[[OOMapTable alloc]initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];;
-            self.uniquePropertyKey=[self.cls uniquePropertyKey];
-        }
-        
-        if ([cls conformsToProtocol:@protocol(OODbModel)]) {
-            self.hasDbColumnType=[cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)];
-            self.dbTable=OOCOMPACT(NSStringFromClass(self.cls));
-            self.database=oo_global_db;
-            NSMutableArray *dbPropertyInfos=[NSMutableArray array];
-            for (OOPropertyInfo * propertyInfo in self.propertyInfos){
-                BOOL shouldAdd=NO;
-                for (NSString * propertyKey in [self.cls dbColumnsInPropertyKeys]){
-                    if ([propertyKey isEqualToString:propertyInfo.propertyKey]) {
-                        shouldAdd=YES;
-                        break;
-                    }
-                }
-                if (shouldAdd) {
-                    [dbPropertyInfos addObject:propertyInfo];
-                }
-            }
-            self.dbPropertyInfos=dbPropertyInfos;
-        }
-        
-    }
-    return self;
-}
-
-- (OOPropertyInfo*)initializePropertyInfo:(OOPropertyInfo*)propertyInfo{
-    if (!propertyInfo.ivarKey||(propertyInfo.propertyType&OOPropertyTypeReadonly)) {
-        return nil;
-    }
-    Class cls=self.cls;
-    if ([cls conformsToProtocol:@protocol(OOJsonModel)]) {
-        NSString *jsonKeyPath=[cls jsonKeyPathsByPropertyKeys][propertyInfo.propertyKey];
-        if (jsonKeyPath.length!=0) {
-            NSArray *jsonKeyPathArr=[jsonKeyPath componentsSeparatedByString:@"."];
-            if (jsonKeyPathArr.count>1) {
-                propertyInfo.jsonKeyPath=jsonKeyPathArr;
-            }else{
-                propertyInfo.jsonKeyPath=jsonKeyPath;
-            }
-        }
-        if ([cls respondsToSelector:@selector(jsonValueTransformerForPropertyKey:)]) {
-            propertyInfo.jsonValueTransformer=[self.cls jsonValueTransformerForPropertyKey:propertyInfo.propertyKey];
-        }
-        if(propertyInfo.encodingType&OOEncodingTypeUnsupportedObject){
-            if ([propertyInfo.propertyCls conformsToProtocol:@protocol(OOJsonModel)]) {
-                propertyInfo.jsonForwards=@selector(oo_modelWithJson:);
-                propertyInfo.jsonBackwards=@selector(oo_jsonDictionary);
-            }
-        }
-    }
-    if ([cls conformsToProtocol:@protocol(OODbModel)]) {
-        propertyInfo.dbColumn=OOCOMPACT(propertyInfo.propertyKey);
-        if ([cls respondsToSelector:@selector(dbValueTransformerForPropertyKey:)]) {
-            propertyInfo.dbValueTransformer=[self.cls dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
-        }
-        if (propertyInfo.encodingType>=OOEncodingTypeBool&&propertyInfo.encodingType<=OOEncodingTypeUInt64) {
-            propertyInfo.dbColumnType=OODbColumnTypeInteger;
-        }else if (propertyInfo.encodingType==OOEncodingTypeFloat||propertyInfo.encodingType==OOEncodingTypeDouble||propertyInfo.encodingType==OOEncodingTypeNSDate||propertyInfo.encodingType==OOEncodingTypeNSNumber) {
-            propertyInfo.dbColumnType=OODbColumnTypeReal;
-        }else if (propertyInfo.encodingType&OOEncodingTypeNSData){
-            propertyInfo.dbColumnType=OODbColumnTypeBlob;
-        }else if (propertyInfo.encodingType&OOEncodingTypeUnsupportedObject){
-            if (self.hasDbColumnType) {
-                propertyInfo.dbColumnType=[self.cls dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
-            }
-        }else{
-            propertyInfo.dbColumnType=OODbColumnTypeText;
-        }
-        if(propertyInfo.encodingType&OOEncodingTypeUnsupportedObject){
-            if ([propertyInfo.propertyCls conformsToProtocol:@protocol(OOUniqueModel)]) {
-                propertyInfo.dbForwards=@selector(oo_modelWithUniqueValue:);
-            }
-        }
-    }
-    propertyInfo.ownClassInfo=self;
-    return propertyInfo;
-}
-
-- (void)enumeratePropertiesUsingBlock:(void (^)(objc_property_t property))block{
-    Class cls=self.cls;
-    while (YES) {
-        if (cls==NSObject.class) {
-            break;
-        }
-        unsigned int count = 0;
-        objc_property_t *properties = class_copyPropertyList(cls, &count);
-        if (properties == NULL) {
-            cls = cls.superclass;
-            continue;
-        }
-        for (unsigned i = 0; i < count; i++) {
-            objc_property_t property=properties[i];
-            block(property);
-        }
-        free(properties);
-        cls = cls.superclass;
-    }
-}
-+ (NSLock*)globalLock{
-    static NSLock * lock=nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        lock=[[NSLock alloc]init];
-    });
-    return lock;
-}
-+ (void)setGlobalDb:(OODb*)db{
-    NSLock *lock=[self globalLock];
-    [lock lock];
-    if (oo_global_db!=db) {
-        oo_global_db=db;
-    }
-    [lock unlock];
-}
-+ (OODb*)globalDb{
-    NSLock *lock=[self globalLock];
-    [lock lock];
-    OODb *db=oo_global_db;
-    [lock unlock];
-    return db;
 }
 @end

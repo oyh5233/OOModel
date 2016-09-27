@@ -40,14 +40,14 @@ static inline int _log(int line,int code,const char * desc){
 @property (nonatomic, assign ) sqlite3             *db;
 @property (nonatomic, strong ) dispatch_queue_t    queue;
 @property (nonatomic, assign ) void                *queueKey;
-@property (nonatomic, assign ) bool                isInTransaction;
+@property (nonatomic, assign ) UInt64              transactionReferenceCount;
 @property (nonatomic, strong ) NSMutableDictionary *stmts;
 
 @end
 
 @implementation OODb
 
-- (void)inDb:(void(^)(OODb *db))block{
+- (void)syncInDb:(void(^)(OODb *db))block{
     if(dispatch_get_specific(self.queueKey)){
         block(self);
     }else{
@@ -56,6 +56,17 @@ static inline int _log(int line,int code,const char * desc){
         });
     }
 }
+
+- (void)asyncInDb:(void(^)(OODb *db))block{
+    if(dispatch_get_specific(self.queueKey)){
+        block(self);
+    }else{
+        dispatch_async(self.queue,^{
+            block(self);
+        });
+    }
+}
+
 #pragma mark --
 #pragma mark -- init
 - (void)dealloc{
@@ -81,6 +92,7 @@ static inline int _log(int line,int code,const char * desc){
 - (instancetype)init{
     self=[super init];
     if (self) {
+        self.transactionReferenceCount=0;
         self.queue=dispatch_queue_create("com.code4god.OOModel.OODb", NULL);
         self.queueKey=&_queueKey;
         dispatch_queue_set_specific(self.queue, self.queueKey, (__bridge void*)self, NULL);
@@ -153,7 +165,7 @@ static inline int _log(int line,int code,const char * desc){
 
 - (NSArray*)executeQuery:(NSString*)sql arguments:(NSArray*)arguments{
     return [self executeQuery:sql context:NULL stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-        [self _bindObject:arguments[index-1] toColumn:index inStatement:stmt];
+        [self _bindObject:arguments[index] toColumn:index+1 inStatement:stmt];
     }];
 }
 
@@ -176,11 +188,9 @@ static inline int _log(int line,int code,const char * desc){
     if (!stmt) {
         return;
     }
-    int index=0;
-    id  obj=nil;
     int count = sqlite3_bind_parameter_count(stmt);
-    for (int i=0;i<count;){
-        stmtBlock(context,stmt,i++);
+    for (int i=0;i<count;i++){
+        stmtBlock(context,stmt,i);
     }
     while (OODB_LOG(sqlite3_step(stmt),self.db)==SQLITE_ROW) {
         resultBlock(context,stmt);
@@ -192,7 +202,7 @@ static inline int _log(int line,int code,const char * desc){
 
 - (BOOL)executeUpdate:(NSString*)sql arguments:(NSArray*)arguments{
     return [self executeUpdate:sql context:NULL stmtBlock:^(void *context, sqlite3_stmt *stmt,int index) {
-        [self _bindObject:arguments[index-1] toColumn:index inStatement:stmt];
+        [self _bindObject:arguments[index] toColumn:index+1 inStatement:stmt];
     }];
 }
 
@@ -202,10 +212,9 @@ static inline int _log(int line,int code,const char * desc){
     if (!stmt) {
         return NO;
     }
-    id obj=nil;
     int count = sqlite3_bind_parameter_count(stmt);
-    for (int i=0;i<count;){
-        stmtBlock(context,stmt,i++);
+    for (int i=0;i<count;i++){
+        stmtBlock(context,stmt,i);
     }
     if (OODB_LOG(sqlite3_step(stmt),self.db)!=SQLITE_DONE) {
         return NO;
@@ -215,38 +224,20 @@ static inline int _log(int line,int code,const char * desc){
 
 #pragma mark --
 #pragma mark --transaction
-- (BOOL)beginTransaction{
-    if (self.isInTransaction) {
-        return YES;
+- (void)beginTransaction{
+    self.transactionReferenceCount++;
+    if (self.transactionReferenceCount==1) {
+        [self executeUpdate:@"begin exclusive transaction" arguments:nil];
     }
-    if ([self executeUpdate:@"begin exclusive transaction" arguments:nil]) {
-        self.isInTransaction=YES;
-    }
-    return self.isInTransaction;
-   
 }
-- (BOOL)rollback{
-    if (!self.isInTransaction) {
-        return YES;
+//[self executeUpdate:@"rollback transaction" arguments:nil];
+- (void)commit{
+    if (self.transactionReferenceCount>0) {
+        self.transactionReferenceCount--;
+        if (self.transactionReferenceCount==0) {
+            [self executeUpdate:@"commit transaction" arguments:nil];
+        }
     }
-    if ([self executeUpdate:@"rollback transaction" arguments:nil]) {
-        self.isInTransaction=NO;
-    }else{
-        return NO;
-    }
-    return YES;
-}
-
-- (BOOL)commit{
-    if (!self.isInTransaction) {
-        return YES;
-    }
-    if ([self executeUpdate:@"commit transaction" arguments:nil]) {
-        self.isInTransaction=NO;
-    }else{
-        return NO;
-    }
-    return YES;
 }
 
 #pragma mark --

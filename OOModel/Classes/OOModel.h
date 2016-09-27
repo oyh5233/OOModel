@@ -18,7 +18,7 @@ FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 #import "NSObject+OOModel.h"
 #import "OOModelInfo.h"
 #import "OOValueTransformer.h"
-#import "OODatabase.h"
+#import "OODb.h"
 
 #ifndef OO_MODEL_IMPLEMENTION_UNIQUE
 #define OO_MODEL_IMPLEMENTION_UNIQUE(x) \

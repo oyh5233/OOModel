@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		113195AF1D9815B700DBE839 /* OOMapTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 113195AD1D9815B700DBE839 /* OOMapTable.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		113195B01D9815B700DBE839 /* OOMapTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 113195AE1D9815B700DBE839 /* OOMapTable.m */; };
+		114CBAE91D9AD6AF00DD1A54 /* NSObject+OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B061D35F24E00826666 /* NSObject+OOModel.m */; };
 		51B2CF8F1D9A003500937AFB /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 51B2CF8E1D9A003500937AFB /* libsqlite3.tbd */; };
 		CF052B101D35F24E00826666 /* NSObject+OOModel.h in Headers */ = {isa = PBXBuildFile; fileRef = CF052B051D35F24E00826666 /* NSObject+OOModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CF052B111D35F24E00826666 /* NSObject+OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B061D35F24E00826666 /* NSObject+OOModel.m */; };
 		CF052B131D35F24E00826666 /* OODb.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B081D35F24E00826666 /* OODb.m */; };
 		CF052B161D35F24E00826666 /* OOModelInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B0B1D35F24E00826666 /* OOModelInfo.m */; };
 		CF052B171D35F24E00826666 /* OOValueTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = CF052B0C1D35F24E00826666 /* OOValueTransformer.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -341,8 +341,8 @@
 			files = (
 				CF052B131D35F24E00826666 /* OODb.m in Sources */,
 				CF052B181D35F24E00826666 /* OOValueTransformer.m in Sources */,
+				114CBAE91D9AD6AF00DD1A54 /* NSObject+OOModel.m in Sources */,
 				113195B01D9815B700DBE839 /* OOMapTable.m in Sources */,
-				CF052B111D35F24E00826666 /* NSObject+OOModel.m in Sources */,
 				CF052B161D35F24E00826666 /* OOModelInfo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
