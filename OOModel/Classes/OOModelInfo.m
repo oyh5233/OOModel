@@ -5,7 +5,7 @@
 
 #import "OOModelInfo.h"
 #import "NSObject+OOModel.h"
-static OODatabase *oo_global_database=nil;
+static OODb *oo_global_db=nil;
 
 @interface OOPropertyInfo()
 
@@ -232,7 +232,7 @@ static OODatabase *oo_global_database=nil;
         if ([cls conformsToProtocol:@protocol(OODbModel)]) {
             self.hasDbColumnType=[cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)];
             self.dbTable=OOCOMPACT(NSStringFromClass(self.cls));
-            self.database=oo_global_database;
+            self.database=oo_global_db;
             NSMutableArray *dbPropertyInfos=[NSMutableArray array];
             for (OOPropertyInfo * propertyInfo in self.propertyInfos){
                 BOOL shouldAdd=NO;
@@ -334,19 +334,18 @@ static OODatabase *oo_global_database=nil;
     });
     return lock;
 }
-+ (void)setGlobalDatabase:(OODatabase*)database{
++ (void)setGlobalDb:(OODb*)db{
     NSLock *lock=[self globalLock];
     [lock lock];
-    if (oo_global_database!=database) {
-        oo_global_database=database;
-        [oo_global_database open];
+    if (oo_global_db!=db) {
+        oo_global_db=db;
     }
     [lock unlock];
 }
-+ (OODatabase*)globalDatabase{
++ (OODb*)globalDb{
     NSLock *lock=[self globalLock];
     [lock lock];
-    OODatabase *db=oo_global_database;
+    OODb *db=oo_global_db;
     [lock unlock];
     return db;
 }

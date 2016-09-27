@@ -8,6 +8,7 @@
 #import "DemoTableViewCell.h"
 #import "WMUser.h"
 #import <sys/time.h>
+#import "sqlite3.h"
 typedef void (^RoadshowBlock) ();
 typedef void (^UserBlock) ();
 
@@ -17,16 +18,57 @@ typedef void (^UserBlock) ();
 @property (nonatomic, strong) UITableView    *tableView;
 @property (nonatomic, strong) RoadshowBlock  roadshowBlock;
 @property (nonatomic, strong) UserBlock      userBlock;
+@property (nonatomic, assign) sqlite3        *db;
+@property (nonatomic, assign) sqlite3_stmt   *stmt1;
+@property (nonatomic, assign) sqlite3_stmt   *stmt2;
 
 @end
-
+#define LOG_ERROR(_code_) _log_error(_code_,self.db,__LINE__)
+static inline void _log_error(int code,sqlite3 *db,int line){
+//    const char * msg=sqlite3_errmsg(db);
+//    if (strcmp(msg, "not an error")||strcmp(msg, "unknown error")) {
+//        return;
+//    }
+    printf("\n%d] %d",line,code);
+}
 @implementation ViewController
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [NSObject oo_setGlobalDB:[OODatabase databaseWithFile:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]]];
-//    [NSObject oo_openDb:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]];
-    
-    [self test1];
+    sqlite3_config(SQLITE_CONFIG_SERIALIZED);
+    LOG_ERROR(sqlite3_open([[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"] cStringUsingEncoding:NSUTF8StringEncoding], &_db));
+    sqlite3_stmt *stmt=NULL;
+    LOG_ERROR(sqlite3_prepare_v2(self.db, "CREATE TABLE IF NOT EXISTS 't1' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'idx' INTERGER NOT NULL,'ts' REAL)", -1, &stmt, 0));
+    LOG_ERROR(sqlite3_step(stmt));
+    LOG_ERROR(sqlite3_finalize(stmt));
+    LOG_ERROR(sqlite3_prepare_v2(self.db, "CREATE TABLE IF NOT EXISTS 't2' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'idx' INTERGER NOT NULL,'ts' REAL)", -1, &stmt, 0));
+    LOG_ERROR(sqlite3_step(stmt));
+    LOG_ERROR(sqlite3_finalize(stmt));
+    int c= 1000;
+    int s= 2000;
+    LOG_ERROR(sqlite3_prepare_v2(self.db, "insert into t1(idx,ts) values (?,?)", -1, &_stmt1, 0));
+    LOG_ERROR(sqlite3_prepare_v2(self.db, "insert into t2(idx,ts) values (?,?)", -1, &_stmt2, 0));
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        for (int i =s;i<s+c;i++){
+            LOG_ERROR(sqlite3_reset(self.stmt1));
+            LOG_ERROR(sqlite3_bind_int(self.stmt1, 1, i));
+            LOG_ERROR(sqlite3_bind_double(self.stmt1, 2, (double)i));
+            LOG_ERROR(sqlite3_step(self.stmt1));
+        }
+        LOG_ERROR(sqlite3_finalize(self.stmt1));
+    });
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        for (int i =s;i<s+c;i++){
+            LOG_ERROR(sqlite3_reset(self.stmt2));
+            LOG_ERROR(sqlite3_bind_int(self.stmt2, 1, i));
+            LOG_ERROR(sqlite3_bind_double(self.stmt2, 2, (double)i));
+            LOG_ERROR(sqlite3_step(self.stmt2));
+        }
+        LOG_ERROR(sqlite3_finalize(self.stmt1));
+    });
+    sqlite3_close_v2(self.db);
+//    [NSObject oo_setGlobalDB:[OODatabase dbWithFile:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"]]];
+////    [self test1];
+//    [self test2];
     
   
     // Do any additional setup after loading the view, typically from a nib.
@@ -46,7 +88,6 @@ typedef void (^UserBlock) ();
     }, ^(double ms) {
         NSLog(@"%.2f",ms);
     });
-
 }
 
 - (void)test2{

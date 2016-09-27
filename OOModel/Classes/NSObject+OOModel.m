@@ -5,11 +5,10 @@
 
 #import "NSObject+OOModel.h"
 #import <objc/message.h>
-#import "OODatabase.h"
 #import "OOMapTable.h"
 const NSString * oo_compaction_prefix    = @"oo_";
 static NSString * oo_latest_used_timestamp = @"oo_latest_used_timestamp";
-static OODatabase *oo_global_db=nil;
+static OODb *oo_global_db=nil;
 static CFMutableDictionaryRef oo_class_info_root=NULL;
 
 typedef struct {

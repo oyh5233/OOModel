@@ -5,9 +5,8 @@
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
-#import "OODatabase.h"
+#import "OODb.h"
 #import "OOMapTable.h"
-#import "sqlite3.h"
 typedef NS_ENUM(NSInteger,OODbColumnType) {
     OODbColumnTypeText,
     OODbColumnTypeInteger,
@@ -103,13 +102,11 @@ typedef NS_ENUM(NSInteger,OOPropertyType) {
 @property (nonatomic,strong,readonly) NSArray        *dbPropertyInfos;
 @property (nonatomic,assign,readonly) BOOL           hasDbColumnType;
 @property (nonatomic,copy  ,readonly) NSString       *dbTable;
-@property (nonatomic                ) OODatabase     *database;
+@property (nonatomic                ) OODb           *database;
 @property (nonatomic,assign         ) NSTimeInterval dbTimestamp;
-@property (nonatomic,assign,readonly) sqlite3_stmt   *insertStmt;
-@property (nonatomic,assign,readonly) sqlite3_stmt   *updateStmt;
-@property (nonatomic,assign,readonly) sqlite3_stmt   *uniqueStmt;
+
 + (instancetype)classInfoWithClass:(Class)cls;
-+ (void)setGlobalDatabase:(OODatabase*)database;
-+ (NSLock*)globalLock;
++ (void)setGlobalDb:(OODb*)db;
++ (OODb*)globalDb;
 @end
 
