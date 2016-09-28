@@ -386,90 +386,33 @@ static void oo_merge_model_to_model_apply(const void * _value,void *_context){
         oo_set_value_for_property(targetModel, sourceValue, propertyInfo);
     }
 }
-//static void oo_db_update_apply(const void *_value,void *_context){
-//    OOModelDbUpdateContext *context=_context;
-//    __unsafe_unretained NSMutableString *sql=(__bridge NSMutableString *)context->sql;
-//    __unsafe_unretained NSMutableArray  *arguments=(__bridge NSMutableArray*)context->arguments;
-//    __unsafe_unretained id model=(__bridge id)context->model;
-//    __unsafe_unretained OOPropertyInfo * propertyInfo=(__bridge OOPropertyInfo*)_value;
-//    id value=nil;
-//    __unsafe_unretained NSValueTransformer *valueTransformer=propertyInfo.dbValueTransformer;
-//    if (valueTransformer) {
-//        value=[model valueForKey:propertyInfo.propertyKey];
-//        value=[valueTransformer reverseTransformedValue:value];
-//    }else{
-//        if (propertyInfo.encodingType==OOEncodingTypeNSData) {
-//            value=[model valueForKey:propertyInfo.propertyKey];
-//        }else{
-//            if (!oo_get_object_for_property(model,&value, propertyInfo)) {
-//                [NSException raise:@"get fail" format:@"model_class:%@\nvalue_class:%@\nproperty:%@\nmethod:\"dbValueTransformerForPropertyKey:\"",NSStringFromClass([model class]),NSStringFromClass([value class]),propertyInfo.propertyKey];
-//            }
-//        }
-//    }
-//    if (!value) {
-//        return;
-//    }
-//    [sql appendString:propertyInfo.propertyKey];
-//    [sql appendString:@"=?,"];
-//    [arguments addObject:value];
-//}
-//
-//static void oo_db_insert_apply(const void *_value,void *_context){
-//    OOModelDbInsertContext *context=_context;
-//    __unsafe_unretained NSMutableString *sql1=(__bridge NSMutableString *)context->sql1;
-//    __unsafe_unretained NSMutableString *sql2=(__bridge NSMutableString *)context->sql2;
-//    __unsafe_unretained NSMutableArray  *arguments=(__bridge NSMutableArray*)context->arguments;
-//    __unsafe_unretained id model=(__bridge id)context->model;
-//    __unsafe_unretained OOPropertyInfo * propertyInfo=(__bridge OOPropertyInfo*)_value;
-//    id value=nil;
-//    __unsafe_unretained NSValueTransformer *valueTransformer=propertyInfo.dbValueTransformer;
-//    if (valueTransformer) {
-//        value=[model valueForKey:propertyInfo.propertyKey];
-//        value=[valueTransformer reverseTransformedValue:value];
-//    }else{
-//        if (propertyInfo.encodingType==OOEncodingTypeNSData) {
-//            value=[model valueForKey:propertyInfo.propertyKey];
-//        }else{
-//            if (!oo_get_object_for_property(model,&value, propertyInfo)) {
-//                [NSException raise:@"get fail" format:@"model_class:%@\nvalue_class:%@\nproperty:%@\nmethod:\"dbValueTransformerForPropertyKey:\"",NSStringFromClass([model class]),NSStringFromClass([value class]),propertyInfo.propertyKey];
-//            }
-//        }
-//    }
-//    if (!value) {
-//        return;
-//    }
-//    [sql1 appendString:propertyInfo.propertyKey];
-//    [sql1 appendString:@","];
-//    [sql2 appendString:@"?,"];
-//    [arguments addObject:value];
-//}
-//
-//static void oo_encode_apply(const void *_propertyInfo, void *_context){
-//    OOModelContext * context=_context;
-//    __unsafe_unretained NSCoder *coder=(__bridge id)context->storage;
-//    __unsafe_unretained id model=(__bridge id)context->model;
-//    __unsafe_unretained OOPropertyInfo *propertyInfo=(__bridge id)_propertyInfo;
-//    id value;
-//    if(!oo_get_object_for_property(model, &value,propertyInfo)){
-//        value=[model valueForKey:propertyInfo.propertyKey];
-//    }
-//    if (value) {
-//        [coder encodeObject:value forKey:propertyInfo.propertyKey];
-//    }
-//}
-//
-//static void oo_decode_apply(const void *_propertyInfo, void *_context){
-//    OOModelContext * context=_context;
-//    __unsafe_unretained NSCoder *coder=(__bridge id)context->storage;
-//    __unsafe_unretained id model=(__bridge id)context->model;
-//    __unsafe_unretained OOPropertyInfo *propertyInfo=(__bridge id)_propertyInfo;
-//    id value=[coder decodeObjectForKey:propertyInfo.propertyKey];
-//    if (value) {
-//        if (!oo_set_object_for_property(model, value, propertyInfo)) {
-//            [model setValue:value forKey:propertyInfo.propertyKey];
-//        }
-//    }
-//}
+
+static inline id oo_db_value_from_value(__unsafe_unretained OOPropertyInfo *propertyInfo,__unsafe_unretained id value){
+    OOEncodingType encodingType=propertyInfo.encodingType;
+    if (encodingType&OOEncodingTypeObject) {
+        switch (encodingType) {
+            case OOEncodingTypeNSString:
+                
+            case OOEncodingTypeNSNumber:
+                
+            case OOEncodingTypeNSData:
+                return value;
+                break;
+            case OOEncodingTypeNSURL:
+                return [value absoluteString];
+                break;
+            case OOEncodingTypeNSDate:
+                return @([value timeIntervalSince1970]);
+                break;
+            default:
+                
+                break;
+        }
+    }else if(encodingType&OOEncodingTypeCType){
+        return value;
+    }
+    return nil;
+}
 
 static inline void oo_prepare_stmt(__unsafe_unretained OOPropertyInfo * propertyInfo,__unsafe_unretained id value,sqlite3_stmt *stmt,int index){
     __unsafe_unretained NSValueTransformer *valueTransformer=propertyInfo.dbValueTransformer;
@@ -496,7 +439,96 @@ static inline void oo_prepare_stmt(__unsafe_unretained OOPropertyInfo * property
         }
     }
 }
-static inline void oo_merge_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo,__unsafe_unretained id model,sqlite3_stmt *stmt,int count){
+
+static inline void oo_stmt_from_model(__unsafe_unretained OOClassInfo* classInfo,__unsafe_unretained id model,sqlite3_stmt *stmt){
+    [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo *_Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+        OOEncodingType encodingType=propertyInfo.encodingType;
+        if (encodingType&OOEncodingTypeObject) {
+            switch (encodingType) {
+                case OOEncodingTypeNSString:
+                {
+                    NSString *value=((NSString* (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter);
+                    sqlite3_bind_text(stmt, idx+1,[value UTF8String], -1, SQLITE_STATIC);
+                }
+                    break;
+                case OOEncodingTypeNSNumber:
+                {
+                    NSString *value=[NSString stringWithFormat:@"%@",((NSNumber * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter)];
+                    sqlite3_bind_text(stmt, idx+1,[value UTF8String], -1, SQLITE_STATIC);
+                }
+                    break;
+                case OOEncodingTypeNSURL:
+                {
+                    NSString *value=[((NSURL * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter) absoluteString];
+                    sqlite3_bind_text(stmt, idx+1,[value UTF8String], -1, SQLITE_STATIC);
+                }
+                    break;
+                case OOEncodingTypeNSDate:
+                {
+                    NSTimeInterval value=[((NSDate * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter) timeIntervalSince1970];
+                    sqlite3_bind_double(stmt, idx+1, value);
+                }
+                case OOEncodingTypeNSData:
+                {
+                    NSData * value=((NSData* (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter);
+                    sqlite3_bind_blob(stmt, idx+1, [value bytes], (int)[value length], SQLITE_STATIC);
+                }
+                    break;
+                case OOEncodingTypeOtherObject:
+                {
+                    OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
+                    if (propertyClassInfo.uniquePropertyKey) {
+                        
+                    }
+                }
+                    break;
+                default:
+                    
+                    break;
+            }
+        }else if(encodingType&OOEncodingTypeCType){
+            switch (encodingType) {
+                case OOEncodingTypeBool:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((bool (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeInt8:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((char (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeUInt8:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((unsigned char (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeInt16:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((short (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeUInt16:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((UInt16 (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeInt32:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((int (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeUInt32:
+                    sqlite3_bind_int64(stmt, idx+1, (long long)((UInt32 (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeInt64:
+                    sqlite3_bind_int64(stmt, idx+1,((long long (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeUInt64:
+                    sqlite3_bind_int64(stmt, idx+1,((unsigned long long (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeFloat:
+                    sqlite3_bind_double(stmt, idx+1, (double)((float (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                case OOEncodingTypeDouble:
+                    sqlite3_bind_double(stmt, idx+1, ((double (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                    break;
+                default:
+                    break;
+            }
+        }
+    }];
+}
+
+static inline void oo_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo,__unsafe_unretained id model,sqlite3_stmt *stmt,int count){
     for (int index=0;index<count;index++){
         __unsafe_unretained OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[[NSString stringWithUTF8String:sqlite3_column_name(stmt, index)]];
         NSCParameterAssert(propertyInfo.dbColumnType);
@@ -656,7 +688,6 @@ static inline void oo_merge_model_from_stmt(__unsafe_unretained OOClassInfo* cla
     return model;
 }
 
-
 + (NSArray *)_oo_modelsWithJsonDictionaries:(NSArray*)jsonDictionaries classInfo:(OOClassInfo*)classInfo mt:(OOMapTable*)mt db:(OODb*)db{
     NSUInteger count=jsonDictionaries.count;
     if (count>1) {
@@ -712,7 +743,7 @@ static inline void oo_merge_model_from_stmt(__unsafe_unretained OOClassInfo* cla
                     return;
                 }
                 model=[[self alloc]init];
-                oo_merge_model_from_stmt(classInfo, model, stmt, count);
+                oo_model_from_stmt(classInfo, model, stmt, count);
                 *stop=YES;
             }];
         }];
@@ -749,7 +780,13 @@ static inline void oo_merge_model_from_stmt(__unsafe_unretained OOClassInfo* cla
 }
 
 + (void)oo_insert:(id)model classInfo:(OOClassInfo*)classInfo db:(OODb*)db{
-    
+    [db syncInDb:^(OODb *db) {
+       [db executeUpdate:classInfo.updateSql context:(__bridge void*)model stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
+           [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//               oo_prepare_stmt(obj,, stmt, index+1);
+           }];
+       }];
+    }];
 }
 + (void)oo_update:(id)model classInfo:(OOClassInfo*)classInfo db:(OODb*)db{
     
