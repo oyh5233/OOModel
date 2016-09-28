@@ -81,21 +81,17 @@ extern const NSString * oo_compaction_prefix;
 
 @interface NSObject (OOModel)
 
-@property (nonatomic,copy,readonly) NSDictionary *oo_jsonDictionary;
+@property (nonatomic,strong,readonly) NSDictionary *oo_dictionary;
 
-@property (nonatomic,copy,readonly) NSString     *oo_jsonString;
+@property (nonatomic,strong,readonly) NSDictionary *oo_jsonDictionary;
 
-@property (nonatomic,assign,readonly) bool       oo_isReplaced;
+@property (nonatomic,copy,readonly  ) NSString     *oo_jsonString;
+
+@property (nonatomic,assign,readonly) bool         oo_isReplaced;
 
 + (NSArray*)oo_modelsWithJsonDictionaries:(NSArray*)jsonDictionaries;
-/**
- *  model from json.
- *
- *  @param  dictionary or json string.
- *
- *  @return instance
- */
-+ (instancetype)oo_modelWithJson:(id)json;
+
++ (id)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
 /**
  *  if model's class conform to protocol OOUniqueModel,
  *
@@ -116,9 +112,8 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @param json 
  */
-- (void)oo_mergeWithJson:(id)json;
+- (void)oo_mergeWithJsonDictionary:(NSDictionary*)dictionary;
 
-- (void)oo_uniqueValue;
 /**
  *  if model class conforms to OODbModel,should open a db at first.All models use the same db.
  *
@@ -135,11 +130,11 @@ extern const NSString * oo_compaction_prefix;
 + (OOClassInfo*)oo_classInfo;
 
 
-+ (void)oo_setGlobalDB:(OODb*)db;
-
-+ (void)oo_setDb:(OODb*)db;
-
-- (void)oo_modelEncode:(NSCoder *)aCoder;
-
-- (id)oo_modelDecode:(NSCoder *)aDecoder;
+//+ (void)oo_setGlobalDB:(OODb*)db;
+//
+//+ (void)oo_setDb:(OODb*)db;
+//
+//- (void)oo_modelEncode:(NSCoder *)aCoder;
+//
+//- (id)oo_modelDecode:(NSCoder *)aDecoder;
 @end

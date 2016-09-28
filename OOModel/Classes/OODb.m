@@ -171,7 +171,7 @@ static inline int _log(int line,int code,const char * desc){
 
 - (NSArray*)executeQuery:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock{
     __block NSMutableArray *array=[NSMutableArray array];
-    [self executeQuery:sql context:context stmtBlock:stmtBlock resultBlock:^(void *context, sqlite3_stmt *stmt) {
+    [self executeQuery:sql context:context stmtBlock:stmtBlock resultBlock:^(void *context, sqlite3_stmt *stmt,bool *stop) {
         int count = sqlite3_data_count(stmt);
         NSDictionary *dictionary = [self _dictionaryInStmt:stmt count:count];
         if (dictionary.count>0) {
@@ -181,7 +181,7 @@ static inline int _log(int line,int code,const char * desc){
     return array.count?array:nil;
 }
 
-- (void)executeQuery:(NSString*)sql context:(void *)context  stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock resultBlock:(void (^)(void *context, sqlite3_stmt *stmt))resultBlock{
+- (void)executeQuery:(NSString*)sql context:(void *)context  stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock resultBlock:(void (^)(void *context, sqlite3_stmt *stmt, bool * stop))resultBlock{
     NSParameterAssert(stmtBlock);
     NSParameterAssert(resultBlock);
     sqlite3_stmt *stmt=[self stmtForSql:sql];
@@ -192,8 +192,12 @@ static inline int _log(int line,int code,const char * desc){
     for (int i=0;i<count;i++){
         stmtBlock(context,stmt,i);
     }
+    bool stop =NO;
     while (OODB_LOG(sqlite3_step(stmt),self.db)==SQLITE_ROW) {
-        resultBlock(context,stmt);
+        resultBlock(context,stmt,&stop);
+        if (stop) {
+            return;
+        }
     }
 }
 

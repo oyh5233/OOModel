@@ -23,7 +23,7 @@
 
 - (BOOL)executeUpdate:(NSString*)sql context:(void *)context  stmtBlock:(void(^)(void * context,sqlite3_stmt *stmt,int index))stmtBlock;
 
-- (void)executeQuery:(NSString*)sql context:(void *)context  stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock resultBlock:(void (^)(void *context, sqlite3_stmt *stmt))resultBlock;
+- (void)executeQuery:(NSString*)sql context:(void *)context  stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock resultBlock:(void (^)(void *context, sqlite3_stmt *stmt, bool * stop))resultBlock;
 
 - (NSArray*)executeQuery:(NSString*)sql context:(void *)context stmtBlock:(void(^)(void * context,sqlite3_stmt *stmt,int index))stmtBlock;
 

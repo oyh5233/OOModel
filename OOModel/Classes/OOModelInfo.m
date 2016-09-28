@@ -87,18 +87,19 @@ static OODb *oo_global_db=nil;
                     }
                     if(propertyInfo.encodingType&OOEncodingTypeOtherObject){
                         if ([propertyInfo.propertyCls conformsToProtocol:@protocol(OOJsonModel)]) {
-                            propertyInfo.jsonForwards=@selector(oo_modelWithJson:);
+                            propertyInfo.jsonForwards=@selector(oo_modelsWithJsonDictionaries:);
                             propertyInfo.jsonBackwards=@selector(oo_jsonDictionary);
                         }
                     }
+                    [jsonPropertyInfos addObject:propertyInfo];
                 }
-                [jsonPropertyInfos addObject:propertyInfo];
             }
             if ([cls conformsToProtocol:@protocol(OODbModel)]) {
                 if ([dbPropertyKeys containsObject:propertyInfo.propertyKey]) {
                     if ([cls respondsToSelector:@selector(dbValueTransformerForPropertyKey:)]) {
                         propertyInfo.dbValueTransformer=[self.cls dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
                     }
+                    NSParameterAssert(propertyInfo.dbColumnType==OODbColumnTypeUnknow);
                     if (propertyInfo.encodingType>=OOEncodingTypeBool&&propertyInfo.encodingType<=OOEncodingTypeUInt64) {
                         propertyInfo.dbColumnType=OODbColumnTypeInteger;
                     }else if (propertyInfo.encodingType==OOEncodingTypeFloat||propertyInfo.encodingType==OOEncodingTypeDouble||propertyInfo.encodingType==OOEncodingTypeNSDate||propertyInfo.encodingType==OOEncodingTypeNSNumber) {
@@ -110,11 +111,8 @@ static OODb *oo_global_db=nil;
                     }else if ([cls respondsToSelector:@selector(dbColumnTypeForPropertyKey:)]) {
                         propertyInfo.dbColumnType=[self.cls dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
                     }
-                    if (propertyInfo.dbColumnType==OODbColumnTypeUnknow) {
-                        NSParameterAssert(0);
-                    }
+                    [dbPropertyInfos addObject:propertyInfo];
                 }
-                [dbPropertyInfos addObject:propertyInfo];
             }
         }];
         self.dbPropertyInfos=dbPropertyInfos.count?dbPropertyInfos:nil;

@@ -24,7 +24,6 @@
 		CF052B2A1D35F2EF00826666 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B291D35F2EF00826666 /* ViewController.m */; };
 		CF052B2D1D35F2EF00826666 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CF052B2B1D35F2EF00826666 /* Main.storyboard */; };
 		CF052B2F1D35F2EF00826666 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF052B2E1D35F2EF00826666 /* Assets.xcassets */; };
-		CF052B321D35F2EF00826666 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CF052B301D35F2EF00826666 /* LaunchScreen.storyboard */; };
 		CF052B3B1D35F30400826666 /* DemoTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B391D35F30400826666 /* DemoTableViewCell.m */; };
 		CF052B3C1D35F30400826666 /* DemoTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = CF052B3A1D35F30400826666 /* DemoTableViewCell.xib */; };
 		CF052B421D35F30B00826666 /* OORoadshow.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B3F1D35F30B00826666 /* OORoadshow.m */; };
@@ -72,7 +71,6 @@
 		CF052B291D35F2EF00826666 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		CF052B2C1D35F2EF00826666 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		CF052B2E1D35F2EF00826666 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		CF052B311D35F2EF00826666 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CF052B331D35F2EF00826666 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CF052B381D35F30400826666 /* DemoTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemoTableViewCell.h; sourceTree = "<group>"; };
 		CF052B391D35F30400826666 /* DemoTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoTableViewCell.m; sourceTree = "<group>"; };
@@ -178,7 +176,6 @@
 				CF052B291D35F2EF00826666 /* ViewController.m */,
 				CF052B2B1D35F2EF00826666 /* Main.storyboard */,
 				CF052B2E1D35F2EF00826666 /* Assets.xcassets */,
-				CF052B301D35F2EF00826666 /* LaunchScreen.storyboard */,
 				CF052B331D35F2EF00826666 /* Info.plist */,
 				CF052B221D35F2EF00826666 /* Supporting Files */,
 			);
@@ -325,7 +322,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CF1F9E561D8F9446005234FC /* user.json in Resources */,
-				CF052B321D35F2EF00826666 /* LaunchScreen.storyboard in Resources */,
 				CF052B2F1D35F2EF00826666 /* Assets.xcassets in Resources */,
 				CF052B3C1D35F30400826666 /* DemoTableViewCell.xib in Resources */,
 				CF052B2D1D35F2EF00826666 /* Main.storyboard in Resources */,
@@ -371,14 +367,6 @@
 				CF052B2C1D35F2EF00826666 /* Base */,
 			);
 			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		CF052B301D35F2EF00826666 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				CF052B311D35F2EF00826666 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

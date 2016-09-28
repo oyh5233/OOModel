@@ -10,7 +10,7 @@
 OO_MODEL_IMPLEMENTION_JSON_KEYS(
                                 OO_PAIR(login, login),
                                 OO_PAIR(userID, user_id),
-                                OO_PAIR(avatarURL, avatar_url),
+                                OO_PAIR(avatarURL, meta.avatar_url),
                                 OO_PAIR(gravatarID, gravatar_id),
                                 OO_PAIR(htmlURL, html_url),
                                 OO_PAIR(followersURL, followers_url),
