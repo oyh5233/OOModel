@@ -75,7 +75,7 @@ static inline void _log_error(int code,sqlite3 *db,int line){
 }
 
 - (void)test1{
-  
+    [WMUser oo_setDb:[[OODb alloc]initWithFile:[[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]stringByAppendingPathComponent:@"db.sqlite"]]];
     NSMutableArray *jsons=[NSMutableArray array];
     int count1=1;
     int count2=10000;

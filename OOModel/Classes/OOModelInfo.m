@@ -129,23 +129,21 @@ static OODb *oo_global_db=nil;
             }
             if (self.dbPropertyInfos) {
                 NSMutableString *sql=[NSMutableString stringWithFormat:@"UPDATE %@ SET ",self.dbTableName];
-
                 NSMutableString * sql1=[NSMutableString stringWithFormat:@"INSERT %@(",self.dbTableName];
                 NSMutableString * sql2=[NSMutableString stringWithFormat:@" VALUES( "];
-                
                 [self.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo * _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
                     [sql appendFormat:@"%@=?,",propertyInfo.propertyKey];
                     [sql1 appendFormat:@"%@,",propertyInfo.propertyKey];
                     [sql2 appendFormat:@"?,"];
                 }];
                 [sql appendFormat:@" WHERE %@=?",[self.propertyInfosByPropertyKeys[self.uniquePropertyKey] propertyKey]];
-                [sql1 deleteCharactersInRange:NSMakeRange(sql1.length-2, 1)];
+                self.updateSql=sql;
+                [sql1 deleteCharactersInRange:NSMakeRange(sql1.length-1, 1)];
                 [sql1 appendFormat:@")"];
-                [sql2 deleteCharactersInRange:NSMakeRange(sql1.length-2, 1)];
+                [sql2 deleteCharactersInRange:NSMakeRange(sql2.length-1, 1)];
                 [sql2 appendFormat:@")"];
                 self.insertSql=[NSString stringWithFormat:@"%@%@",sql1,sql2];
-                
-                
+                NSLog(@"%@\n%@\n%@",self.uniqueSelectSql,self.insertSql,self.updateSql);
             }
         }
     }

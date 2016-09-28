@@ -132,7 +132,7 @@ extern const NSString * oo_compaction_prefix;
 
 //+ (void)oo_setGlobalDB:(OODb*)db;
 //
-//+ (void)oo_setDb:(OODb*)db;
++ (void)oo_setDb:(OODb*)db;
 //
 //- (void)oo_modelEncode:(NSCoder *)aCoder;
 //

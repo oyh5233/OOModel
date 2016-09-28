@@ -12,7 +12,7 @@ typedef NS_ENUM(NSInteger,WMUserSex) {
     WMUserSexMan,
     WMUserSexWoman
 };
-@interface WMUser : NSObject<OOUniqueModel,OOJsonModel>
+@interface WMUser : NSObject<OOUniqueModel,OODbModel,OOJsonModel>
 @property (strong) NSString *login;
 @property (assign) UInt64   userID;
 @property (strong) NSString *avatarURL;
