@@ -69,16 +69,12 @@ static inline id oo_json_value_from_value(__unsafe_unretained id value,OOPropert
                 
             case OOEncodingTypeNSNumber:
                 return value;
-                break;
             case OOEncodingTypeNSURL:
                 return [value absoluteString];
-                break;
             case OOEncodingTypeNSDate:
                 return @([value timeIntervalSince1970]);
-                break;
             case OOEncodingTypeNSData:
                 return [value base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
-                break;
             default:
             {
                 OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
@@ -109,16 +105,13 @@ static inline id oo_value_from_json_value(__unsafe_unretained id value,OOPropert
                     return [NSString stringWithFormat:@"%@",value];
                 }
                 return value;
-                break;
             case OOEncodingTypeNSNumber:
                 if ([value isKindOfClass:NSString.class]) {
                     return @([value doubleValue]);
                 }
                 return value;
-                break;
             case OOEncodingTypeNSDate:
                 return [NSDate dateWithTimeIntervalSince1970:[value doubleValue]];
-                break;
             case OOEncodingTypeNSURL:
                 if ([value isKindOfClass:NSString.class]) {
                     return [NSURL URLWithString:value];
@@ -128,7 +121,6 @@ static inline id oo_value_from_json_value(__unsafe_unretained id value,OOPropert
                 if ([value isKindOfClass:NSString.class]) {
                     return [[NSData alloc] initWithBase64EncodedString:value options:NSDataBase64DecodingIgnoreUnknownCharacters];
                 }
-                break;
             default:
             {
                 OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
@@ -414,125 +406,249 @@ static inline id oo_db_value_from_value(__unsafe_unretained OOPropertyInfo *prop
     return nil;
 }
 
-static inline void oo_prepare_stmt(__unsafe_unretained OOPropertyInfo * propertyInfo,__unsafe_unretained id value,sqlite3_stmt *stmt,int index){
-    __unsafe_unretained NSValueTransformer *valueTransformer=propertyInfo.dbValueTransformer;
-    if (valueTransformer) {
-        value=[valueTransformer reverseTransformedValue:value];
-    }
-    if (value&&![value isKindOfClass:NSNull.class]) {
-        NSCParameterAssert(propertyInfo.dbColumnType);
-        switch (propertyInfo.dbColumnType) {
-            case OODbColumnTypeInteger:
-                sqlite3_bind_int64(stmt, index+1, [value longLongValue]);
+static inline void oo_stmt_from_property(__unsafe_unretained OOPropertyInfo * propertyInfo,__unsafe_unretained id model,sqlite3_stmt *stmt,int idx){
+    OOEncodingType encodingType=propertyInfo.encodingType;
+    NSCParameterAssert(propertyInfo.dbColumnType);
+    if (encodingType&OOEncodingTypeObject) {
+        switch (encodingType) {
+            case OOEncodingTypeNSString:
+            {
+                NSString *value=((NSString* (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter);
+                sqlite3_bind_text(stmt, idx,[value UTF8String], -1, SQLITE_STATIC);
+                return;
+            }
+            case OOEncodingTypeNSNumber:
+            {
+                NSString *value=[NSString stringWithFormat:@"%@",((NSNumber * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter)];
+                sqlite3_bind_text(stmt, idx,[value UTF8String], -1, SQLITE_STATIC);
+                return;
+            }
+            case OOEncodingTypeNSURL:
+            {
+                NSString *value=[((NSURL * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter) absoluteString];
+                sqlite3_bind_text(stmt, idx,[value UTF8String], -1, SQLITE_STATIC);
+                return;
+            }
+            case OOEncodingTypeNSDate:
+            {
+                NSTimeInterval value=[((NSDate * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter) timeIntervalSince1970];
+                sqlite3_bind_double(stmt, idx, value);
+                return;
+            }
+            case OOEncodingTypeNSData:
+            {
+                NSData * value=((NSData* (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter);
+                sqlite3_bind_blob(stmt, idx, [value bytes], (int)[value length], SQLITE_STATIC);
+            }
+                return;
+            case OOEncodingTypeOtherObject:
+            {
+                OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
+                if (propertyClassInfo.uniquePropertyKey) {
+                    oo_stmt_from_property(propertyClassInfo.propertyInfosByPropertyKeys[propertyClassInfo.uniquePropertyKey], ((id (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter), stmt, idx);
+                    return;
+                }
+            }
                 break;
-            case OODbColumnTypeReal:
-                sqlite3_bind_double(stmt, index+1, [value doubleValue]);
+            default:
+                
                 break;
-            case OODbColumnTypeText:
-                sqlite3_bind_text(stmt, index+1, [[value description] UTF8String], -1, SQLITE_STATIC);
-                break;
-            case OODbColumnTypeBlob:
-                sqlite3_bind_blob(stmt, index, [value bytes], (int)[value length], SQLITE_STATIC);
-                break;
+        }
+    }else if(encodingType&OOEncodingTypeCType){
+        switch (encodingType) {
+            case OOEncodingTypeBool:
+                sqlite3_bind_int64(stmt, idx, (long long)((bool (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeInt8:
+                sqlite3_bind_int64(stmt, idx, (long long)((char (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeUInt8:
+                sqlite3_bind_int64(stmt, idx, (long long)((unsigned char (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeInt16:
+                sqlite3_bind_int64(stmt, idx, (long long)((short (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeUInt16:
+                sqlite3_bind_int64(stmt, idx, (long long)((UInt16 (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeInt32:
+                sqlite3_bind_int64(stmt, idx, (long long)((int (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeUInt32:
+                sqlite3_bind_int64(stmt, idx, (long long)((UInt32 (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeInt64:
+                sqlite3_bind_int64(stmt, idx,((long long (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeUInt64:
+                sqlite3_bind_int64(stmt, idx,((unsigned long long (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeFloat:
+                sqlite3_bind_double(stmt, idx, (double)((float (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
+            case OOEncodingTypeDouble:
+                sqlite3_bind_double(stmt, idx, ((double (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
+                return;
             default:
                 break;
         }
     }
+    NSValueTransformer * valueTransformer=propertyInfo.dbValueTransformer;
+    if (valueTransformer) {
+        id transformedValue=[valueTransformer reverseTransformedValue:((id (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter)];
+        switch (propertyInfo.dbColumnType) {
+            case OODbColumnTypeInteger:
+                sqlite3_bind_int64(stmt, idx, [transformedValue longLongValue]);
+                return;
+            case OODbColumnTypeReal:
+                sqlite3_bind_double(stmt, idx, [transformedValue doubleValue]);
+                return;
+            case OODbColumnTypeText:
+                sqlite3_bind_text(stmt, idx, [[transformedValue description] UTF8String], -1, SQLITE_STATIC);
+                return;
+            case OODbColumnTypeBlob:
+                sqlite3_bind_blob(stmt, idx, [transformedValue bytes], (int)[transformedValue length], SQLITE_STATIC);
+                return;
+            default:
+                break;
+        }
+        return;
+    }
+    NSLog(@"invalid model value for db---class:%@,property:%@",NSStringFromClass(propertyInfo.ownClassInfo.cls),propertyInfo.propertyKey);
 }
 
-static inline void oo_stmt_from_model(__unsafe_unretained OOClassInfo* classInfo,__unsafe_unretained id model,sqlite3_stmt *stmt){
-    [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo *_Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+static inline void oo_value_from_stmt(__unsafe_unretained OOPropertyInfo *propertyInfo,__unsafe_unretained id model,sqlite3_stmt *stmt,int idx){
+    
+}
+static inline void oo_model_value_from_stmt(__unsafe_unretained OOPropertyInfo *propertyInfo,__unsafe_unretained id model,sqlite3_stmt *stmt,int idx){
+    NSCParameterAssert(propertyInfo.dbColumnType);
+    int type = sqlite3_column_type(stmt, idx);
+    OOEncodingType encodingType=propertyInfo.encodingType;
+    if (encodingType&OOEncodingTypeObject) {
+        switch (encodingType) {
+            case OOEncodingTypeNSString:
+                if (type==SQLITE_TEXT) {
+                    NSString *value=[NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, idx)];
+                    ((void (*)(id, SEL, NSString*))(void *) objc_msgSend)(model, propertyInfo.setter,value);
+                    return;
+                }
+                break;
+            case OOEncodingTypeNSNumber:
+                if (type==SQLITE_TEXT) {
+                    NSString *value=[NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, idx)];
+                    ((void (*)(id, SEL, NSNumber*))(void *) objc_msgSend)(model, propertyInfo.setter,@([value doubleValue]));
+                    return;
+                }
+                break;
+            case OOEncodingTypeNSURL:
+                if (type==SQLITE_TEXT) {
+                    NSString *value=[NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, idx)];
+                    ((void (*)(id, SEL, NSURL*))(void *) objc_msgSend)(model, propertyInfo.setter,[NSURL URLWithString:value]);
+                    return;
+                }
+                break;
+            case OOEncodingTypeNSDate:
+                if (type==SQLITE_FLOAT) {
+                    double value=sqlite3_column_double(stmt, idx);
+                    ((void (*)(id, SEL, NSDate*))(void *) objc_msgSend)(model, propertyInfo.setter,[NSDate dateWithTimeIntervalSince1970:value]);
+                    return;
+                }
+                break;
+            case OOEncodingTypeNSData:
+                if (type==SQLITE_BLOB) {
+                    int length=sqlite3_column_bytes(stmt, idx);
+                    const void * value = sqlite3_column_blob(stmt, idx);
+                    ((void (*)(id, SEL, NSData*))(void *) objc_msgSend)(model, propertyInfo.setter,[NSData dataWithBytes:value length:length]);
+                    return;
+                }
+                break;
+            case OOEncodingTypeOtherObject:
+            {
+                OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
+                if (propertyClassInfo.uniquePropertyKey) {
+                    OOPropertyInfo *PropertyUniquePropertyInfo=propertyClassInfo.propertyInfosByPropertyKeys[propertyClassInfo.uniquePropertyKey];
+                    OOEncodingType propertyEncodingType=PropertyUniquePropertyInfo.propertyType;
+                    
+                    id uniqueModel=[propertyClassInfo.cls oo_modelWithUniqueValue:nil];
+                    ((void (*)(id, SEL, id))(void *) objc_msgSend)(model, propertyInfo.setter,uniqueModel);
+                    return;
+                }
+            }
+            default:
+                break;
+        }
+    }else if(encodingType&OOEncodingTypeCType){
+        
+    }
+}
+static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo,__unsafe_unretained id model,sqlite3_stmt *stmt){
+    int count=sqlite3_column_count(stmt);
+    bool result=NO;
+    for (int idx=0;idx<count;){
+        idx++;
+        __unsafe_unretained OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[[NSString stringWithUTF8String:sqlite3_column_name(stmt, idx)]];
+        if (!propertyInfo) {
+            continue;
+        }
+        if (![classInfo.dbPropertyInfos containsObject:propertyInfo]) {
+            continue;
+        }
+        NSCParameterAssert(propertyInfo.dbColumnType);
+        int type = sqlite3_column_type(stmt, idx);
         OOEncodingType encodingType=propertyInfo.encodingType;
         if (encodingType&OOEncodingTypeObject) {
             switch (encodingType) {
                 case OOEncodingTypeNSString:
-                {
-                    NSString *value=((NSString* (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter);
-                    sqlite3_bind_text(stmt, idx+1,[value UTF8String], -1, SQLITE_STATIC);
-                }
+                    if (type==SQLITE_TEXT) {
+                        NSString *value=[NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, idx)];
+                        ((void (*)(id, SEL, NSString*))(void *) objc_msgSend)(model, propertyInfo.setter,value);
+                        continue;
+                    }
                     break;
                 case OOEncodingTypeNSNumber:
-                {
-                    NSString *value=[NSString stringWithFormat:@"%@",((NSNumber * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter)];
-                    sqlite3_bind_text(stmt, idx+1,[value UTF8String], -1, SQLITE_STATIC);
-                }
+                    if (type==SQLITE_TEXT) {
+                        NSString *value=[NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, idx)];
+                        ((void (*)(id, SEL, NSNumber*))(void *) objc_msgSend)(model, propertyInfo.setter,@([value doubleValue]));
+                        continue;
+                    }
                     break;
                 case OOEncodingTypeNSURL:
-                {
-                    NSString *value=[((NSURL * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter) absoluteString];
-                    sqlite3_bind_text(stmt, idx+1,[value UTF8String], -1, SQLITE_STATIC);
-                }
+                    if (type==SQLITE_TEXT) {
+                        NSString *value=[NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, idx)];
+                        ((void (*)(id, SEL, NSURL*))(void *) objc_msgSend)(model, propertyInfo.setter,[NSURL URLWithString:value]);
+                        continue;
+                    }
                     break;
                 case OOEncodingTypeNSDate:
-                {
-                    NSTimeInterval value=[((NSDate * (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter) timeIntervalSince1970];
-                    sqlite3_bind_double(stmt, idx+1, value);
-                }
+                    if (type==SQLITE_FLOAT) {
+                        double value=sqlite3_column_double(stmt, idx);
+                        ((void (*)(id, SEL, NSDate*))(void *) objc_msgSend)(model, propertyInfo.setter,[NSDate dateWithTimeIntervalSince1970:value]);
+                        continue;
+                    }
+                    break;
                 case OOEncodingTypeNSData:
-                {
-                    NSData * value=((NSData* (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter);
-                    sqlite3_bind_blob(stmt, idx+1, [value bytes], (int)[value length], SQLITE_STATIC);
-                }
+                    if (type==SQLITE_BLOB) {
+                        int length=sqlite3_column_bytes(stmt, idx);
+                        const void * value = sqlite3_column_blob(stmt, idx);
+                        ((void (*)(id, SEL, NSData*))(void *) objc_msgSend)(model, propertyInfo.setter,[NSData dataWithBytes:value length:length]);
+                        continue;
+                    }
                     break;
                 case OOEncodingTypeOtherObject:
                 {
                     OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
                     if (propertyClassInfo.uniquePropertyKey) {
+                        OOPropertyInfo *PropertyUniquePropertyInfo=propertyClassInfo.propertyInfosByPropertyKeys[propertyClassInfo.uniquePropertyKey];
                         
+                        continue;
                     }
                 }
-                    break;
                 default:
-                    
                     break;
             }
         }else if(encodingType&OOEncodingTypeCType){
-            switch (encodingType) {
-                case OOEncodingTypeBool:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((bool (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeInt8:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((char (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeUInt8:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((unsigned char (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeInt16:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((short (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeUInt16:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((UInt16 (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeInt32:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((int (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeUInt32:
-                    sqlite3_bind_int64(stmt, idx+1, (long long)((UInt32 (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeInt64:
-                    sqlite3_bind_int64(stmt, idx+1,((long long (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeUInt64:
-                    sqlite3_bind_int64(stmt, idx+1,((unsigned long long (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeFloat:
-                    sqlite3_bind_double(stmt, idx+1, (double)((float (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                case OOEncodingTypeDouble:
-                    sqlite3_bind_double(stmt, idx+1, ((double (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter));
-                    break;
-                default:
-                    break;
-            }
+            
         }
-    }];
-}
-
-static inline void oo_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo,__unsafe_unretained id model,sqlite3_stmt *stmt,int count){
-    for (int index=0;index<count;index++){
-        __unsafe_unretained OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[[NSString stringWithUTF8String:sqlite3_column_name(stmt, index)]];
-        NSCParameterAssert(propertyInfo.dbColumnType);
-        int type = sqlite3_column_type(stmt, index);
         switch (type) {
             case SQLITE_INTEGER:
             {
@@ -644,6 +760,7 @@ static inline void oo_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo
                 break;
         }
     }
+    return result;
 }
 
 @implementation NSObject (OOModel)
@@ -736,14 +853,12 @@ static inline void oo_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo
         [db syncInDb:^(OODb *db) {
             [db executeQuery:classInfo.uniqueSelectSql context:(__bridge void *)self stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
                 OOPropertyInfo *propertyInfo=classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
-                oo_prepare_stmt(propertyInfo,uniqueValue,stmt,index);
+                oo_stmt_from_property(propertyInfo,uniqueValue,stmt,index);
             } resultBlock:^(void *context, sqlite3_stmt *stmt,bool *stop) {
-                int count = sqlite3_data_count(stmt);
-                if (count<=0) {
-                    return;
-                }
                 model=[[self alloc]init];
-                oo_model_from_stmt(classInfo, model, stmt, count);
+                if (!oo_model_from_stmt(classInfo, model, stmt)) {
+                    model=nil;
+                }
                 *stop=YES;
             }];
         }];
@@ -782,8 +897,8 @@ static inline void oo_model_from_stmt(__unsafe_unretained OOClassInfo* classInfo
 + (void)oo_insert:(id)model classInfo:(OOClassInfo*)classInfo db:(OODb*)db{
     [db syncInDb:^(OODb *db) {
        [db executeUpdate:classInfo.updateSql context:(__bridge void*)model stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-           [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//               oo_prepare_stmt(obj,, stmt, index+1);
+           [classInfo.dbPropertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo *  _Nonnull propertyInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+               oo_stmt_from_property(propertyInfo, model, stmt, idx+1);
            }];
        }];
     }];
