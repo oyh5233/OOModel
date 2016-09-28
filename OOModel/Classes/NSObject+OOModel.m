@@ -565,13 +565,15 @@ static inline void oo_model_value_from_stmt(__unsafe_unretained OOPropertyInfo *
             case OOEncodingTypeOtherObject:
             {
                 OOClassInfo *propertyClassInfo=[propertyInfo.propertyCls oo_classInfo];
+                OOPropertyInfo *propertyUniquePropertyInfo;
                 if (propertyClassInfo.uniquePropertyKey) {
-                    OOPropertyInfo *PropertyUniquePropertyInfo=propertyClassInfo.propertyInfosByPropertyKeys[propertyClassInfo.uniquePropertyKey];
-                    OOEncodingType propertyEncodingType=PropertyUniquePropertyInfo.propertyType;
-                    
-                    id uniqueModel=[propertyClassInfo.cls oo_modelWithUniqueValue:nil];
-                    ((void (*)(id, SEL, id))(void *) objc_msgSend)(model, propertyInfo.setter,uniqueModel);
-                    return;
+                    do{
+                        propertyUniquePropertyInfo=propertyClassInfo.propertyInfosByPropertyKeys[propertyClassInfo.uniquePropertyKey];
+                    }while (propertyUniquePropertyInfo==nil||propertyUniquePropertyInfo.encodingType!=OOEncodingTypeOtherObject);
+//                    OOEncodingType propertyEncodingType=PropertyUniquePropertyInfo.propertyType;
+//                    id uniqueModel=[propertyClassInfo.cls oo_modelWithUniqueValue:nil];
+//                    ((void (*)(id, SEL, id))(void *) objc_msgSend)(model, propertyInfo.setter,uniqueModel);
+//                    return;
                 }
             }
             default:
