@@ -21,7 +21,6 @@ static inline int _log(int line, int code, const char *desc)
 
 @property (nonatomic, assign) sqlite3_stmt *stmt;
 @property (nonatomic, copy) NSString *sql;
-@property (nonatomic, assign) UInt64 count;
 
 @end
 
@@ -125,7 +124,7 @@ static inline int _log(int line, int code, const char *desc)
 - (BOOL)open
 {
     sqlite3 *db;
-    if (OODB_LOG(sqlite3_open_v2([self.file cStringUsingEncoding:NSUTF8StringEncoding], &db, SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE, NULL), self.db) != SQLITE_OK)
+    if (OODB_LOG(sqlite3_open([self.file cStringUsingEncoding:NSUTF8StringEncoding], &db), self.db) != SQLITE_OK)
     {
         return NO;
     }
@@ -161,11 +160,10 @@ static inline int _log(int line, int code, const char *desc)
         }
         s = [[OOStmt alloc] init];
         s.stmt = stmt;
-        s.count = 0;
         s.sql = sql;
-        self.stmts[sql] = sql;
+        self.stmts[sql] = s;
     }
-    s.count++;
+    sqlite3_clear_bindings(s.stmt);
     sqlite3_reset(s.stmt);
     return s.stmt;
 }
@@ -196,7 +194,7 @@ static inline int _log(int line, int code, const char *desc)
 - (NSArray *)executeQuery:(NSString *)sql arguments:(NSArray *)arguments
 {
     return [self executeQuery:sql context:NULL stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-        [self _bindObject:arguments[index] toColumn:index + 1 inStatement:stmt];
+        [self _bindObject:arguments[index-1] toColumn:index inStatement:stmt];
     }];
 }
 
@@ -226,7 +224,7 @@ static inline int _log(int line, int code, const char *desc)
     int count = sqlite3_bind_parameter_count(stmt);
     for (int i = 0; i < count; i++)
     {
-        stmtBlock(context, stmt, i);
+        stmtBlock(context, stmt, i+1);
     }
     bool stop = NO;
     while (OODB_LOG(sqlite3_step(stmt), self.db) == SQLITE_ROW)
@@ -245,7 +243,7 @@ static inline int _log(int line, int code, const char *desc)
 - (BOOL)executeUpdate:(NSString *)sql arguments:(NSArray *)arguments
 {
     return [self executeUpdate:sql context:NULL stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-        [self _bindObject:arguments[index] toColumn:index + 1 inStatement:stmt];
+        [self _bindObject:arguments[index-1] toColumn:index inStatement:stmt];
     }];
 }
 
@@ -260,7 +258,7 @@ static inline int _log(int line, int code, const char *desc)
     int count = sqlite3_bind_parameter_count(stmt);
     for (int i = 0; i < count; i++)
     {
-        stmtBlock(context, stmt, i);
+        stmtBlock(context, stmt, i+1);
     }
     if (OODB_LOG(sqlite3_step(stmt), self.db) != SQLITE_DONE)
     {
