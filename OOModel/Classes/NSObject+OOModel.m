@@ -1197,6 +1197,7 @@ static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo *classInfo
     {
         classInfo = [[OOClassInfo alloc] initWithClass:self];
         classInfo.database=oo_global_db;
+        [classInfo.cls oo_createDb:classInfo db:oo_global_db];
         CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
     }
     OSSpinLockUnlock(&lock);
