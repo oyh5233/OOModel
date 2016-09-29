@@ -79,6 +79,7 @@ static inline int _log(int line, int code, const char *desc)
 
 #pragma mark--
 #pragma mark-- init
+
 - (void)dealloc
 {
     [self removeAllStmt];
@@ -147,6 +148,7 @@ static inline int _log(int line, int code, const char *desc)
 
 #pragma mark--
 #pragma mark-- stmt
+
 - (sqlite3_stmt *)stmtForSql:(NSString *)sql
 {
     OOStmt *s = self.stmts[sql];
@@ -188,20 +190,21 @@ static inline int _log(int line, int code, const char *desc)
     }];
     [self.stmts removeAllObjects];
 }
+
 #pragma mark--
 #pragma mark-- query
 
 - (NSArray *)executeQuery:(NSString *)sql arguments:(NSArray *)arguments
 {
-    return [self executeQuery:sql context:NULL stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-        [self _bindObject:arguments[index-1] toColumn:index inStatement:stmt];
+    return [self executeQuery:sql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+        [self _bindObject:arguments[idx-1] toColumn:idx inStatement:stmt];
     }];
 }
 
-- (NSArray *)executeQuery:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock
+- (NSArray *)executeQuery:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int idx))stmtBlock
 {
     __block NSMutableArray *array = [NSMutableArray array];
-    [self executeQuery:sql context:context stmtBlock:stmtBlock resultBlock:^(void *context, sqlite3_stmt *stmt, bool *stop) {
+    [self executeQuery:sql stmtBlock:stmtBlock resultBlock:^(sqlite3_stmt *stmt, bool *stop) {
         int count = sqlite3_data_count(stmt);
         NSDictionary *dictionary = [self _dictionaryInStmt:stmt count:count];
         if (dictionary.count > 0)
@@ -212,7 +215,7 @@ static inline int _log(int line, int code, const char *desc)
     return array.count ? array : nil;
 }
 
-- (void)executeQuery:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock resultBlock:(void (^)(void *context, sqlite3_stmt *stmt, bool *stop))resultBlock
+- (void)executeQuery:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int idx))stmtBlock resultBlock:(void (^)(sqlite3_stmt *stmt, bool *stop))resultBlock
 {
     NSParameterAssert(stmtBlock);
     NSParameterAssert(resultBlock);
@@ -224,12 +227,12 @@ static inline int _log(int line, int code, const char *desc)
     int count = sqlite3_bind_parameter_count(stmt);
     for (int i = 0; i < count; i++)
     {
-        stmtBlock(context, stmt, i+1);
+        stmtBlock(stmt, i+1);
     }
     bool stop = NO;
     while (OODB_LOG(sqlite3_step(stmt), self.db) == SQLITE_ROW)
     {
-        resultBlock(context, stmt, &stop);
+        resultBlock(stmt, &stop);
         if (stop)
         {
             return;
@@ -242,12 +245,12 @@ static inline int _log(int line, int code, const char *desc)
 
 - (BOOL)executeUpdate:(NSString *)sql arguments:(NSArray *)arguments
 {
-    return [self executeUpdate:sql context:NULL stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-        [self _bindObject:arguments[index-1] toColumn:index inStatement:stmt];
+    return [self executeUpdate:sql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+        [self _bindObject:arguments[idx-1] toColumn:idx inStatement:stmt];
     }];
 }
 
-- (BOOL)executeUpdate:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock
+- (BOOL)executeUpdate:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int idx))stmtBlock
 {
     NSParameterAssert(stmtBlock);
     sqlite3_stmt *stmt = [self stmtForSql:sql];
@@ -258,7 +261,7 @@ static inline int _log(int line, int code, const char *desc)
     int count = sqlite3_bind_parameter_count(stmt);
     for (int i = 0; i < count; i++)
     {
-        stmtBlock(context, stmt, i+1);
+        stmtBlock(stmt, i+1);
     }
     if (OODB_LOG(sqlite3_step(stmt), self.db) != SQLITE_DONE)
     {
@@ -278,7 +281,7 @@ static inline int _log(int line, int code, const char *desc)
         [self executeUpdate:@"begin exclusive transaction" arguments:nil];
     }
 }
-//[self executeUpdate:@"rollback transaction" arguments:nil];
+
 - (void)commit
 {
     if (self.transactionReferenceCount > 0)
@@ -294,12 +297,12 @@ static inline int _log(int line, int code, const char *desc)
 #pragma mark--
 #pragma mark-- bind object to column
 
-- (void)_bindObject:(id)obj toColumn:(int)index inStatement:(sqlite3_stmt *)stmt
+- (void)_bindObject:(id)obj toColumn:(int)idx inStatement:(sqlite3_stmt *)stmt
 {
     int result = SQLITE_OK;
     if ((!obj) || obj == (id) kCFNull)
     {
-        result = sqlite3_bind_null(stmt, index);
+        result = sqlite3_bind_null(stmt, idx);
     }
     else if ([obj isKindOfClass:NSData.class])
     {
@@ -308,100 +311,101 @@ static inline int _log(int line, int code, const char *desc)
         {
             bytes = "";
         }
-        result = sqlite3_bind_blob(stmt, index, bytes, (int) [obj length], SQLITE_STATIC);
+        result = sqlite3_bind_blob(stmt, idx, bytes, (int) [obj length], SQLITE_STATIC);
     }
     else if ([obj isKindOfClass:NSDate.class])
     {
-        result = sqlite3_bind_double(stmt, index, [obj timeIntervalSince1970]);
+        result = sqlite3_bind_double(stmt, idx, [obj timeIntervalSince1970]);
     }
     else if ([obj isKindOfClass:NSNumber.class])
     {
         if (strcmp([obj objCType], @encode(char)) == 0)
         {
-            result = sqlite3_bind_int(stmt, index, [obj charValue]);
+            result = sqlite3_bind_int(stmt, idx, [obj charValue]);
         }
         else if (strcmp([obj objCType], @encode(unsigned char)) == 0)
         {
-            result = sqlite3_bind_int(stmt, index, [obj unsignedCharValue]);
+            result = sqlite3_bind_int(stmt, idx, [obj unsignedCharValue]);
         }
         else if (strcmp([obj objCType], @encode(short)) == 0)
         {
-            result = sqlite3_bind_int(stmt, index, [obj shortValue]);
+            result = sqlite3_bind_int(stmt, idx, [obj shortValue]);
         }
         else if (strcmp([obj objCType], @encode(unsigned short)) == 0)
         {
-            result = sqlite3_bind_int(stmt, index, [obj unsignedShortValue]);
+            result = sqlite3_bind_int(stmt, idx, [obj unsignedShortValue]);
         }
         else if (strcmp([obj objCType], @encode(int)) == 0)
         {
-            result = sqlite3_bind_int(stmt, index, [obj intValue]);
+            result = sqlite3_bind_int(stmt, idx, [obj intValue]);
         }
         else if (strcmp([obj objCType], @encode(unsigned int)) == 0)
         {
-            result = sqlite3_bind_int64(stmt, index, (long long) [obj unsignedIntValue]);
+            result = sqlite3_bind_int64(stmt, idx, (long long) [obj unsignedIntValue]);
         }
         else if (strcmp([obj objCType], @encode(long)) == 0)
         {
-            result = sqlite3_bind_int64(stmt, index, [obj longValue]);
+            result = sqlite3_bind_int64(stmt, idx, [obj longValue]);
         }
         else if (strcmp([obj objCType], @encode(unsigned long)) == 0)
         {
-            result = sqlite3_bind_int64(stmt, index, (long long) [obj unsignedLongValue]);
+            result = sqlite3_bind_int64(stmt, idx, (long long) [obj unsignedLongValue]);
         }
         else if (strcmp([obj objCType], @encode(long long)) == 0)
         {
-            result = sqlite3_bind_int64(stmt, index, [obj longLongValue]);
+            result = sqlite3_bind_int64(stmt, idx, [obj longLongValue]);
         }
         else if (strcmp([obj objCType], @encode(unsigned long long)) == 0)
         {
-            result = sqlite3_bind_int64(stmt, index, (long long) [obj unsignedLongLongValue]);
+            result = sqlite3_bind_int64(stmt, idx, (long long) [obj unsignedLongLongValue]);
         }
         else if (strcmp([obj objCType], @encode(float)) == 0)
         {
-            result = sqlite3_bind_double(stmt, index, [obj floatValue]);
+            result = sqlite3_bind_double(stmt, idx, [obj floatValue]);
         }
         else if (strcmp([obj objCType], @encode(double)) == 0)
         {
-            result = sqlite3_bind_double(stmt, index, [obj doubleValue]);
+            result = sqlite3_bind_double(stmt, idx, [obj doubleValue]);
         }
         else if (strcmp([obj objCType], @encode(BOOL)) == 0)
         {
-            result = sqlite3_bind_int(stmt, index, ([obj boolValue] ? 1 : 0));
+            result = sqlite3_bind_int(stmt, idx, ([obj boolValue] ? 1 : 0));
         }
         else
         {
-            result = sqlite3_bind_text(stmt, index, [[obj description] UTF8String], -1, SQLITE_STATIC);
+            result = sqlite3_bind_text(stmt, idx, [[obj description] UTF8String], -1, SQLITE_STATIC);
         }
     }
     else
     {
-        result = sqlite3_bind_text(stmt, index, [[obj description] UTF8String], -1, SQLITE_STATIC);
+        result = sqlite3_bind_text(stmt, idx, [[obj description] UTF8String], -1, SQLITE_STATIC);
     }
     OODB_LOG(result, self.db);
 }
+
 #pragma mark--
 #pragma mark-- getter
 
 - (NSDictionary *)_dictionaryInStmt:(sqlite3_stmt *)stmt count:(int)count
 {
     NSMutableDictionary *set = [NSMutableDictionary dictionary];
-    for (int index = 0; index < count; index++)
+    for (int idx = 0; idx < count; idx++)
     {
-        NSString *columnName = [NSString stringWithUTF8String:sqlite3_column_name(stmt, index)];
-        int type = sqlite3_column_type(stmt, index);
+        NSString *columnName = [NSString stringWithUTF8String:sqlite3_column_name(stmt, idx)];
+        int type = sqlite3_column_type(stmt, idx);
         id value = nil;
         if (type == SQLITE_INTEGER)
         {
-            value = [NSNumber numberWithLongLong:sqlite3_column_int64(stmt, index)];
+            value = [NSNumber numberWithLongLong:sqlite3_column_int64(stmt, idx)];
         }
         else if (type == SQLITE_FLOAT)
         {
-            value = [NSNumber numberWithDouble:sqlite3_column_double(stmt, index)];
+            value = [NSNumber numberWithDouble:sqlite3_column_double(stmt, idx)];
         }
         else if (type == SQLITE_BLOB)
         {
-            int bytes = sqlite3_column_bytes(stmt, index);
-            value = [NSData dataWithBytes:sqlite3_column_blob(stmt, index) length:bytes];
+            int bytes = sqlite3_column_bytes(stmt, idx);
+            value = [NSData dataWithBytes:sqlite3_column_blob(stmt, idx) length:bytes];
         }
         else if (type == SQLITE_NULL)
         {
@@ -409,7 +413,7 @@ static inline int _log(int line, int code, const char *desc)
         }
         else
         {
-            value = [[NSString alloc] initWithCString:(const char *) sqlite3_column_text(stmt, index) encoding:NSUTF8StringEncoding];
+            value = [[NSString alloc] initWithCString:(const char *) sqlite3_column_text(stmt, idx) encoding:NSUTF8StringEncoding];
         }
         if (value == nil || [value isKindOfClass:NSNull.class])
         {

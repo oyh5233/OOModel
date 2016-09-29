@@ -5,7 +5,6 @@
 
 #import "sqlite3.h"
 #import <Foundation/Foundation.h>
-@class OODb;
 
 @interface OODb : NSObject
 
@@ -21,11 +20,11 @@
 
 - (BOOL)executeUpdate:(NSString *)sql arguments:(NSArray *)arguments;
 
-- (BOOL)executeUpdate:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock;
+- (BOOL)executeUpdate:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int dix))stmtBlock;
 
-- (void)executeQuery:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock resultBlock:(void (^)(void *context, sqlite3_stmt *stmt, bool *stop))resultBlock;
+- (void)executeQuery:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int idx))stmtBlock resultBlock:(void (^)(sqlite3_stmt *stmt, bool *stop))resultBlock;
 
-- (NSArray *)executeQuery:(NSString *)sql context:(void *)context stmtBlock:(void (^)(void *context, sqlite3_stmt *stmt, int index))stmtBlock;
+- (NSArray *)executeQuery:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int idx))stmtBlock;
 
 - (NSArray *)executeQuery:(NSString *)sql arguments:(NSArray *)arguments;
 

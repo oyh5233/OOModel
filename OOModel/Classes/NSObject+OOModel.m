@@ -1017,11 +1017,11 @@ static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo *classInfo
     if (db)
     {
         [db syncInDb:^(OODb *db) {
-            [db executeQuery:classInfo.uniqueSelectSql context:(__bridge void *) self stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
+            [db executeQuery:classInfo.uniqueSelectSql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
                 OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
-                oo_stmt_from_unique_property(propertyInfo,uniqueValue,stmt,index);
+                oo_stmt_from_unique_property(propertyInfo,uniqueValue,stmt,idx);
             }
-                resultBlock:^(void *context, sqlite3_stmt *stmt, bool *stop) {
+                resultBlock:^(sqlite3_stmt *stmt, bool *stop) {
                     model = [[self alloc] init];
                     if (!oo_model_from_stmt(classInfo, model, stmt))
                     {
@@ -1077,9 +1077,9 @@ static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo *classInfo
 + (void)oo_insert:(id)model classInfo:(OOClassInfo *)classInfo db:(OODb *)db
 {
     [db syncInDb:^(OODb *db) {
-        [db executeUpdate:classInfo.insertSql context:(__bridge void *) model stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-            OOPropertyInfo *propertyInfo=classInfo.dbPropertyInfos[index-1];
-                oo_stmt_from_property(propertyInfo, model, stmt, (int) index);
+        [db executeUpdate:classInfo.insertSql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+            OOPropertyInfo *propertyInfo=classInfo.dbPropertyInfos[idx-1];
+                oo_stmt_from_property(propertyInfo, model, stmt, (int) idx);
         }];
     }];
 }
@@ -1087,12 +1087,12 @@ static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo *classInfo
 + (void)oo_update:(id)model classInfo:(OOClassInfo *)classInfo db:(OODb *)db
 {
     [db syncInDb:^(OODb *db) {
-        [db executeUpdate:classInfo.updateSql context:(__bridge void *) model stmtBlock:^(void *context, sqlite3_stmt *stmt, int index) {
-            if (index-1==classInfo.dbPropertyInfos.count) {
-                oo_stmt_from_property(classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey], model, stmt, (int) index);
+        [db executeUpdate:classInfo.updateSql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+            if (idx-1==classInfo.dbPropertyInfos.count) {
+                oo_stmt_from_property(classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey], model, stmt, (int) idx);
             }else{
-                OOPropertyInfo *propertyInfo=classInfo.dbPropertyInfos[index-1];
-                oo_stmt_from_property(propertyInfo, model, stmt, (int) index);
+                OOPropertyInfo *propertyInfo=classInfo.dbPropertyInfos[idx-1];
+                oo_stmt_from_property(propertyInfo, model, stmt, (int) idx);
             }
         }];
     }];
@@ -1196,7 +1196,7 @@ static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo *classInfo
     if (!classInfo)
     {
         classInfo = [[OOClassInfo alloc] initWithClass:self];
-        [self oo_setDb:oo_global_db classInfo:classInfo];
+        classInfo.database=oo_global_db;
         CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
     }
     OSSpinLockUnlock(&lock);
@@ -1213,33 +1213,24 @@ static inline bool oo_model_from_stmt(__unsafe_unretained OOClassInfo *classInfo
     return oo_classInfos;
 }
 
-+ (void)oo_setDb:(OODb *)db classInfo:(OOClassInfo*)classInfo{
-    if (classInfo.database!=db) {
-        classInfo.database=db;
-        [self oo_createDb:classInfo db:db];
++ (void)oo_setDb:(OODb*)db forAll:(bool)forAll{
+    if (forAll) {
+        if (oo_global_db!=db) {
+            oo_global_db=db;
+            [(__bridge NSDictionary*)[self oo_classInfos] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, OOClassInfo *  _Nonnull classInfo, BOOL * _Nonnull stop) {
+                if (classInfo.database!=db) {
+                    classInfo.database=db;
+                    [self oo_createDb:classInfo db:db];
+                }
+            }];
+        }
+    }else{
+        OOClassInfo *classInfo=[self oo_classInfo];
+        if (classInfo.database!=db) {
+            classInfo.database=db;
+            [self oo_createDb:classInfo db:db];
+        }
     }
-}
-
-+ (void)oo_setDb:(OODb *)db
-{
-    OOClassInfo *classInfo=[self oo_classInfo];
-    [self oo_setDb:db classInfo:classInfo];
-//    static OSSpinLock lock=OS_SPINLOCK_INIT;
-//    OSSpinLockLock(lock);
-
-//    OSSpinLockUnlock(lock);
-}
-
-+ (void)oo_setGlobalDb:(OODb*)db{
-//    static OSSpinLock lock=OS_SPINLOCK_INIT;
-//    OSSpinLockLock(lock);
-    if (oo_global_db!=db) {
-        oo_global_db=db;
-        [(__bridge NSDictionary*)[self oo_classInfos] enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, OOClassInfo *  _Nonnull classInfo, BOOL * _Nonnull stop) {
-            [classInfo.cls oo_setDb:oo_global_db classInfo:classInfo];
-        }];
-    }
-//    OSSpinLockUnlock(lock);
 }
 
 + (void)oo_createDb:(OOClassInfo*)classInfo db:(OODb*)db
