@@ -144,7 +144,7 @@ static OODb *oo_global_db = nil;
             ;
             self.uniquePropertyKey = [self.cls oo_uniquePropertyKey];
             OOPropertyInfo *uniquePropertyInfo = self.propertyInfosByPropertyKeys[self.uniquePropertyKey];
-            NSCAssert(!(uniquePropertyInfo.encodingType == OOEncodingTypeUnknow || uniquePropertyInfo.encodingType == OOEncodingTypeOtherObject), @"unique key can not support this encoding type");
+            NSCAssert(uniquePropertyInfo && uniquePropertyInfo.encodingType != OOEncodingTypeUnknow && uniquePropertyInfo.encodingType != OOEncodingTypeOtherObject, @"unique key can not support this encoding type");
         }
         if ([cls conformsToProtocol:@protocol(OODbModel)])
         {
