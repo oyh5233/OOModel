@@ -1200,19 +1200,33 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
 
 + (OOClassInfo *)oo_classInfo
 {
-    CFMutableDictionaryRef classInfoRoot = [self oo_classInfos];
     static OSSpinLock lock = OS_SPINLOCK_INIT;
     OSSpinLockLock(&lock);
-    OOClassInfo *classInfo = CFDictionaryGetValue(classInfoRoot, (__bridge void *) self);
+    OOClassInfo *classInfo = objc_getAssociatedObject(self, @selector(oo_classInfo));
     if (!classInfo)
     {
         classInfo = [[OOClassInfo alloc] initWithClass:self];
         classInfo.database = oo_global_db;
         [classInfo.cls oo_createDb:classInfo db:oo_global_db];
+        objc_setAssociatedObject(self, @selector(oo_classInfo), classInfo, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        CFMutableDictionaryRef classInfoRoot = [self oo_classInfos];
         CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
     }
     OSSpinLockUnlock(&lock);
     return classInfo;
+    //    CFMutableDictionaryRef classInfoRoot = [self oo_classInfos];
+    //    static OSSpinLock lock = OS_SPINLOCK_INIT;
+    //    OSSpinLockLock(&lock);
+    //    OOClassInfo *classInfo = CFDictionaryGetValue(classInfoRoot, (__bridge void *) self);
+    //    if (!classInfo)
+    //    {
+    //        classInfo = [[OOClassInfo alloc] initWithClass:self];
+    //        classInfo.database = oo_global_db;
+    //        [classInfo.cls oo_createDb:classInfo db:oo_global_db];
+    //        CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
+    //    }
+    //    OSSpinLockUnlock(&lock);
+    //    return classInfo;
 }
 
 + (CFMutableDictionaryRef)oo_classInfos

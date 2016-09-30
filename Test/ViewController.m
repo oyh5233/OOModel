@@ -28,8 +28,8 @@ typedef void (^UserBlock)();
 {
     [super viewDidLoad];
     [NSObject oo_setDb:[[OODb alloc] initWithFile:[[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"db.sqlite"]] forAll:YES];
-//    [self test1];
-    [self test2];
+    [self test1];
+//    [self test2];
 
     // Do any additional setup after loading the view, typically from a nib.
 }
