@@ -13,7 +13,7 @@ static inline void _log(int line, NSString *desc)
     printf("\n%d:%s\r", line, desc);
 }
 
-static NSString *oo_latest_used_timestamp = @"oo_latest_used_timestamp";
+static NSString *oo_update_timestamp = @"oo_update_timestamp";
 static OODb *oo_global_db = nil;
 
 typedef struct
@@ -23,7 +23,7 @@ typedef struct
 
 } OOModelContext;
 
-inline static NSString *oo_databaseColumnTypeWithType(OODbColumnType type)
+static inline NSString *oo_databaseColumnTypeWithType(OODbColumnType type)
 {
     NSString *dbColumnType = nil;
     switch (type)
@@ -395,7 +395,7 @@ static void oo_merge_model_to_model_apply(const void *_value, void *_context)
     }
 }
 
-static id oo_model_from_unique_value(__unsafe_unretained OOClassInfo *classInfo, __unsafe_unretained id value)
+static inline id oo_model_from_unique_value(__unsafe_unretained OOClassInfo *classInfo, __unsafe_unretained id value)
 {
     NSCAssert(classInfo.uniquePropertyKey, @"[class:%@] [class should implement +(NSStrng*)oo_uniquePropertyKey:]", NSStringFromClass(classInfo.cls));
     if (!value)
@@ -559,7 +559,7 @@ static inline void oo_model_value_from_stmt(__unsafe_unretained OOPropertyInfo *
                 break;
         }
     }
-    NSValueTransformer *valueTransformer = propertyInfo.dbValueTransformer;
+    __unsafe_unretained NSValueTransformer *valueTransformer = propertyInfo.dbValueTransformer;
     if (valueTransformer)
     {
         id value;
@@ -678,7 +678,7 @@ static inline void oo_bind_stmt_from_value(__unsafe_unretained OOPropertyInfo *p
         }
         return;
     }
-    NSValueTransformer *valueTransformer = propertyInfo.dbValueTransformer;
+    __unsafe_unretained NSValueTransformer *valueTransformer = propertyInfo.dbValueTransformer;
     if (valueTransformer)
     {
         id transformedValue = [valueTransformer reverseTransformedValue:value];
@@ -800,7 +800,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
                 break;
         }
     }
-    NSValueTransformer *valueTransformer = propertyInfo.dbValueTransformer;
+    __unsafe_unretained NSValueTransformer *valueTransformer = propertyInfo.dbValueTransformer;
     if (valueTransformer)
     {
         id transformedValue = [valueTransformer reverseTransformedValue:((id (*)(id, SEL))(void *) objc_msgSend)(model, propertyInfo.getter)];
@@ -1183,7 +1183,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
 
 + (void)oo_deleteModelsBeforeDate:(NSDate *)date classInfo:(OOClassInfo *)classInfo db:(OODb *)db
 {
-    NSString *sql = [NSString stringWithFormat:@"DELETE FROM %@ WHERE %@<%f", classInfo.database, oo_latest_used_timestamp, [date timeIntervalSince1970]];
+    NSString *sql = [NSString stringWithFormat:@"DELETE FROM %@ WHERE %@<%f", classInfo.database, oo_update_timestamp, [date timeIntervalSince1970]];
     [db executeUpdate:sql arguments:nil];
 }
 
@@ -1202,11 +1202,11 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
             OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[uniquePropertyKey];
             NSString *uniqueDbColumn = propertyInfo.propertyKey;
             NSString *uniqueDbColumnType = oo_databaseColumnTypeWithType(propertyInfo.dbColumnType);
-            sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' %@ NOT NULL UNIQUE,'%@' REAL)", table, uniqueDbColumn, uniqueDbColumnType, oo_latest_used_timestamp];
+            sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' %@ NOT NULL UNIQUE,'%@' REAL)", table, uniqueDbColumn, uniqueDbColumnType, oo_update_timestamp];
         }
         else
         {
-            sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' REAL)", table, oo_latest_used_timestamp];
+            sql = [NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS '%@' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'%@' REAL)", table, oo_update_timestamp];
         }
         [db executeUpdate:sql arguments:nil];
     }
@@ -1240,7 +1240,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
             [databaseIndexesKeys addObject:propertyKey];
         }];
     }
-    [databaseIndexesKeys addObject:oo_latest_used_timestamp];
+    [databaseIndexesKeys addObject:oo_update_timestamp];
     [databaseIndexesKeys enumerateObjectsUsingBlock:^(NSString *_Nonnull databaseIndexKey, NSUInteger idx, BOOL *_Nonnull stop) {
         if (![self oo_checkTable:classInfo.dbTableName index:databaseIndexKey db:db])
         {
