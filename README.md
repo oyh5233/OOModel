@@ -10,7 +10,7 @@ single,synchronous and thread safety model in memory and database,support json m
 
 Add the following to your project's Podfile:
 ```ruby
-pod 'oyh5233/OOModel', '~> 1.0.1'
+pod 'oyh5233/OOModel', '~> 1.0.2'
 ```
 
 #### Carthage

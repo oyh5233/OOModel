@@ -432,15 +432,16 @@ static inline id oo_model_from_unique_value(__unsafe_unretained OOClassInfo *cla
         return nil;
     }
     OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
+    id model = nil;
     if (propertyInfo.encodingType != OOEncodingTypeOtherObject)
     {
-        return [classInfo.cls oo_modelWithUniqueValue:value];
+        model = [classInfo.cls oo_modelWithUniqueValue:value];
     }
     else
     {
-        return [classInfo.cls oo_modelWithUniqueValue:oo_model_from_unique_value([propertyInfo.propertyCls oo_classInfo], value)];
+        model = [classInfo.cls oo_modelWithUniqueValue:oo_model_from_unique_value([propertyInfo.propertyCls oo_classInfo], value)];
     }
-    return nil;
+    return model;
 }
 
 static inline void oo_model_value_from_stmt(__unsafe_unretained OOPropertyInfo *propertyInfo, __unsafe_unretained id model, sqlite3_stmt *stmt, int idx)
@@ -739,7 +740,7 @@ static inline void oo_bind_stmt_from_value(__unsafe_unretained OOPropertyInfo *p
         NSCAssert(@"[class:%@,propertyKey:%@,propertyValue:%@] [can not bind value to stmt]", NSStringFromClass(propertyInfo.ownClassInfo.cls), propertyInfo.propertyKey, value);
     }
 }
-static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *propertyInfo, __unsafe_unretained id model, sqlite3_stmt *stmt, int idx)
+static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *propertyInfo, __unsafe_unretained id model, sqlite3_stmt *stmt, int idx)
 {
     OOEncodingType encodingType = propertyInfo.encodingType;
     if (encodingType & OOEncodingTypeObject)
@@ -931,12 +932,57 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
     {
         return nil;
     }
-    return [self oo_modelsWithJsonDictionaries:@[jsonDictionary]];
+    NSArray *models = [self oo_modelsWithJsonDictionaries:@[jsonDictionary]];
+    return models.count ? [models firstObject] : nil;
 }
 
 + (instancetype)oo_modelWithUniqueValue:(id)uniqueValue
 {
-    return nil;
+    OOClassInfo *classInfo = [self oo_classInfo];
+    OOMapTable *mt = classInfo.mapTable;
+    OODb *db = classInfo.database;
+    __unsafe_unretained OOPropertyInfo *uniquePropertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
+    if (uniquePropertyInfo.encodingType == OOEncodingTypeOtherObject)
+    {
+        classInfo = [uniquePropertyInfo.propertyCls oo_classInfo];
+        uniqueValue = oo_unique_value_in_model(uniqueValue, classInfo);
+    }
+    __block id model = nil;
+    [mt syncInMt:^(OOMapTable *mt) {
+        model = [mt objectForKey:uniqueValue];
+    }];
+    if (model)
+    {
+        return model;
+    }
+    [db syncInDb:^(OODb *db) {
+        [db executeQuery:classInfo.uniqueSelectSql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+            oo_bind_stmt_from_value(uniquePropertyInfo, uniqueValue, stmt, idx);
+        }
+            resultBlock:^(sqlite3_stmt *stmt, bool *stop) {
+                model = [[self alloc] init];
+                if (!oo_model_from_stmt(classInfo, model, stmt))
+                {
+                    model = nil;
+                }
+                *stop = YES;
+            }];
+    }];
+    [mt syncInMt:^(OOMapTable *mt) {
+        id mtModel = [mt objectForKey:uniqueValue];
+        if (mtModel)
+        {
+            model = mtModel;
+        }
+        else
+        {
+            if (model)
+            {
+                [mt setObject:model forKey:uniqueValue];
+            }
+        }
+    }];
+    return model;
 }
 
 - (void)oo_mergeWithJsonDictionary:(NSDictionary *)jsonDictionary

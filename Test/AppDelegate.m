@@ -16,7 +16,7 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    NSLog(@"-----sandbox-----\n%@\n------sandbox------",[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES)firstObject]);
+    NSLog(@"\n-----sandbox-----\n%@\n------sandbox------",[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES)firstObject]);
     // Override point for customization after application launch.
     return YES;
 }

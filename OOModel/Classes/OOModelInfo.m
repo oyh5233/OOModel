@@ -114,7 +114,7 @@ static OODb *oo_global_db = nil;
                     {
                         propertyInfo.dbColumnType = OODbColumnTypeInteger;
                     }
-                    else if (propertyInfo.encodingType == OOEncodingTypeFloat || propertyInfo.encodingType == OOEncodingTypeDouble || propertyInfo.encodingType == OOEncodingTypeNSDate || propertyInfo.encodingType == OOEncodingTypeNSNumber)
+                    else if (propertyInfo.encodingType == OOEncodingTypeFloat || propertyInfo.encodingType == OOEncodingTypeDouble || propertyInfo.encodingType == OOEncodingTypeNSDate)
                     {
                         propertyInfo.dbColumnType = OODbColumnTypeReal;
                     }
@@ -122,12 +122,13 @@ static OODb *oo_global_db = nil;
                     {
                         propertyInfo.dbColumnType = OODbColumnTypeBlob;
                     }
-                    else if (propertyInfo.encodingType == OOEncodingTypeNSString || propertyInfo.encodingType == OOEncodingTypeNSURL)
+                    else if (propertyInfo.encodingType == OOEncodingTypeNSString || propertyInfo.encodingType == OOEncodingTypeNSURL || propertyInfo.encodingType == OOEncodingTypeNSNumber)
                     {
                         propertyInfo.dbColumnType = OODbColumnTypeText;
                     }
-                    else if ([cls respondsToSelector:@selector(oo_dbColumnTypeForPropertyKey:)])
+                    else
                     {
+                        NSCAssert([cls respondsToSelector:@selector(oo_dbColumnTypeForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (OODbColumnType)oo_dbColumnTypeForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
                         propertyInfo.dbColumnType = [self.cls oo_dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
                     }
                     [dbPropertyInfos addObject:propertyInfo];
@@ -142,6 +143,8 @@ static OODb *oo_global_db = nil;
             self.mapTable = [[OOMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];
             ;
             self.uniquePropertyKey = [self.cls oo_uniquePropertyKey];
+            OOPropertyInfo *uniquePropertyInfo = self.propertyInfosByPropertyKeys[self.uniquePropertyKey];
+            NSCAssert(!(uniquePropertyInfo.encodingType == OOEncodingTypeUnknow || uniquePropertyInfo.encodingType == OOEncodingTypeOtherObject), @"unique key can not support this encoding type");
         }
         if ([cls conformsToProtocol:@protocol(OODbModel)])
         {
