@@ -413,7 +413,6 @@ static void oo_merge_model_to_model_apply(const void *_value, void *_context)
 
 static inline id oo_model_from_unique_value(__unsafe_unretained OOClassInfo *classInfo, __unsafe_unretained id value)
 {
-    OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
     return [classInfo.cls oo_modelWithUniqueValue:value];
 }
 
