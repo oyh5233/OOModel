@@ -217,6 +217,15 @@ static inline int _log(int line, int code, const char *desc)
     return array.count ? array : nil;
 }
 
+- (void)executeQuery:(NSString *)sql arguments:(NSArray *)arguments resultBlock:(void (^)(sqlite3_stmt *stmt, bool *stop))resultBlock
+{
+    [self executeQuery:sql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+        [self _bindObject:arguments[idx - 1] toColumn:idx inStatement:stmt];
+    } resultBlock:^(sqlite3_stmt *stmt, bool *stop) {
+        resultBlock(stmt,stop);
+    }];
+}
+
 - (void)executeQuery:(NSString *)sql stmtBlock:(void (^)(sqlite3_stmt *stmt, int idx))stmtBlock resultBlock:(void (^)(sqlite3_stmt *stmt, bool *stop))resultBlock
 {
     NSParameterAssert(stmtBlock);

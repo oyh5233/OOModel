@@ -25,7 +25,7 @@ OO_MODEL_IMPLEMENTION_UNIQUE(rid)
 
 OO_MODEL_IMPLEMENTION_DB_KEYS(rid,title,creator,membercount)
 
-+ (NSValueTransformer*)dbValueTransformerForPropertyKey:(NSString *)propertyKey{
++ (NSValueTransformer*)oo_dbValueTransformerForPropertyKey:(NSString *)propertyKey{
     if ([propertyKey isEqualToString:@"creator"]) {
         return [OOValueTransformer transformerWithForwardBlock:^id(id value) {
             return [OOUser oo_modelWithUniqueValue:value];

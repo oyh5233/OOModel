@@ -42,7 +42,7 @@ OO_MODEL_IMPLEMENTION_JSON_KEYS(
 OO_MODEL_IMPLEMENTION_UNIQUE(userID)
 OO_MODEL_IMPLEMENTION_DB_KEYS(login,userID,avatarURL,gravatarID,htmlURL,followersURL,followingURL,gistsURL,starredURL,subscriptionsURL,organizationsURL,reposURL,eventsURL,receivedEventsURL,siteAdmin,publicRepos,publicGists,createdAt,updatedAt,type,name,company,blog,location,email,hireable,bio,followers,following)
 
-+ (NSValueTransformer*)jsonValueTransformerForPropertyKey:(NSString *)propertyKey{
++ (NSValueTransformer*)oo_jsonValueTransformerForPropertyKey:(NSString *)propertyKey{
     if ([propertyKey isEqualToString:@"test"]) {
         return [OOValueTransformer transformerWithForwardBlock:^id(id value) {
             return [TestMD oo_modelWithUniqueValue:value];
@@ -53,7 +53,7 @@ OO_MODEL_IMPLEMENTION_DB_KEYS(login,userID,avatarURL,gravatarID,htmlURL,follower
     return nil;
 }
 
-+ (NSValueTransformer*)dbValueTransformerForPropertyKey:(NSString *)propertyKey{
++ (NSValueTransformer*)oo_dbValueTransformerForPropertyKey:(NSString *)propertyKey{
     if ([propertyKey isEqualToString:@"test"]) {
         return [OOValueTransformer transformerWithForwardBlock:^id(id value) {
             return [TestMD oo_modelWithUniqueValue:value];

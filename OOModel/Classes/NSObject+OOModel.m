@@ -8,11 +8,6 @@
 #import <libkern/OSAtomic.h>
 #import <objc/message.h>
 
-static inline void _log(int line, NSString *desc)
-{
-    printf("\n%d:%s\r", line, desc);
-}
-
 static NSString *oo_update_timestamp = @"oo_update_timestamp";
 static OODb *oo_global_db = nil;
 
@@ -172,6 +167,22 @@ static inline id oo_get_value_for_property(__unsafe_unretained id model, __unsaf
     }
     return value;
 }
+
+static inline id oo_unique_value_in_model(__unsafe_unretained id model,__unsafe_unretained OOClassInfo *classInfo){
+    __unsafe_unretained OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
+    id value = oo_get_value_for_property(model, propertyInfo);
+    if (!value)
+    {
+        return value;
+    }
+    if (propertyInfo.encodingType == OOEncodingTypeOtherObject)
+    {
+        value = oo_unique_value_in_model(value,[propertyInfo.propertyCls oo_classInfo]);
+    }
+    return value;
+}
+
+
 
 static inline id oo_value_from_json_value(__unsafe_unretained id value, OOPropertyInfo *propertyInfo)
 {
@@ -365,6 +376,24 @@ static void oo_transform_model_to_json_dictionary_apply(const void *_value, void
         }
         parent[jsonKeyPathArray[i]] = jsonValue;
     }
+}
+
+static inline id oo_unique_value_in_json_dictionary(__unsafe_unretained NSDictionary *jsonDictionary,__unsafe_unretained OOClassInfo *classInfo){
+    __unsafe_unretained OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
+    id value = jsonDictionary[propertyInfo.jsonKeyPathInString];
+    if (!value)
+    {
+        return value;
+    }
+    if (propertyInfo.encodingType == OOEncodingTypeOtherObject)
+    {
+        value = oo_unique_value_in_json_dictionary(value,[propertyInfo.propertyCls oo_classInfo]);
+    }
+    else
+    {
+        value = oo_value_from_json_value(value, propertyInfo);
+    }
+    return value;
 }
 
 static void oo_transform_model_to_dictionary_apply(const void *_value, void *_context)
@@ -854,6 +883,42 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
     return models;
 }
 
++ (NSArray *)oo_modelsWithAfterWhereSql:(NSString *)afterWhereSql arguments:(NSArray *)arguments
+{
+    OOClassInfo *classInfo = [self oo_classInfo];
+    OODb *db = classInfo.database;
+    OOMapTable *mt =classInfo.mapTable;
+    NSMutableArray *array = [NSMutableArray array];
+    NSString *sql = [NSString stringWithFormat:@"SELECT * FROM %@", classInfo.dbTableName];
+    if (afterWhereSql)
+    {
+        sql = [sql stringByAppendingFormat:@" WHERE %@", afterWhereSql];
+    }
+    [db syncInDb:^(OODb *db) {
+        [db executeQuery:sql arguments:arguments resultBlock:^(sqlite3_stmt *stmt, bool *stop) {
+            id model = [[self alloc] init];
+            if (oo_model_from_stmt(classInfo, model, stmt))
+            {
+                if (mt) {
+                    [mt syncInMt:^(OOMapTable *mt) {
+                        id uniqueValue=oo_unique_value_in_model(model, classInfo);
+                        id mtModel=[mt objectForKey:uniqueValue];
+                        if (mtModel) {
+                            [array addObject:mtModel];
+                        }else{
+                            [mt setObject:model forKey:uniqueValue];
+                            [array addObject:model];
+                        }
+                    }];
+                }else{
+                    [array addObject:model];
+                }
+            }
+        }];
+    }];
+    return array.count ? array : nil;
+}
+
 + (id)oo_modelWithJsonDictionary:(NSDictionary *)jsonDictionary
 {
     if (!jsonDictionary)
@@ -915,7 +980,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
         }
         return model;
     }
-    id uniqueValue = [self _oo_uniqueValueInJsonDictionary:jsonDictionary classInfo:classInfo];
+    id uniqueValue = oo_unique_value_in_json_dictionary(jsonDictionary, classInfo);
     if (!uniqueValue)
     {
         OOMD_LOG(@"[class:%@,propertyKey:%@] [class do not have a unique value]", NSStringFromClass(classInfo.cls), classInfo.uniquePropertyKey);
@@ -1037,35 +1102,6 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
     context.storage = (__bridge void *) model;
     CFArrayRef propertyInfos = (__bridge CFArrayRef) classInfo.propertyInfos;
     CFArrayApplyFunction(propertyInfos, CFRangeMake(0, CFArrayGetCount(propertyInfos)), oo_merge_model_to_model_apply, &context);
-}
-
-+ (id)_oo_uniqueValueInJsonDictionary:(NSDictionary *)jsonDictionary classInfo:(OOClassInfo *)classInfo
-{
-    OOPropertyInfo *propertyInfo = nil;
-    NSString *uniqueKey = classInfo.uniquePropertyKey;
-    id value = nil;
-    if (uniqueKey)
-    {
-        propertyInfo = classInfo.propertyInfosByPropertyKeys[uniqueKey];
-        NSString *jsonKeyPath = propertyInfo.jsonKeyPathInString;
-        if (jsonKeyPath)
-        {
-            value = jsonDictionary[jsonKeyPath];
-        }
-    }
-    if (!value)
-    {
-        return value;
-    }
-    if (propertyInfo.encodingType == OOEncodingTypeOtherObject)
-    {
-        value = [self _oo_uniqueValueInJsonDictionary:value classInfo:[propertyInfo.propertyCls oo_classInfo]];
-    }
-    else
-    {
-        value = oo_value_from_json_value(value, propertyInfo);
-    }
-    return value;
 }
 
 - (void)oo_setIsReplaced:(bool)isReplaced
@@ -1232,7 +1268,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
 + (void)oo_addIndexes:(OOClassInfo *)classInfo db:(OODb *)db
 {
     NSMutableArray *databaseIndexesKeys = [NSMutableArray array];
-    if ([self respondsToSelector:@selector(dbIndexesInPropertyKeys)])
+    if ([self respondsToSelector:@selector(oo_dbIndexesInPropertyKeys)])
     {
         NSArray *indexesKeys = [self.class oo_dbIndexesInPropertyKeys];
         [indexesKeys enumerateObjectsUsingBlock:^(NSString *_Nonnull propertyKey, NSUInteger idx, BOOL *_Nonnull stop) {
