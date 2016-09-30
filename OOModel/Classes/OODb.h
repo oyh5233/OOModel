@@ -8,7 +8,8 @@
 
 @interface OODb : NSObject
 
-@property (nonatomic, copy, readonly) NSString *file;
+@property(nonatomic, copy, readonly) NSString *file;
+@property(nonatomic, strong, readonly) NSError *error;
 
 + (instancetype)dbWithFile:(NSString *)file;
 

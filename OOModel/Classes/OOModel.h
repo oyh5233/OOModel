@@ -20,16 +20,17 @@ FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 #import "OOModelInfo.h"
 #import "OOValueTransformer.h"
 
+#ifndef OOMD_LOG
+#define OOMD_LOG(fmt, ...) NSLog((@"%d:" fmt), __LINE__, ##__VA_ARGS__)
+#endif
+
 #ifndef OO_MODEL_IMPLEMENTION_UNIQUE
 #define OO_MODEL_IMPLEMENTION_UNIQUE(x) \
-    +(NSString *) uniquePropertyKey     \
+    +(NSString *) oo_uniquePropertyKey  \
     {                                   \
         return @ #x;                    \
     }
 #endif
-//+ (NSArray*)dbColumnsInPropertyKeys{\
-//return [[@#__VA_ARGS__ stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsSeparatedByString:@","];\
-//}
 
 #ifndef OO_NO_WHITESPACE_NEWLINE
 #define OO_NO_WHITESPACE_NEWLINE(x) [x stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
@@ -37,7 +38,7 @@ FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 
 #ifndef OO_MODEL_IMPLEMENTION_DB_KEYS
 #define OO_MODEL_IMPLEMENTION_DB_KEYS(...)                                                  \
-    +(NSArray *) dbColumnsInPropertyKeys                                                    \
+    +(NSArray *) oo_dbColumnNamesInPropertyKeys                                             \
     {                                                                                       \
         return [OO_NO_WHITESPACE_NEWLINE(@ #__VA_ARGS__) componentsSeparatedByString:@","]; \
     }
@@ -48,10 +49,10 @@ FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 #endif
 
 #ifndef OO_MODEL_IMPLEMENTION_JSON_KEYS
-#define OO_MODEL_IMPLEMENTION_JSON_KEYS(...)     \
-    +(NSDictionary *) jsonKeyPathsByPropertyKeys \
-    {                                            \
-        return @{                                \
-            __VA_ARGS__};                        \
+#define OO_MODEL_IMPLEMENTION_JSON_KEYS(...)        \
+    +(NSDictionary *) oo_jsonKeyPathsByPropertyKeys \
+    {                                               \
+        return @{                                   \
+            __VA_ARGS__};                           \
     }
 #endif

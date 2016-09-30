@@ -34,7 +34,7 @@ static inline void _log_error(int code,sqlite3 *db,int line){
 @implementation ViewController
 - (void)viewDidLoad {
     [super viewDidLoad];
-    sqlite3_config(SQLITE_CONFIG_SERIALIZED);
+//    sqlite3_config(SQLITE_CONFIG_SERIALIZED);
 //    LOG_ERROR(sqlite3_open([[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).lastObject stringByAppendingPathComponent:@"db.sqlite"] cStringUsingEncoding:NSUTF8StringEncoding], &_db));
 //    sqlite3_stmt *stmt=NULL;
 //    LOG_ERROR(sqlite3_prepare_v2(self.db, "CREATE TABLE IF NOT EXISTS 't1' ('id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,'idx' INTERGER NOT NULL,'ts' REAL)", -1, &stmt, 0));

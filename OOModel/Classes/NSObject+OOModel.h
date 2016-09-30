@@ -3,10 +3,10 @@
 //  OOModel
 //
 
-#import <Foundation/Foundation.h>
 #import "OOModelInfo.h"
+#import <Foundation/Foundation.h>
 
-extern const NSString * oo_compaction_prefix;
+extern const NSString *oo_compaction_prefix;
 /**
  *  compact property key to column.
  *  e.g.
@@ -14,13 +14,13 @@ extern const NSString * oo_compaction_prefix;
  *  NSArray * models = [oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@ like ?",OOCOMPACT(@"keyword")] arguments:@[@"world"]];
  */
 
-@protocol OOUniqueModel<NSObject>
+@protocol OOUniqueModel <NSObject>
 /**
  *  this value is used by maptable and db.
  *
  *  @return unique value.
  */
-+ (NSString*)uniquePropertyKey;
++ (NSString *)oo_uniquePropertyKey;
 
 @end
 
@@ -30,7 +30,7 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return a mapping dictionary.
  */
-+ (NSDictionary*)jsonKeyPathsByPropertyKeys;
++ (NSDictionary *)oo_jsonKeyPathsByPropertyKeys;
 
 @optional
 /**
@@ -40,7 +40,7 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return value trasformer.
  */
-+ (NSValueTransformer*)jsonValueTransformerForPropertyKey:(NSString*)propertyKey;
++ (NSValueTransformer *)oo_jsonValueTransformerForPropertyKey:(NSString *)propertyKey;
 
 @end
 
@@ -50,7 +50,7 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return property keys array.
  */
-+ (NSArray*)dbColumnsInPropertyKeys;
++ (NSArray *)oo_dbColumnNamesInPropertyKeys;
 
 @optional
 /**
@@ -60,7 +60,7 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return value trasformer.
  */
-+ (NSValueTransformer*)dbValueTransformerForPropertyKey:(NSString*)propertyKey;
++ (NSValueTransformer *)oo_dbValueTransformerForPropertyKey:(NSString *)propertyKey;
 /**
  *  if OOmodel do not recognize this property,you should implementation this method.
  *
@@ -68,30 +68,30 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return column type.
  */
-+ (OODbColumnType)dbColumnTypeForPropertyKey:(NSString*)propertyKey;
++ (OODbColumnType)oo_dbColumnTypeForPropertyKey:(NSString *)propertyKey;
 
 /**
  *  which property key should be indexed in db.
  *
  *  @return array of indexed property key.
  */
-+ (NSArray*)dbIndexesInPropertyKeys;
++ (NSArray *)oo_dbIndexesInPropertyKeys;
 
 @end
 
 @interface NSObject (OOModel)
 
-@property (nonatomic,strong,readonly) NSDictionary *oo_dictionary;
+@property(nonatomic, strong, readonly) NSDictionary *oo_dictionary;
 
-@property (nonatomic,strong,readonly) NSDictionary *oo_jsonDictionary;
+@property(nonatomic, strong, readonly) NSDictionary *oo_jsonDictionary;
 
-@property (nonatomic,copy,readonly  ) NSString     *oo_jsonString;
+@property(nonatomic, copy, readonly) NSString *oo_jsonString;
 
-@property (nonatomic,assign,readonly) bool         oo_isReplaced;
+@property(nonatomic, assign, readonly) bool oo_isReplaced;
 
-+ (NSArray*)oo_modelsWithJsonDictionaries:(NSArray*)jsonDictionaries;
++ (NSArray *)oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaries;
 
-+ (id)oo_modelWithJsonDictionary:(NSDictionary*)jsonDictionary;
++ (id)oo_modelWithJsonDictionary:(NSDictionary *)jsonDictionary;
 /**
  *  if model's class conform to protocol OOUniqueModel,
  *
@@ -106,13 +106,13 @@ extern const NSString * oo_compaction_prefix;
  *
  *  NSArray * models = [oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@ like ?",OOCOMPACT(@"keyword")] arguments:@[@"world"]];
  */
-+ (NSArray *)oo_modelsWithAfterWhereSql:(NSString*)afterWhereSql arguments:(NSArray*)arguments;
++ (NSArray *)oo_modelsWithAfterWhereSql:(NSString *)afterWhereSql arguments:(NSArray *)arguments;
 /**
  *  merge model with json.if model conforms to OOUniqueModel,but json has a different unique value,it will occur a error.
  *
  *  @param json 
  */
-- (void)oo_mergeWithJsonDictionary:(NSDictionary*)dictionary;
+- (void)oo_mergeWithJsonDictionary:(NSDictionary *)dictionary;
 
 /**
  *  if model class conforms to OODbModel,should open a db at first.All models use the same db.
@@ -121,15 +121,14 @@ extern const NSString * oo_compaction_prefix;
  *
  *  @return result
  */
-+ (void)oo_deleteModelsBeforeDate:(NSDate*)date;
++ (void)oo_deleteModelsBeforeDate:(NSDate *)date;
 /**
  *
  *
  *  @return class info of this class.
  */
-+ (OOClassInfo*)oo_classInfo;
++ (OOClassInfo *)oo_classInfo;
 
-
-+ (void)oo_setDb:(OODb*)db forAll:(bool)forAll;
++ (void)oo_setDb:(OODb *)db forAll:(bool)forAll;
 
 @end

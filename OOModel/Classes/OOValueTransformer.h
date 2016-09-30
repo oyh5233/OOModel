@@ -7,7 +7,7 @@
 
 typedef id (^OOValueTransformerBlock)(id value);
 
-@interface OOValueTransformer :NSValueTransformer
+@interface OOValueTransformer : NSValueTransformer
 
 + (instancetype)transformerWithForwardBlock:(OOValueTransformerBlock)forwardBlock reverseBlock:(OOValueTransformerBlock)reverseBlock;
 

@@ -4,23 +4,25 @@
 //
 
 #import "OODb.h"
+#import "OOModel.h"
+
 #ifndef OODB_LOG
-#define OODB_LOG(code, db) _log(__LINE__, code, sqlite3_errmsg(db))
+#define OODB_LOG(code) _log(__LINE__, code, sqlite3_errmsg(self.db))
 #endif
 
 static inline int _log(int line, int code, const char *desc)
 {
     if (code != SQLITE_DONE && code != SQLITE_OK && code != SQLITE_ROW)
     {
-        printf("\n%d: %d,%s", line, code, desc);
+        NSLog(@"[line:%d] [code:%d,desc:%s]", line, code, desc);
     }
     return code;
 }
 
 @interface OOStmt : NSObject
 
-@property (nonatomic, assign) sqlite3_stmt *stmt;
-@property (nonatomic, copy) NSString *sql;
+@property(nonatomic, assign) sqlite3_stmt *stmt;
+@property(nonatomic, copy) NSString *sql;
 
 @end
 
@@ -38,12 +40,12 @@ static inline int _log(int line, int code, const char *desc)
 
 @interface OODb ()
 
-@property (nonatomic, copy) NSString *file;
-@property (nonatomic, assign) sqlite3 *db;
-@property (nonatomic, strong) dispatch_queue_t queue;
-@property (nonatomic, assign) void *queueKey;
-@property (nonatomic, assign) UInt64 transactionReferenceCount;
-@property (nonatomic, strong) NSMutableDictionary *stmts;
+@property(nonatomic, copy) NSString *file;
+@property(nonatomic, assign) sqlite3 *db;
+@property(nonatomic, strong) dispatch_queue_t queue;
+@property(nonatomic, assign) void *queueKey;
+@property(nonatomic, assign) UInt64 transactionReferenceCount;
+@property(nonatomic, strong) NSMutableDictionary *stmts;
 
 @end
 
@@ -125,7 +127,7 @@ static inline int _log(int line, int code, const char *desc)
 - (BOOL)open
 {
     sqlite3 *db;
-    if (OODB_LOG(sqlite3_open([self.file cStringUsingEncoding:NSUTF8StringEncoding], &db), self.db) != SQLITE_OK)
+    if (OODB_LOG(sqlite3_open([self.file cStringUsingEncoding:NSUTF8StringEncoding], &db)) != SQLITE_OK)
     {
         return NO;
     }
@@ -137,7 +139,7 @@ static inline int _log(int line, int code, const char *desc)
 {
     if (self.db)
     {
-        if (OODB_LOG(sqlite3_close(self.db), self.db) != SQLITE_OK)
+        if (OODB_LOG(sqlite3_close(self.db)) != SQLITE_OK)
         {
             return NO;
         }
@@ -155,7 +157,7 @@ static inline int _log(int line, int code, const char *desc)
     if (!s)
     {
         sqlite3_stmt *stmt = NULL;
-        if (OODB_LOG(sqlite3_prepare_v2(self.db, [sql UTF8String], -1, &stmt, 0), self.db) != SQLITE_OK)
+        if (OODB_LOG(sqlite3_prepare_v2(self.db, [sql UTF8String], -1, &stmt, 0)) != SQLITE_OK)
         {
             sqlite3_finalize(stmt);
             return NULL;
@@ -165,8 +167,8 @@ static inline int _log(int line, int code, const char *desc)
         s.sql = sql;
         self.stmts[sql] = s;
     }
-    sqlite3_clear_bindings(s.stmt);
-    sqlite3_reset(s.stmt);
+    OODB_LOG(sqlite3_reset(s.stmt));
+    OODB_LOG(sqlite3_clear_bindings(s.stmt));
     return s.stmt;
 }
 
@@ -197,7 +199,7 @@ static inline int _log(int line, int code, const char *desc)
 - (NSArray *)executeQuery:(NSString *)sql arguments:(NSArray *)arguments
 {
     return [self executeQuery:sql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
-        [self _bindObject:arguments[idx-1] toColumn:idx inStatement:stmt];
+        [self _bindObject:arguments[idx - 1] toColumn:idx inStatement:stmt];
     }];
 }
 
@@ -227,10 +229,10 @@ static inline int _log(int line, int code, const char *desc)
     int count = sqlite3_bind_parameter_count(stmt);
     for (int i = 0; i < count; i++)
     {
-        stmtBlock(stmt, i+1);
+        stmtBlock(stmt, i + 1);
     }
     bool stop = NO;
-    while (OODB_LOG(sqlite3_step(stmt), self.db) == SQLITE_ROW)
+    while (OODB_LOG(sqlite3_step(stmt)) == SQLITE_ROW)
     {
         resultBlock(stmt, &stop);
         if (stop)
@@ -246,7 +248,7 @@ static inline int _log(int line, int code, const char *desc)
 - (BOOL)executeUpdate:(NSString *)sql arguments:(NSArray *)arguments
 {
     return [self executeUpdate:sql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
-        [self _bindObject:arguments[idx-1] toColumn:idx inStatement:stmt];
+        [self _bindObject:arguments[idx - 1] toColumn:idx inStatement:stmt];
     }];
 }
 
@@ -261,9 +263,9 @@ static inline int _log(int line, int code, const char *desc)
     int count = sqlite3_bind_parameter_count(stmt);
     for (int i = 0; i < count; i++)
     {
-        stmtBlock(stmt, i+1);
+        stmtBlock(stmt, i + 1);
     }
-    if (OODB_LOG(sqlite3_step(stmt), self.db) != SQLITE_DONE)
+    if (OODB_LOG(sqlite3_step(stmt)) != SQLITE_DONE)
     {
         return NO;
     }
@@ -380,7 +382,7 @@ static inline int _log(int line, int code, const char *desc)
     {
         result = sqlite3_bind_text(stmt, idx, [[obj description] UTF8String], -1, SQLITE_STATIC);
     }
-    OODB_LOG(result, self.db);
+    OODB_LOG(result);
 }
 
 #pragma mark--
@@ -424,7 +426,7 @@ static inline int _log(int line, int code, const char *desc)
     return set;
 }
 
-- (NSError *)_lastError
+- (NSError *)error
 {
     return [NSError errorWithDomain:NSStringFromClass(self.class) code:sqlite3_errcode(self.db) userInfo:@{NSLocalizedDescriptionKey: [[NSString alloc] initWithCString:sqlite3_errmsg(self.db) encoding:NSUTF8StringEncoding]}];
 }
