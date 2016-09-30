@@ -168,7 +168,8 @@ static inline id oo_get_value_for_property(__unsafe_unretained id model, __unsaf
     return value;
 }
 
-static inline id oo_unique_value_in_model(__unsafe_unretained id model,__unsafe_unretained OOClassInfo *classInfo){
+static inline id oo_unique_value_in_model(__unsafe_unretained id model, __unsafe_unretained OOClassInfo *classInfo)
+{
     __unsafe_unretained OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
     id value = oo_get_value_for_property(model, propertyInfo);
     if (!value)
@@ -177,12 +178,10 @@ static inline id oo_unique_value_in_model(__unsafe_unretained id model,__unsafe_
     }
     if (propertyInfo.encodingType == OOEncodingTypeOtherObject)
     {
-        value = oo_unique_value_in_model(value,[propertyInfo.propertyCls oo_classInfo]);
+        value = oo_unique_value_in_model(value, [propertyInfo.propertyCls oo_classInfo]);
     }
     return value;
 }
-
-
 
 static inline id oo_value_from_json_value(__unsafe_unretained id value, OOPropertyInfo *propertyInfo)
 {
@@ -378,7 +377,8 @@ static void oo_transform_model_to_json_dictionary_apply(const void *_value, void
     }
 }
 
-static inline id oo_unique_value_in_json_dictionary(__unsafe_unretained NSDictionary *jsonDictionary,__unsafe_unretained OOClassInfo *classInfo){
+static inline id oo_unique_value_in_json_dictionary(__unsafe_unretained NSDictionary *jsonDictionary, __unsafe_unretained OOClassInfo *classInfo)
+{
     __unsafe_unretained OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
     id value = jsonDictionary[propertyInfo.jsonKeyPathInString];
     if (!value)
@@ -387,7 +387,7 @@ static inline id oo_unique_value_in_json_dictionary(__unsafe_unretained NSDictio
     }
     if (propertyInfo.encodingType == OOEncodingTypeOtherObject)
     {
-        value = oo_unique_value_in_json_dictionary(value,[propertyInfo.propertyCls oo_classInfo]);
+        value = oo_unique_value_in_json_dictionary(value, [propertyInfo.propertyCls oo_classInfo]);
     }
     else
     {
@@ -887,7 +887,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
 {
     OOClassInfo *classInfo = [self oo_classInfo];
     OODb *db = classInfo.database;
-    OOMapTable *mt =classInfo.mapTable;
+    OOMapTable *mt = classInfo.mapTable;
     NSMutableArray *array = [NSMutableArray array];
     NSString *sql = [NSString stringWithFormat:@"SELECT * FROM %@", classInfo.dbTableName];
     if (afterWhereSql)
@@ -899,18 +899,24 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
             id model = [[self alloc] init];
             if (oo_model_from_stmt(classInfo, model, stmt))
             {
-                if (mt) {
+                if (mt)
+                {
                     [mt syncInMt:^(OOMapTable *mt) {
-                        id uniqueValue=oo_unique_value_in_model(model, classInfo);
-                        id mtModel=[mt objectForKey:uniqueValue];
-                        if (mtModel) {
+                        id uniqueValue = oo_unique_value_in_model(model, classInfo);
+                        id mtModel = [mt objectForKey:uniqueValue];
+                        if (mtModel)
+                        {
                             [array addObject:mtModel];
-                        }else{
+                        }
+                        else
+                        {
                             [mt setObject:model forKey:uniqueValue];
                             [array addObject:model];
                         }
                     }];
-                }else{
+                }
+                else
+                {
                     [array addObject:model];
                 }
             }
