@@ -10,15 +10,11 @@ static OODb *oo_global_db = nil;
 @interface OOClassInfo ()
 
 @property(nonatomic, assign) Class cls;
-
 @property(nonatomic, strong) NSArray *propertyKeys;
 @property(nonatomic, strong) NSArray *propertyInfos;
 @property(nonatomic, strong) NSDictionary *propertyInfosByPropertyKeys;
-
 @property(nonatomic, strong) NSArray *jsonPropertyInfos;
-
 @property(nonatomic, copy) NSString *uniquePropertyKey;
-
 @property(nonatomic, strong) NSArray *dbPropertyInfos;
 @property(nonatomic, copy) NSString *dbTableName;
 @property(nonatomic, copy) NSString *uniqueSelectSql;
@@ -28,6 +24,7 @@ static OODb *oo_global_db = nil;
 @end
 
 @interface OOPropertyInfo ()
+
 @property(nonatomic, copy) NSString *ivarKey;
 @property(nonatomic, copy) NSString *propertyKey;
 @property(nonatomic, assign) Class propertyCls;
@@ -36,15 +33,10 @@ static OODb *oo_global_db = nil;
 @property(nonatomic, assign) OOReferenceType referenceType;
 @property(nonatomic, assign) SEL setter;
 @property(nonatomic, assign) SEL getter;
-
 @property(nonatomic, weak) OOClassInfo *ownClassInfo;
-
 @property(nonatomic, strong) NSValueTransformer *jsonValueTransformer;
 @property(nonatomic, copy) NSString *jsonKeyPathInString;
 @property(nonatomic, strong) NSArray *jsonKeyPathInArray;
-@property(nonatomic, assign) SEL jsonForwards;
-@property(nonatomic, assign) SEL jsonBackwards;
-
 @property(nonatomic, strong) NSValueTransformer *dbValueTransformer;
 @property(nonatomic, assign) OODbColumnType dbColumnType;
 @property(nonatomic, assign) SEL dbForwards;
@@ -52,6 +44,7 @@ static OODb *oo_global_db = nil;
 @end
 
 @implementation OOClassInfo
+
 - (instancetype)initWithClass:(Class)cls
 {
     self = [self init];
@@ -90,14 +83,6 @@ static OODb *oo_global_db = nil;
                     {
                         propertyInfo.jsonValueTransformer = [self.cls oo_jsonValueTransformerForPropertyKey:propertyInfo.propertyKey];
                     }
-                    if (propertyInfo.encodingType & OOEncodingTypeOtherObject)
-                    {
-                        if ([propertyInfo.propertyCls conformsToProtocol:@protocol(OOJsonModel)])
-                        {
-                            propertyInfo.jsonForwards = @selector(oo_modelsWithJsonDictionaries:);
-                            propertyInfo.jsonBackwards = @selector(oo_jsonDictionary);
-                        }
-                    }
                     [jsonPropertyInfos addObject:propertyInfo];
                 }
             }
@@ -105,11 +90,6 @@ static OODb *oo_global_db = nil;
             {
                 if ([dbPropertyKeys containsObject:propertyInfo.propertyKey])
                 {
-                    if ([cls respondsToSelector:@selector(oo_dbValueTransformerForPropertyKey:)])
-                    {
-                        propertyInfo.dbValueTransformer = [self.cls oo_dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
-                    }
-                    NSParameterAssert(propertyInfo.dbColumnType == OODbColumnTypeUnknow);
                     if (propertyInfo.encodingType >= OOEncodingTypeBool && propertyInfo.encodingType <= OOEncodingTypeUInt64)
                     {
                         propertyInfo.dbColumnType = OODbColumnTypeInteger;
@@ -128,6 +108,10 @@ static OODb *oo_global_db = nil;
                     }
                     else
                     {
+                        if ([cls respondsToSelector:@selector(oo_dbValueTransformerForPropertyKey:)])
+                        {
+                            propertyInfo.dbValueTransformer = [self.cls oo_dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
+                        }
                         NSCAssert([cls respondsToSelector:@selector(oo_dbColumnTypeForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (OODbColumnType)oo_dbColumnTypeForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
                         propertyInfo.dbColumnType = [self.cls oo_dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
                     }
@@ -140,11 +124,12 @@ static OODb *oo_global_db = nil;
 
         if ([cls conformsToProtocol:@protocol(OOUniqueModel)])
         {
-            self.mapTable = [[OOMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];
-            ;
             self.uniquePropertyKey = [self.cls oo_uniquePropertyKey];
+            self.mapTable = [[OOMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];
+#ifdef DEBUG
             OOPropertyInfo *uniquePropertyInfo = self.propertyInfosByPropertyKeys[self.uniquePropertyKey];
             NSCAssert(uniquePropertyInfo && uniquePropertyInfo.encodingType != OOEncodingTypeUnknow && uniquePropertyInfo.encodingType != OOEncodingTypeOtherObject, @"unique key can not support this encoding type");
+#endif
         }
         if ([cls conformsToProtocol:@protocol(OODbModel)])
         {
@@ -415,7 +400,6 @@ static OODb *oo_global_db = nil;
         self.jsonKeyPathInString = nil;
         self.jsonKeyPathInArray = nil;
         self.jsonKeyPathInArray = nil;
-        self.jsonBackwards = nil;
         self.jsonValueTransformer = nil;
         self.dbColumnType = OODbColumnTypeUnknow;
         self.dbValueTransformer = nil;

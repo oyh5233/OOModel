@@ -95,11 +95,8 @@ typedef NS_ENUM(NSInteger, OOPropertyType) {
 @property(nonatomic, strong, readonly) NSValueTransformer *jsonValueTransformer;
 @property(nonatomic, copy, readonly) NSString *jsonKeyPathInString;
 @property(nonatomic, strong, readonly) NSArray *jsonKeyPathInArray;
-@property(nonatomic, assign, readonly) SEL jsonForwards;
-@property(nonatomic, assign, readonly) SEL jsonBackwards;
 @property(nonatomic, strong, readonly) NSValueTransformer *dbValueTransformer;
 @property(nonatomic, assign, readonly) OODbColumnType dbColumnType;
-@property(nonatomic, assign, readonly) SEL dbForwards;
 
 - (instancetype)initWithProperty:(objc_property_t)property;
 
