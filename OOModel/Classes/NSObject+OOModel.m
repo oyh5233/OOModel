@@ -1241,32 +1241,32 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
 
 + (void)oo_setDb:(OODb *)db forAll:(bool)forAll
 {
-    @synchronized(NSObject.class)
+    OSSpinLock lock =OS_SPINLOCK_INIT;
+    OSSpinLockLock(&lock);
+    if (forAll)
     {
-        if (forAll)
+        if (oo_global_db != db)
         {
-            if (oo_global_db != db)
-            {
-                oo_global_db = db;
-                [(__bridge NSDictionary *) [self oo_classInfos] enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, OOClassInfo *_Nonnull classInfo, BOOL *_Nonnull stop) {
-                    if (classInfo.database != db)
-                    {
-                        classInfo.database = db;
-                        [self oo_createDb:classInfo db:db];
-                    }
-                }];
-            }
-        }
-        else
-        {
-            OOClassInfo *classInfo = [self oo_classInfo];
-            if (classInfo.database != db)
-            {
-                classInfo.database = db;
-                [self oo_createDb:classInfo db:db];
-            }
+            oo_global_db = db;
+            [(__bridge NSDictionary *) [self oo_classInfos] enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, OOClassInfo *_Nonnull classInfo, BOOL *_Nonnull stop) {
+                if (classInfo.database != db)
+                {
+                    classInfo.database = db;
+                    [self oo_createDb:classInfo db:db];
+                }
+            }];
         }
     }
+    else
+    {
+        OOClassInfo *classInfo = [self oo_classInfo];
+        if (classInfo.database != db)
+        {
+            classInfo.database = db;
+            [self oo_createDb:classInfo db:db];
+        }
+    }
+    OSSpinLockUnlock(&lock);
 }
 
 + (void)oo_createDb:(OOClassInfo *)classInfo db:(OODb *)db
