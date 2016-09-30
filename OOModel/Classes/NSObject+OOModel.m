@@ -1198,7 +1198,7 @@ static inline void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *p
         NSString *sql;
         if ([self conformsToProtocol:@protocol(OOUniqueModel)])
         {
-            NSString *uniquePropertyKey = [self.class uniquePropertyKey];
+            NSString *uniquePropertyKey = [self.class oo_uniquePropertyKey];
             OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[uniquePropertyKey];
             NSString *uniqueDbColumn = propertyInfo.propertyKey;
             NSString *uniqueDbColumnType = oo_databaseColumnTypeWithType(propertyInfo.dbColumnType);
