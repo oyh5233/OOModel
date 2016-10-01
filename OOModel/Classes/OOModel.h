@@ -33,7 +33,7 @@ FOUNDATION_EXPORT const unsigned char OOModelVersionString[];
 #endif
 
 #ifndef OO_NO_WHITESPACE_NEWLINE
-#define OO_NO_WHITESPACE_NEWLINE(x) [x stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
+#define OO_NO_WHITESPACE_NEWLINE(x) [[x stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] stringByReplacingOccurrencesOfString:@" " withString:@""]
 #endif
 
 #ifndef OO_MODEL_IMPLEMENTION_DB_KEYS

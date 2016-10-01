@@ -60,67 +60,6 @@ static OODb *oo_global_db = nil;
         self.propertyInfosByPropertyKeys = propertyInfosByPropertyKeys;
         self.propertyKeys = [self.propertyInfosByPropertyKeys allKeys];
         self.propertyInfos = [self.propertyInfosByPropertyKeys allValues];
-        NSMutableArray *dbPropertyInfos = [NSMutableArray array];
-        NSMutableArray *jsonPropertyInfos = [NSMutableArray array];
-        NSDictionary *jsonKeyPathsByPropertyKeys = [cls oo_jsonKeyPathsByPropertyKeys];
-        NSArray *dbPropertyKeys = [cls oo_dbColumnNamesInPropertyKeys];
-        [self.propertyInfos enumerateObjectsUsingBlock:^(OOPropertyInfo *_Nonnull propertyInfo, NSUInteger idx, BOOL *_Nonnull stop) {
-            if (!propertyInfo.ivarKey)
-            {
-                return;
-            }
-            if ([cls conformsToProtocol:@protocol(OOJsonModel)])
-            {
-                NSString *jsonKeyPath = jsonKeyPathsByPropertyKeys[propertyInfo.propertyKey];
-                if (jsonKeyPath.length != 0)
-                {
-                    NSArray *jsonKeyPathArr = [jsonKeyPath componentsSeparatedByString:@"."];
-                    propertyInfo.jsonKeyPathInString = jsonKeyPath;
-                    propertyInfo.jsonKeyPathInArray = jsonKeyPathArr;
-                    if ((propertyInfo.encodingType == OOEncodingTypeOtherObject && ![propertyInfo.propertyCls conformsToProtocol:@protocol(OOJsonModel)]) || propertyInfo.encodingType == OOEncodingTypeUnknow)
-                    {
-                        NSCAssert([cls respondsToSelector:@selector(oo_jsonValueTransformerForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (NSValueTransformer)oo_jsonValueTransformerForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
-                        propertyInfo.jsonValueTransformer = [self.cls oo_jsonValueTransformerForPropertyKey:propertyInfo.propertyKey];
-                    }
-                    [jsonPropertyInfos addObject:propertyInfo];
-                }
-            }
-            if ([cls conformsToProtocol:@protocol(OODbModel)])
-            {
-                if ([dbPropertyKeys containsObject:propertyInfo.propertyKey])
-                {
-                    if (propertyInfo.encodingType >= OOEncodingTypeBool && propertyInfo.encodingType <= OOEncodingTypeUInt64)
-                    {
-                        propertyInfo.dbColumnType = OODbColumnTypeInteger;
-                    }
-                    else if (propertyInfo.encodingType == OOEncodingTypeFloat || propertyInfo.encodingType == OOEncodingTypeDouble || propertyInfo.encodingType == OOEncodingTypeNSDate)
-                    {
-                        propertyInfo.dbColumnType = OODbColumnTypeReal;
-                    }
-                    else if (propertyInfo.encodingType & OOEncodingTypeNSData)
-                    {
-                        propertyInfo.dbColumnType = OODbColumnTypeBlob;
-                    }
-                    else if (propertyInfo.encodingType == OOEncodingTypeNSString || propertyInfo.encodingType == OOEncodingTypeNSURL || propertyInfo.encodingType == OOEncodingTypeNSNumber)
-                    {
-                        propertyInfo.dbColumnType = OODbColumnTypeText;
-                    }
-                    else
-                    {
-                        if ((propertyInfo.encodingType == OOEncodingTypeOtherObject && ![propertyInfo.propertyCls conformsToProtocol:@protocol(OODbModel)]) || propertyInfo.encodingType == OOEncodingTypeUnknow)
-                        {
-                            NSCAssert([cls respondsToSelector:@selector(oo_dbValueTransformerForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (NSValueTransformer)oo_dbValueTransformerForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
-                            propertyInfo.dbValueTransformer = [self.cls oo_dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
-                        }
-                        NSCAssert([cls respondsToSelector:@selector(oo_dbColumnTypeForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (OODbColumnType)oo_dbColumnTypeForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
-                        propertyInfo.dbColumnType = [self.cls oo_dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
-                    }
-                    [dbPropertyInfos addObject:propertyInfo];
-                }
-            }
-        }];
-        self.dbPropertyInfos = dbPropertyInfos.count ? dbPropertyInfos : nil;
-        self.jsonPropertyInfos = jsonPropertyInfos.count ? jsonPropertyInfos : nil;
         if ([cls conformsToProtocol:@protocol(OOUniqueModel)])
         {
             self.uniquePropertyKey = [self.cls oo_uniquePropertyKey];
@@ -131,8 +70,62 @@ static OODb *oo_global_db = nil;
                 NSCAssert(uniquePropertyInfo && uniquePropertyInfo.encodingType != OOEncodingTypeUnknow && uniquePropertyInfo.encodingType != OOEncodingTypeOtherObject, @"unique key can not support this encoding type");
             }
         }
+        if ([cls conformsToProtocol:@protocol(OOJsonModel)])
+        {
+            NSMutableArray *jsonPropertyInfos = [NSMutableArray array];
+            NSDictionary *jsonKeyPathsByPropertyKeys = [cls oo_jsonKeyPathsByPropertyKeys];
+            [jsonKeyPathsByPropertyKeys enumerateKeysAndObjectsUsingBlock:^(NSString *_Nonnull propertyKey, NSString *_Nonnull jsonKeyPath, BOOL *_Nonnull stop) {
+                OOPropertyInfo *propertyInfo = self.propertyInfosByPropertyKeys[propertyKey];
+                NSCAssert(propertyInfo.ivarKey.length, @"[class:%@,propertyKey:%@] [property do not have ivar]", NSStringFromClass(cls), propertyKey);
+                NSCAssert(jsonKeyPath.length, @"[class:%@,propertyKey:%@] [json key path is null]", NSStringFromClass(cls), propertyKey);
+                NSArray *jsonKeyPathArr = [jsonKeyPath componentsSeparatedByString:@"."];
+                propertyInfo.jsonKeyPathInString = jsonKeyPath;
+                propertyInfo.jsonKeyPathInArray = jsonKeyPathArr;
+                if ((propertyInfo.encodingType == OOEncodingTypeOtherObject && ![propertyInfo.propertyCls conformsToProtocol:@protocol(OOJsonModel)]) || propertyInfo.encodingType == OOEncodingTypeUnknow)
+                {
+                    NSCAssert([cls respondsToSelector:@selector(oo_jsonValueTransformerForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (NSValueTransformer)oo_jsonValueTransformerForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
+                    propertyInfo.jsonValueTransformer = [self.cls oo_jsonValueTransformerForPropertyKey:propertyInfo.propertyKey];
+                }
+                [jsonPropertyInfos addObject:propertyInfo];
+            }];
+            self.jsonPropertyInfos = jsonPropertyInfos.count ? jsonPropertyInfos : nil;
+        }
         if ([cls conformsToProtocol:@protocol(OODbModel)])
         {
+            NSMutableArray *dbPropertyInfos = [NSMutableArray array];
+            NSArray *dbPropertyKeys = [cls oo_dbColumnNamesInPropertyKeys];
+            [dbPropertyKeys enumerateObjectsUsingBlock:^(NSString *_Nonnull propertyKey, NSUInteger idx, BOOL *_Nonnull stop) {
+                OOPropertyInfo *propertyInfo = self.propertyInfosByPropertyKeys[propertyKey];
+                NSCAssert(propertyInfo.ivarKey.length, @"[class:%@,propertyKey:%@] [property do not have ivar]", NSStringFromClass(cls), propertyKey);
+                if (propertyInfo.encodingType >= OOEncodingTypeBool && propertyInfo.encodingType <= OOEncodingTypeUInt64)
+                {
+                    propertyInfo.dbColumnType = OODbColumnTypeInteger;
+                }
+                else if (propertyInfo.encodingType == OOEncodingTypeFloat || propertyInfo.encodingType == OOEncodingTypeDouble || propertyInfo.encodingType == OOEncodingTypeNSDate)
+                {
+                    propertyInfo.dbColumnType = OODbColumnTypeReal;
+                }
+                else if (propertyInfo.encodingType & OOEncodingTypeNSData)
+                {
+                    propertyInfo.dbColumnType = OODbColumnTypeBlob;
+                }
+                else if (propertyInfo.encodingType == OOEncodingTypeNSString || propertyInfo.encodingType == OOEncodingTypeNSURL || propertyInfo.encodingType == OOEncodingTypeNSNumber)
+                {
+                    propertyInfo.dbColumnType = OODbColumnTypeText;
+                }
+                else
+                {
+                    if ((propertyInfo.encodingType == OOEncodingTypeOtherObject && ![propertyInfo.propertyCls conformsToProtocol:@protocol(OODbModel)]) || propertyInfo.encodingType == OOEncodingTypeUnknow)
+                    {
+                        NSCAssert([cls respondsToSelector:@selector(oo_dbValueTransformerForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (NSValueTransformer)oo_dbValueTransformerForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
+                        propertyInfo.dbValueTransformer = [self.cls oo_dbValueTransformerForPropertyKey:propertyInfo.propertyKey];
+                    }
+                    NSCAssert([cls respondsToSelector:@selector(oo_dbColumnTypeForPropertyKey:)], @"[class:%@,propertyKey:%@] [class should implement + (OODbColumnType)oo_dbColumnTypeForPropertyKey:]", NSStringFromClass(cls), propertyInfo.propertyKey);
+                    propertyInfo.dbColumnType = [self.cls oo_dbColumnTypeForPropertyKey:propertyInfo.propertyKey];
+                }
+                [dbPropertyInfos addObject:propertyInfo];
+            }];
+            self.dbPropertyInfos = dbPropertyInfos.count ? dbPropertyInfos : nil;
             self.dbTableName = NSStringFromClass(cls);
             if (self.uniquePropertyKey)
             {

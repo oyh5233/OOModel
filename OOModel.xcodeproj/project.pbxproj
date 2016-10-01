@@ -10,6 +10,7 @@
 		113195AF1D9815B700DBE839 /* OOMapTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 113195AD1D9815B700DBE839 /* OOMapTable.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		113195B01D9815B700DBE839 /* OOMapTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 113195AE1D9815B700DBE839 /* OOMapTable.m */; };
 		114CBAE91D9AD6AF00DD1A54 /* NSObject+OOModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B061D35F24E00826666 /* NSObject+OOModel.m */; };
+		116DB8FE1D9F83B8006413EA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 116DB8FC1D9F83B8006413EA /* LaunchScreen.storyboard */; };
 		51B2CF8F1D9A003500937AFB /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 51B2CF8E1D9A003500937AFB /* libsqlite3.tbd */; };
 		CF052B101D35F24E00826666 /* NSObject+OOModel.h in Headers */ = {isa = PBXBuildFile; fileRef = CF052B051D35F24E00826666 /* NSObject+OOModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CF052B131D35F24E00826666 /* OODb.m in Sources */ = {isa = PBXBuildFile; fileRef = CF052B081D35F24E00826666 /* OODb.m */; };
@@ -51,6 +52,7 @@
 /* Begin PBXFileReference section */
 		113195AD1D9815B700DBE839 /* OOMapTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OOMapTable.h; sourceTree = "<group>"; };
 		113195AE1D9815B700DBE839 /* OOMapTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OOMapTable.m; sourceTree = "<group>"; };
+		116DB8FD1D9F83B8006413EA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		51B2CF8E1D9A003500937AFB /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		CF052AF71D35F22D00826666 /* OOModel.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OOModel.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF052AFC1D35F22D00826666 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 				CF052B261D35F2EF00826666 /* AppDelegate.m */,
 				CF052B281D35F2EF00826666 /* ViewController.h */,
 				CF052B291D35F2EF00826666 /* ViewController.m */,
+				116DB8FC1D9F83B8006413EA /* LaunchScreen.storyboard */,
 				CF052B2B1D35F2EF00826666 /* Main.storyboard */,
 				CF052B2E1D35F2EF00826666 /* Assets.xcassets */,
 				CF052B331D35F2EF00826666 /* Info.plist */,
@@ -324,6 +327,7 @@
 				CF1F9E561D8F9446005234FC /* user.json in Resources */,
 				CF052B2F1D35F2EF00826666 /* Assets.xcassets in Resources */,
 				CF052B3C1D35F30400826666 /* DemoTableViewCell.xib in Resources */,
+				116DB8FE1D9F83B8006413EA /* LaunchScreen.storyboard in Resources */,
 				CF052B2D1D35F2EF00826666 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -361,6 +365,14 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		116DB8FC1D9F83B8006413EA /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				116DB8FD1D9F83B8006413EA /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
 		CF052B2B1D35F2EF00826666 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -510,7 +522,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = N4WZ33Z6KM;
@@ -532,7 +543,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = N4WZ33Z6KM;
