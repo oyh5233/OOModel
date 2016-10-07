@@ -130,6 +130,6 @@ extern const NSString *oo_compaction_prefix;
 + (void)oo_setGlobalDb:(OODb *)db;
 
 
-//+ (OOClassInfo*)oo_classInfo;
++ (OOClassInfo*)oo_classInfo;
 
 @end

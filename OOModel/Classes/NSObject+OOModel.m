@@ -7,9 +7,6 @@
 #import "OOModel.h"
 #import <libkern/OSAtomic.h>
 #import <objc/message.h>
-@interface NSObject ()
-+ (OOClassInfo *)oo_classInfo;
-@end
 
 static NSString *oo_update_timestamp = @"oo_update_timestamp";
 static OODb *oo_global_db = nil;
