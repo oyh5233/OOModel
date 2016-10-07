@@ -104,7 +104,7 @@ extern const NSString *oo_compaction_prefix;
 /*
  *  e.g.
  *
- *  NSArray * models = [oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"%@ like ?",OOCOMPACT(@"keyword")] arguments:@[@"world"]];
+ *  NSArray * models = [class oo_modelsWithAfterWhereSql:[NSString stringWithFormat:@"keyword like ?"] arguments:@[@"world"]];
  */
 + (NSArray *)oo_modelsWithAfterWhereSql:(NSString *)afterWhereSql arguments:(NSArray *)arguments;
 /**
@@ -123,12 +123,13 @@ extern const NSString *oo_compaction_prefix;
  */
 + (void)oo_deleteModelsBeforeDate:(NSDate *)date;
 /**
+ *  set global database cache for instance.
  *
- *
- *  @return class info of this class.
+ *  @param db database for disk cache.
  */
-+ (OOClassInfo *)oo_classInfo;
++ (void)oo_setGlobalDb:(OODb *)db;
 
-+ (void)oo_setDb:(OODb *)db forAll:(bool)forAll;
+
+//+ (OOClassInfo*)oo_classInfo;
 
 @end

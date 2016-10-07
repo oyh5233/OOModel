@@ -27,9 +27,9 @@ typedef void (^UserBlock)();
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    [NSObject oo_setDb:[[OODb alloc] initWithFile:[[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"db.sqlite"]] forAll:YES];
+    [NSObject oo_setGlobalDb:[[OODb alloc] initWithFile:[[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"db.sqlite"]]];
     [self test1];
-//    [self test2];
+    //    [self test2];
 
     // Do any additional setup after loading the view, typically from a nib.
 }
@@ -48,10 +48,10 @@ typedef void (^UserBlock)();
 
     __block NSArray *users = nil;
     users = [WMUser oo_modelsWithJsonDictionaries:jsons];
-    [users enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSDictionary *d=[obj oo_dictionary];
-        [d enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            NSLog(@"%@:%@--------%@",key,NSStringFromClass([obj class]),obj);
+    [users enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
+        NSDictionary *d = [obj oo_dictionary];
+        [d enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+            NSLog(@"%@:%@--------%@", key, NSStringFromClass([obj class]), obj);
         }];
     }];
     users = nil;
@@ -65,39 +65,40 @@ typedef void (^UserBlock)();
     YYBenchmark(^{
         users = [WMUser oo_modelsWithJsonDictionaries:jsons];
     },
-                ^(double ms) {
-                    NSLog(@"::::\n%.2f\n::::", ms);
-                });
+    ^(double ms) {
+        NSLog(@"::::\n%.2f\n::::", ms);
+    });
 }
 
 - (void)test2
 {
-        for (int i = 0; i < 3 ; i++){
-            NSDictionary *jsonDictionary=@{
-                                           @"id":[NSString stringWithFormat:@"%d",i+1],
-                                           @"extra":@{
-                                                   @"creator":@{
-                                                           @"id":i<2?[NSString stringWithFormat:@"%d",1]:[NSString stringWithFormat:@"%d",2]
-                                                           }
-                                                   }
-                                           };
-            
-            OORoadshow *roadshow=[OORoadshow oo_modelWithJsonDictionary:jsonDictionary];
-            [self.roadshows addObject:roadshow];
-        }
-        [self.view addSubview:self.tableView];
-        NSTimer *timer1=[NSTimer timerWithTimeInterval:0.2 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
-        [[NSRunLoop currentRunLoop]addTimer:timer1 forMode:NSRunLoopCommonModes];
-        [timer1 fire];
-//        NSTimer *timer11=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
-//        [[NSRunLoop currentRunLoop]addTimer:timer11 forMode:NSRunLoopCommonModes];
-//        [timer11 fire];
-        NSTimer *timer2=[NSTimer timerWithTimeInterval:0.2 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
-        [[NSRunLoop currentRunLoop]addTimer:timer2 forMode:NSRunLoopCommonModes];
-        [timer2 fire];
-//        NSTimer *timer22=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
-//        [[NSRunLoop currentRunLoop]addTimer:timer22 forMode:NSRunLoopCommonModes];
-//        [timer22 fire];
+    for (int i = 0; i < 3; i++)
+    {
+        NSDictionary *jsonDictionary = @{
+            @"id": [NSString stringWithFormat:@"%d", i + 1],
+            @"extra": @{
+                @"creator": @{
+                    @"id": i < 2 ? [NSString stringWithFormat:@"%d", 1] : [NSString stringWithFormat:@"%d", 2]
+                }
+            }
+        };
+
+        OORoadshow *roadshow = [OORoadshow oo_modelWithJsonDictionary:jsonDictionary];
+        [self.roadshows addObject:roadshow];
+    }
+    [self.view addSubview:self.tableView];
+    NSTimer *timer1 = [NSTimer timerWithTimeInterval:0.2 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:timer1 forMode:NSRunLoopCommonModes];
+    [timer1 fire];
+    //        NSTimer *timer11=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer1) userInfo:nil repeats:YES];
+    //        [[NSRunLoop currentRunLoop]addTimer:timer11 forMode:NSRunLoopCommonModes];
+    //        [timer11 fire];
+    NSTimer *timer2 = [NSTimer timerWithTimeInterval:0.2 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:timer2 forMode:NSRunLoopCommonModes];
+    [timer2 fire];
+    //        NSTimer *timer22=[NSTimer timerWithTimeInterval:0.3 target:self selector:@selector(timer2) userInfo:nil repeats:YES];
+    //        [[NSRunLoop currentRunLoop]addTimer:timer22 forMode:NSRunLoopCommonModes];
+    //        [timer22 fire];
 }
 - (void)timer1
 {
@@ -166,19 +167,20 @@ typedef void (^UserBlock)();
 {
     if (!_roadshowBlock)
     {
-                _roadshowBlock=^{
-                    NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
-                    int location=arc4random()%str.length-1;
-                    location=location<0?0:location;
-                    int length=arc4random()%((str.length-location-1))+1;
-                    NSString *title=[str substringWithRange:NSMakeRange(location, length)];
-        
-        
-                    NSString *rid=[NSString stringWithFormat:@"%d",arc4random()%3+1];
-                    NSString *membercount=[NSString stringWithFormat:@"%d",arc4random()%98+1];
-                    NSDictionary *roadshowDict=@{@"id":rid,@"membercount":membercount,@"title":title};
-                    [OORoadshow oo_modelWithJsonDictionary:roadshowDict];
-                };
+        _roadshowBlock = ^{
+            NSString *str = @"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
+            int location = arc4random() % str.length - 1;
+            location = location < 0 ? 0 : location;
+            int length = arc4random() % ((str.length - location - 1)) + 1;
+            NSString *title = [str substringWithRange:NSMakeRange(location, length)];
+
+            NSString *rid = [NSString stringWithFormat:@"%d", arc4random() % 3 + 1];
+            NSString *membercount = [NSString stringWithFormat:@"%d", arc4random() % 98 + 1];
+            NSDictionary *roadshowDict = @{ @"id": rid,
+                                            @"membercount": membercount,
+                                            @"title": title };
+            [OORoadshow oo_modelWithJsonDictionary:roadshowDict];
+        };
     }
     return _roadshowBlock;
 }
@@ -187,23 +189,28 @@ typedef void (^UserBlock)();
 {
     if (!_userBlock)
     {
-                _userBlock=^{
-                    NSString *str=@"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
-        
-                    int location=arc4random()%str.length-1;
-                    location=location<0?0:location;
-                    int length=arc4random()%(11)+1;
-                    if (location+length>str.length) {
-                        length=(int)str.length-location;
-                    }
-                    NSString *name=[str substringWithRange:NSMakeRange(location, length)];
-                    NSString *age=[NSString stringWithFormat:@"%d",arc4random()%52+18];
-                    NSString *uid=[NSString stringWithFormat:@"%d",arc4random()%2+1];
-                    NSString *sex=[NSString stringWithFormat:@"%d",arc4random()%2];
-        
-                    NSDictionary *userDict= @{@"id":uid,@"name":name,@"sex":sex,@"age":age,@"location":@"aaaa"};
-                    [OOUser oo_modelWithJsonDictionary:userDict];
-                };
+        _userBlock = ^{
+            NSString *str = @"Oprah takes a huge gamble on weight loss giant Amazon slaps some of its users with lawsuit New Orleans ranks No. 1 on the list for jobs in this field 7 things to try out before deciding to retire from work Cuban shares the advice that made him a success";
+
+            int location = arc4random() % str.length - 1;
+            location = location < 0 ? 0 : location;
+            int length = arc4random() % (11) + 1;
+            if (location + length > str.length)
+            {
+                length = (int) str.length - location;
+            }
+            NSString *name = [str substringWithRange:NSMakeRange(location, length)];
+            NSString *age = [NSString stringWithFormat:@"%d", arc4random() % 52 + 18];
+            NSString *uid = [NSString stringWithFormat:@"%d", arc4random() % 2 + 1];
+            NSString *sex = [NSString stringWithFormat:@"%d", arc4random() % 2];
+
+            NSDictionary *userDict = @{ @"id": uid,
+                                        @"name": name,
+                                        @"sex": sex,
+                                        @"age": age,
+                                        @"location": @"aaaa" };
+            [OOUser oo_modelWithJsonDictionary:userDict];
+        };
     }
     return _userBlock;
 }

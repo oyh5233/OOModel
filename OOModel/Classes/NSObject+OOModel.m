@@ -7,6 +7,9 @@
 #import "OOModel.h"
 #import <libkern/OSAtomic.h>
 #import <objc/message.h>
+@interface NSObject ()
++ (OOClassInfo *)oo_classInfo;
+@end
 
 static NSString *oo_update_timestamp = @"oo_update_timestamp";
 static OODb *oo_global_db = nil;
@@ -1177,22 +1180,31 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
     return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:[self oo_jsonDictionary] options:NSJSONWritingPrettyPrinted error:nil] encoding:NSUTF8StringEncoding];
 }
 
++ (dispatch_semaphore_t)oo_semaphore
+{
+    static dispatch_semaphore_t semaphore;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        semaphore = dispatch_semaphore_create(1);
+    });
+    return semaphore;
+}
+
 + (OOClassInfo *)oo_classInfo
 {
-    @synchronized(self)
+    dispatch_semaphore_t semaphore = [self oo_semaphore];
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    CFMutableDictionaryRef classInfoRoot = [self oo_classInfos];
+    OOClassInfo *classInfo = CFDictionaryGetValue(classInfoRoot, (__bridge void *) (self));
+    if (!classInfo)
     {
-        OOClassInfo *classInfo = objc_getAssociatedObject(self, @selector(oo_classInfo));
-        if (!classInfo)
-        {
-            classInfo = [[OOClassInfo alloc] initWithClass:self];
-            classInfo.database = oo_global_db;
-            [classInfo.cls oo_createDb:classInfo db:oo_global_db];
-            objc_setAssociatedObject(self, @selector(oo_classInfo), classInfo, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            CFMutableDictionaryRef classInfoRoot = [self oo_classInfos];
-            CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
-        }
-        return classInfo;
+        classInfo = [[OOClassInfo alloc] initWithClass:self];
+        classInfo.database = oo_global_db;
+        [classInfo.cls oo_createDb:classInfo db:oo_global_db];
+        CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
     }
+    dispatch_semaphore_signal(semaphore);
+    return classInfo;
 }
 
 + (CFMutableDictionaryRef)oo_classInfos
@@ -1219,10 +1231,9 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
 
 - (void)oo_setIsReplaced:(bool)isReplaced
 {
-    if (isReplaced != [self oo_isReplaced])
-    {
-        objc_setAssociatedObject(self, @selector(oo_isReplaced), @(isReplaced), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
+    [self willChangeValueForKey:@"oo_isReplaced"];
+    objc_setAssociatedObject(self, @selector(oo_isReplaced), @(isReplaced), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [self didChangeValueForKey:@"oo_isReplaced"];
 }
 
 - (bool)oo_isReplaced
@@ -1233,34 +1244,23 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
 #pragma mark--
 #pragma mark-- db
 
-+ (void)oo_setDb:(OODb *)db forAll:(bool)forAll
++ (void)oo_setGlobalDb:(OODb *)db
 {
-    OSSpinLock lock = OS_SPINLOCK_INIT;
-    OSSpinLockLock(&lock);
-    if (forAll)
+    dispatch_semaphore_t semaphore = [self oo_semaphore];
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    NSDictionary *classInfos = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary *) [self oo_classInfos]];
+    if (oo_global_db != db)
     {
-        if (oo_global_db != db)
-        {
-            oo_global_db = db;
-            [(__bridge NSDictionary *) [self oo_classInfos] enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, OOClassInfo *_Nonnull classInfo, BOOL *_Nonnull stop) {
-                if (classInfo.database != db)
-                {
-                    classInfo.database = db;
-                    [self oo_createDb:classInfo db:db];
-                }
-            }];
-        }
+        oo_global_db = db;
+        [classInfos enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, OOClassInfo *_Nonnull classInfo, BOOL *_Nonnull stop) {
+            if (classInfo.database != db)
+            {
+                classInfo.database = db;
+                [self oo_createDb:classInfo db:db];
+            }
+        }];
     }
-    else
-    {
-        OOClassInfo *classInfo = [self oo_classInfo];
-        if (classInfo.database != db)
-        {
-            classInfo.database = db;
-            [self oo_createDb:classInfo db:db];
-        }
-    }
-    OSSpinLockUnlock(&lock);
+    dispatch_semaphore_signal(semaphore);
 }
 
 + (void)oo_createDb:(OOClassInfo *)classInfo db:(OODb *)db
