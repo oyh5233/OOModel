@@ -170,6 +170,10 @@ static inline id oo_get_value_for_property(__unsafe_unretained id model, __unsaf
 
 static inline id oo_unique_value_in_model(__unsafe_unretained id model, __unsafe_unretained OOClassInfo *classInfo)
 {
+    if (!classInfo.uniquePropertyKey)
+    {
+        return nil;
+    }
     __unsafe_unretained OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
     return oo_get_value_for_property(model, propertyInfo);
 }
@@ -847,12 +851,21 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
     if (db)
     {
         [db syncInDb:^(OODb *db) {
-            models = [self _oo_modelsWithJsonDictionaries:jsonDictionaries classInfo:classInfo mt:mt db:db];
+            NSUInteger count = jsonDictionaries.count;
+            if (count > 1)
+            {
+                [db beginTransaction];
+            }
+            models = [self oo_modelsWithJsonDictionaries:jsonDictionaries classInfo:classInfo mt:mt db:db];
+            if (count > 1)
+            {
+                [db commit];
+            }
         }];
     }
     else
     {
-        models = [self _oo_modelsWithJsonDictionaries:jsonDictionaries classInfo:classInfo mt:mt db:db];
+        models = [self oo_modelsWithJsonDictionaries:jsonDictionaries classInfo:classInfo mt:mt db:db];
     }
     return models;
 }
@@ -964,6 +977,102 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
     return array.count ? array : nil;
 }
 
++ (void)oo_save:(NSArray *)models
+{
+    OOClassInfo *classInfo = [self oo_classInfo];
+    OOMapTable *mt = classInfo.mapTable;
+    OODb *db = classInfo.database;
+    NSUInteger count = models.count;
+    if (db)
+    {
+        [db syncInDb:^(OODb *db) {
+            if (count > 1)
+            {
+                [db beginTransaction];
+            }
+            [self oo_save:models classInfo:classInfo mt:mt db:db];
+            if (count > 1)
+            {
+                [db commit];
+            }
+        }];
+    }
+    else
+    {
+        [self oo_save:models classInfo:classInfo mt:mt db:db];
+    }
+}
+
++ (void)oo_save:(NSArray *)models classInfo:(OOClassInfo *)classInfo mt:(OOMapTable *)mt db:(OODb *)db
+{
+
+    [models enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
+        if ([obj isKindOfClass:self])
+        {
+            [obj oo_save:classInfo mt:mt db:db];
+        }
+    }];
+}
+
+- (void)oo_save
+{
+}
+
+- (void)oo_save:(OOClassInfo *)classInfo mt:(OOMapTable *)mt db:(OODb *)db
+{
+    id uniqueValue = oo_unique_value_in_model(self, classInfo);
+    if (mt)
+    {
+        if (uniqueValue)
+        {
+            [mt setObject:self forKey:uniqueValue];
+        }
+        else
+        {
+            OOMD_LOG(@"[class:%@,propertyKey:%@] [class do not have a unique value]", NSStringFromClass(classInfo.cls), classInfo.uniquePropertyKey);
+        }
+    }
+    if (db)
+    {
+        if (uniqueValue)
+        {
+            __block id model = nil;
+            [db executeQuery:classInfo.uniqueSelectSql stmtBlock:^(sqlite3_stmt *stmt, int idx) {
+                OOPropertyInfo *propertyInfo = classInfo.propertyInfosByPropertyKeys[classInfo.uniquePropertyKey];
+                oo_bind_stmt_from_value(propertyInfo, uniqueValue, stmt, idx);
+            }
+                resultBlock:^(sqlite3_stmt *stmt, bool *stop) {
+                    model = [[self.class alloc] init];
+                    if (!oo_model_from_stmt(classInfo, model, stmt))
+                    {
+                        model = nil;
+                    }
+                    *stop = YES;
+                }];
+            if (model)
+            {
+                [self oo_setIsReplaced:YES];
+                [self.class oo_update:self classInfo:classInfo db:db];
+            }
+            else
+            {
+                [self.class oo_insert:self classInfo:classInfo db:db];
+            }
+        }
+        else
+        {
+            if (!classInfo.uniqueSelectSql)
+            {
+                [self.class oo_insert:self classInfo:classInfo db:db];
+            }
+            else
+            {
+                OOMD_LOG(@"[class:%@,propertyKey:%@] [class do not have a unique value]", NSStringFromClass(classInfo.cls), classInfo.uniquePropertyKey);
+            }
+        }
+    }
+}
+
 - (void)oo_mergeWithJsonDictionary:(NSDictionary *)jsonDictionary
 {
     OOClassInfo *classInfo = [self.class oo_classInfo];
@@ -977,13 +1086,9 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
     [self oo_deleteModelsBeforeDate:date classInfo:classInfo db:db];
 }
 
-+ (NSArray *)_oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaries classInfo:(OOClassInfo *)classInfo mt:(OOMapTable *)mt db:(OODb *)db
++ (NSArray *)oo_modelsWithJsonDictionaries:(NSArray *)jsonDictionaries classInfo:(OOClassInfo *)classInfo mt:(OOMapTable *)mt db:(OODb *)db
 {
-    NSUInteger count = jsonDictionaries.count;
-    if (count > 1)
-    {
-        [db beginTransaction];
-    }
+
     NSMutableArray *models = [NSMutableArray array];
     [jsonDictionaries enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
         id model = [self oo_modelWithJonDictionry:obj classInfo:classInfo mt:mt db:db];
@@ -992,10 +1097,6 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
             [models addObject:model];
         }
     }];
-    if (count > 1)
-    {
-        [db commit];
-    }
     return models.count ? models : nil;
 }
 

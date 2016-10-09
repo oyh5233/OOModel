@@ -66,11 +66,11 @@ typedef NS_ENUM(NSInteger, OOPropertyType) {
 
 @property(nonatomic, strong, readonly) NSArray *jsonPropertyInfos;
 
-@property(nonatomic) OOMapTable *mapTable;
+@property(nonatomic, strong) OOMapTable *mapTable;
 @property(nonatomic, copy, readonly) NSString *uniquePropertyKey;
 
 @property(nonatomic, strong, readonly) NSArray *dbPropertyInfos;
-@property(nonatomic) OODb *database;
+@property(strong) OODb *database;
 @property(nonatomic, copy, readonly) NSString *dbTableName;
 @property(nonatomic, copy, readonly) NSString *uniqueSelectSql;
 @property(nonatomic, copy, readonly) NSString *insertSql;

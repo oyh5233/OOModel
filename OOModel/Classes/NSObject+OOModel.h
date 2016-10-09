@@ -100,7 +100,6 @@ extern const NSString *oo_compaction_prefix;
  *  @return instance
  */
 + (instancetype)oo_modelWithUniqueValue:(id)uniqueValue;
-
 /*
  *  e.g.
  *
@@ -112,6 +111,10 @@ extern const NSString *oo_compaction_prefix;
  *
  *  @param json 
  */
++ (void)oo_save:(NSArray *)models;
+
+- (void)oo_save;
+
 - (void)oo_mergeWithJsonDictionary:(NSDictionary *)dictionary;
 
 /**
@@ -129,7 +132,6 @@ extern const NSString *oo_compaction_prefix;
  */
 + (void)oo_setGlobalDb:(OODb *)db;
 
-
-+ (OOClassInfo*)oo_classInfo;
++ (OOClassInfo *)oo_classInfo;
 
 @end
