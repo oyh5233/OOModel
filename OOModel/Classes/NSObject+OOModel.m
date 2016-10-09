@@ -1342,6 +1342,12 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
 #pragma mark--
 #pragma mark-- db
 
++ (void)oo_setDb:(OODb *)db
+{
+    OOClassInfo *classInfo = [self oo_classInfo];
+    classInfo.database = db;
+}
+
 + (void)oo_setGlobalDb:(OODb *)db
 {
     dispatch_semaphore_t semaphore = [self oo_semaphore];

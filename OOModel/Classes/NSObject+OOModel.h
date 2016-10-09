@@ -125,6 +125,8 @@ extern const NSString *oo_compaction_prefix;
  *  @return result
  */
 + (void)oo_deleteModelsBeforeDate:(NSDate *)date;
+
++ (void)oo_setDb:(OODb *)db;
 /**
  *  set global database cache for instance.
  *
