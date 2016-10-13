@@ -1298,7 +1298,10 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
     {
         classInfo = [[OOClassInfo alloc] initWithClass:self];
         classInfo.database = oo_global_db;
-        [classInfo.cls oo_createDb:classInfo db:oo_global_db];
+        if (oo_global_db)
+        {
+            [classInfo.cls oo_createDb:classInfo db:oo_global_db];
+        }
         CFDictionarySetValue(classInfoRoot, (__bridge void *) self, (__bridge void *) classInfo);
     }
     dispatch_semaphore_signal(semaphore);
@@ -1360,7 +1363,10 @@ static void oo_bind_stmt_from_model(__unsafe_unretained OOPropertyInfo *property
             if (classInfo.database != db)
             {
                 classInfo.database = db;
-                [self oo_createDb:classInfo db:db];
+                if (db)
+                {
+                    [self oo_createDb:classInfo db:db];
+                }
             }
         }];
     }
